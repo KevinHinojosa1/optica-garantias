@@ -1,0 +1,154 @@
+[
+  {
+    "id": "quito-megamaxi-6diciembre",
+    "nombre": "Megamaxi 6 de Diciembre",
+    "ciudad": "Quito",
+    "direccion": "Av. 6 de Diciembre S/N y Calle Alemán, Local #711",
+    "whatsapp_grupo": "593999000001",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Megamaxi 6 de Diciembre"
+  },
+  {
+    "id": "quito-supermaxi-eloy-alfaro",
+    "nombre": "Supermaxi Eloy Alfaro",
+    "ciudad": "Quito",
+    "direccion": "Av. Eloy Alfaro 44-110 y Av. Río Coca, Local #4",
+    "whatsapp_grupo": "593999000002",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Supermaxi Eloy Alfaro"
+  },
+  {
+    "id": "quito-quicentro",
+    "nombre": "Quicentro Shopping",
+    "ciudad": "Quito",
+    "direccion": "Av. Naciones Unidas S/N y Av. Shyris, Local PB056-055",
+    "whatsapp_grupo": "593999000003",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Quicentro Shopping"
+  },
+  {
+    "id": "quito-rio-amazonas",
+    "nombre": "Río Amazonas",
+    "ciudad": "Quito",
+    "direccion": "Av. Río Amazonas N13-30 y Av. Naciones Unidas, Local A-129",
+    "whatsapp_grupo": "593999000004",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Río Amazonas"
+  },
+  {
+    "id": "quito-12-octubre",
+    "nombre": "Supermaxi 12 de Octubre",
+    "ciudad": "Quito",
+    "direccion": "Av. 12 de Octubre 16-26 y Madrid, Local #121",
+    "whatsapp_grupo": "593999000005",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — 12 de Octubre"
+  },
+  {
+    "id": "quito-condado",
+    "nombre": "Condado Shopping",
+    "ciudad": "Quito",
+    "direccion": "Av. De la Prensa S/N y Av. Kennedy, Local #714",
+    "whatsapp_grupo": "593999000006",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Condado Shopping"
+  },
+  {
+    "id": "quito-scala",
+    "nombre": "Scala Shopping",
+    "ciudad": "Quito",
+    "direccion": "Av. Interoceánica Km 12 Sector Primavera, Local L288",
+    "whatsapp_grupo": "593999000007",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Scala Shopping"
+  },
+  {
+    "id": "quito-cumbaya",
+    "nombre": "Villa Cumbayá",
+    "ciudad": "Quito",
+    "direccion": "Av. Interoceánica, Local #3",
+    "whatsapp_grupo": "593999000008",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Villa Cumbayá"
+  },
+  {
+    "id": "quito-aeropuerto",
+    "nombre": "Centro Comercial Aeropuerto",
+    "ciudad": "Quito",
+    "direccion": "Av. De la Prensa S/N y Humberto Salas, Local 10",
+    "whatsapp_grupo": "593999000009",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Aeropuerto"
+  },
+  {
+    "id": "quito-el-fortin",
+    "nombre": "Mall El Fortín",
+    "ciudad": "Quito",
+    "direccion": "Av. Modesto Luque S/N y Casuarina, Local #123",
+    "whatsapp_grupo": "593999000010",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Mall El Fortín"
+  },
+  {
+    "id": "gye-san-marino",
+    "nombre": "San Marino Shopping",
+    "ciudad": "Guayaquil",
+    "direccion": "Av. Carlos Luis Plaza Dañín S/N y Av. Francisco de Orellana, Local #25",
+    "whatsapp_grupo": "593999000011",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — San Marino Shopping"
+  },
+  {
+    "id": "gye-riocentro-ceibos",
+    "nombre": "Riocentro Los Ceibos",
+    "ciudad": "Guayaquil",
+    "direccion": "Av. El Bombero S/N y Leopoldo Carrera, Km 6 Vía a la Costa, Local #50",
+    "whatsapp_grupo": "593999000012",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Riocentro Los Ceibos"
+  },
+  {
+    "id": "gye-mall-del-sol",
+    "nombre": "Mall del Sol",
+    "ciudad": "Guayaquil",
+    "direccion": "Av. Constitución S/N y Juan Tanga Marengo, Local B-27",
+    "whatsapp_grupo": "593999000013",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Mall del Sol"
+  },
+  {
+    "id": "gye-citymall",
+    "nombre": "Citymall",
+    "ciudad": "Guayaquil",
+    "direccion": "Calle Felipe Pezo S/N y Benjamín Carrión, Local #147-148",
+    "whatsapp_grupo": "593999000014",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Citymall"
+  },
+  {
+    "id": "gye-riocentro-norte",
+    "nombre": "Riocentro Norte",
+    "ciudad": "Guayaquil",
+    "direccion": "Av. Francisco de Orellana S/N y Av. Guillermo Pareja Rolando, Local #4-5-6",
+    "whatsapp_grupo": "593999000015",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Riocentro Norte"
+  },
+  {
+    "id": "gye-riocentro-sur",
+    "nombre": "Riocentro Sur",
+    "ciudad": "Guayaquil",
+    "direccion": "Av. 25 de Julio, Local #8",
+    "whatsapp_grupo": "593999000016",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Riocentro Sur"
+  },
+  {
+    "id": "gye-mall-del-sur",
+    "nombre": "Mall del Sur",
+    "ciudad": "Guayaquil",
+    "direccion": "Av. 25 de Julio S/N, Local #4",
+    "whatsapp_grupo": "593999000017",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Mall del Sur"
+  },
+  {
+    "id": "gye-village-plaza",
+    "nombre": "Village Plaza",
+    "ciudad": "Guayaquil",
+    "direccion": "Vía Samborondón Km 1½, Local #7",
+    "whatsapp_grupo": "593999000018",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Village Plaza"
+  },
+  {
+    "id": "central-call-center",
+    "nombre": "Call Center Central",
+    "ciudad": "Nacional",
+    "direccion": "1800 ÓPTICA (678422) — Coordinación nacional de garantías",
+    "whatsapp_grupo": "5931800678422",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Call Center Central"
+  }
+]

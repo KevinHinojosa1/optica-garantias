@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Historial y Políticas{% endblock %}
+
+{% block content %}
+<div class="grid lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-2">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+      <div>
+        <h2 class="text-2xl font-bold text-slate-800">📋 Módulo 5 — Historial</h2>
+        <p class="text-slate-500">Consultas de garantía con PDF e imagen · <span id="contador-historial" class="font-medium text-slate-600">—</span></p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        <a href="/api/historial/exportar" id="btn-exportar"
+          class="bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center gap-2">
+          📥 Exportar Excel
+        </a>
+        <button id="btn-limpiar-historial"
+          class="bg-red-50 hover:bg-red-100 text-red-700 font-semibold px-5 py-2.5 rounded-xl border border-red-200 transition">
+          🗑️ Limpiar historial
+        </button>
+      </div>
+    </div>
+
+    <div id="loading" class="text-center py-12 text-slate-400">
+      <p class="text-2xl animate-pulse">⏳</p>
+      <p>Cargando historial...</p>
+    </div>
+
+    <div id="tabla-historial" class="hidden bg-white rounded-2xl shadow-sm border overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 text-slate-600">
+            <tr>
+              <th class="text-left px-4 py-3 font-semibold">Fecha</th>
+              <th class="text-left px-4 py-3 font-semibold">Cliente</th>
+              <th class="text-left px-4 py-3 font-semibold">Veredicto</th>
+              <th class="text-left px-4 py-3 font-semibold">Motivo</th>
+              <th class="text-left px-4 py-3 font-semibold">Asesor</th>
+              <th class="text-left px-4 py-3 font-semibold">Descuento</th>
+              <th class="text-right px-4 py-3 font-semibold">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="historial-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="sin-historial" class="hidden text-center py-12 text-slate-400">
+      <p class="text-4xl mb-2">📭</p>
+      <p>No hay consultas registradas aún</p>
+    </div>
+  </div>
+
+  <div>
+    <div class="bg-white rounded-2xl shadow-sm border p-5 sticky top-6">
+      <h3 class="font-bold text-slate-800 mb-4">📜 Políticas de Óptica Los Andes</h3>
+      <div class="space-y-4">
+        {% for p in politicas %}
+        <div class="border-l-4 border-optica-500 pl-3">
+          <p class="font-semibold text-sm text-slate-800">{{ p.titulo }}</p>
+          <p class="text-xs text-slate-600 mt-0.5">{{ p.texto }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/historial.js"></script>
+{% endblock %}

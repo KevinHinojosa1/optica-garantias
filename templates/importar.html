@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Importar Base de Datos{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+  <div class="bg-white rounded-2xl shadow-sm border p-6 sm:p-8">
+    <h2 class="text-2xl font-bold text-slate-800 mb-2">📥 Módulo 1 — Carga de Base de Datos</h2>
+    <p class="text-slate-500 mb-6">Suba un archivo CSV o Excel con los datos de clientes.</p>
+
+    <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 text-sm text-amber-800">
+      <p class="font-semibold">⚠️ Protección anti-duplicados activa</p>
+      <p class="mt-1">Si un cliente ya existe (misma <strong>número de factura</strong>), no se importará y verá una alerta.</p>
+    </div>
+
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 text-sm text-blue-800">
+      <p class="font-semibold mb-2">Columnas requeridas:</p>
+      <code class="text-xs break-all">nombre, cedula, telefono, tienda, producto, tipo_producto, fecha_factura, numero_factura, fecha_entrega, tiene_ola_plus</code>
+      <p class="mt-2 text-xs">Opcionales: <code>codigo_descuento</code> (10–50), <code>porcentaje_descuento</code> (10–50, no mayor al código).</p>
+      <p class="mt-1 text-xs">El campo <strong>tienda</strong> debe coincidir con un local del catálogo oficial (ver abajo).</p>
+    </div>
+
+    <form id="form-importar" class="space-y-4">
+      <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-optica-500 transition cursor-pointer" id="drop-zone">
+        <input type="file" id="archivo" accept=".csv,.xlsx,.xls" class="hidden">
+        <p class="text-4xl mb-2">📄</p>
+        <p class="text-slate-600 font-medium">Arrastre su archivo aquí o haga clic para seleccionar</p>
+        <p class="text-slate-400 text-sm mt-1">CSV, XLSX</p>
+        <p id="archivo-nombre" class="text-optica-600 font-semibold mt-3 hidden"></p>
+      </div>
+
+      <button type="submit" id="btn-importar" disabled
+        class="w-full bg-optica-600 hover:bg-optica-700 disabled:bg-slate-300 text-white font-semibold py-3 rounded-xl transition">
+        Importar clientes
+      </button>
+    </form>
+
+    <div id="resultado" class="hidden mt-6"></div>
+    <div id="duplicados-detalle" class="hidden mt-4"></div>
+    <div id="errores-detalle" class="hidden mt-4"></div>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border p-6 sm:p-8 mt-6">
+    <h3 class="text-xl font-bold text-slate-800 mb-2">📁 Carpeta de base de datos</h3>
+    <p class="text-slate-500 text-sm mb-4">
+      Para pruebas y actualizaciones futuras, coloque su Excel en la carpeta del proyecto y actualice desde aquí.
+    </p>
+
+    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-4 text-sm">
+      <p class="font-semibold text-slate-700">Archivo configurado:</p>
+      <code class="text-xs text-optica-700 break-all">{{ ruta_base_datos }}</code>
+      <p class="mt-2 {% if existe_archivo_base %}text-emerald-700{% else %}text-red-600{% endif %}">
+        {% if existe_archivo_base %}✅ Archivo encontrado — listo para importar{% else %}❌ No existe pacientes.xlsx en la carpeta{% endif %}
+      </p>
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-3">
+      <button id="btn-importar-carpeta" {% if not existe_archivo_base %}disabled{% endif %}
+        class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-semibold py-3 rounded-xl transition">
+        🔄 Actualizar desde carpeta (reemplazar todo)
+      </button>
+      <button id="btn-agregar-carpeta" {% if not existe_archivo_base %}disabled{% endif %}
+        class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-semibold py-3 rounded-xl transition">
+        ➕ Agregar desde carpeta
+      </button>
+      <button id="btn-limpiar" class="bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-3 px-5 rounded-xl border border-red-200 transition">
+        🗑️ Limpiar base
+      </button>
+    </div>
+    <p class="text-xs text-slate-400 mt-3">
+      Actualizar: borra todos los pacientes e importa el Excel de la carpeta. Agregar: solo inserta registros nuevos.
+    </p>
+    <div id="resultado-carpeta" class="hidden mt-4"></div>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border p-6 mt-6">
+    <h3 class="font-bold text-slate-800 mb-3">🏪 Catálogo de tiendas válidas</h3>
+    <p class="text-sm text-slate-500 mb-4">Use exactamente estos nombres en la columna <code>tienda</code> del archivo:</p>
+    <div class="grid sm:grid-cols-2 gap-2 text-xs max-h-64 overflow-y-auto">
+      {% for t in tiendas %}
+      {% if t.id != 'central-call-center' %}
+      <div class="bg-slate-50 rounded-lg px-3 py-2">
+        <span class="font-semibold text-slate-700">{{ t.nombre }}</span>
+        <span class="text-slate-400"> — {{ t.ciudad }}</span>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/import.js"></script>
+{% endblock %}

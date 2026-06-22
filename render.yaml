@@ -1,0 +1,19 @@
+# Despliegue gratuito en Render.com
+# Conectar repo de GitHub → New → Blueprint → seleccionar este archivo
+services:
+  - type: web
+    name: optica-garantias
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:///./data/optica_garantias.db
+      - key: DEBUG
+        value: "false"
+      - key: VISION_PROVIDER
+        value: claude
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: DEFAULT_ASESOR
+        value: Asesor Virtual

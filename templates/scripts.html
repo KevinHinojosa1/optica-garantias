@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Scripts de Atención{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <h2 class="text-2xl font-bold text-slate-800">💬 Scripts Profesionales de Atención</h2>
+      <p class="text-slate-500">Guiones de saludo, intermedio y cierre para voz y WhatsApp — clientes difíciles y situaciones operativas.</p>
+    </div>
+    <a href="/api/scripts/exportar" id="btn-exportar-scripts"
+      class="bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center gap-2">
+      📥 Exportar Excel
+    </a>
+  </div>
+
+  <div class="bg-optica-50 border border-optica-200 rounded-2xl p-5">
+    <h3 class="font-bold text-slate-800 mb-1">🔍 Cargar ficha completa</h3>
+    <p class="text-sm text-slate-500 mb-4">Busque un cliente en Atención o una consulta del Historial para llenar todos los datos y armar WhatsApp listo para enviar.</p>
+    <div class="flex flex-wrap gap-3 mb-3">
+      <input type="text" id="buscar-ficha" placeholder="Buscar por nombre, cédula o factura..."
+        class="flex-1 min-w-[220px] border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none bg-white">
+      <button type="button" id="btn-buscar-ficha"
+        class="bg-optica-600 hover:bg-optica-700 text-white font-semibold px-5 py-2.5 rounded-xl transition">
+        Buscar
+      </button>
+    </div>
+    <div id="resultados-ficha" class="space-y-2 max-h-48 overflow-y-auto"></div>
+    <p id="ficha-origen" class="text-sm text-emerald-700 font-medium mt-3 hidden"></p>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border p-5">
+    <h3 class="font-bold text-slate-800 mb-1">📋 Datos de la ficha</h3>
+    <p class="text-sm text-slate-500 mb-4">Complete manualmente o cargue desde Atención/Historial. La ficha en WhatsApp solo aparece cuando hay datos reales del cliente (nombre + tienda o factura).</p>
+    <p id="aviso-ficha-wa" class="hidden text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 mb-4">
+      ⚠️ Cargue la ficha del cliente para incluir sus datos en el WhatsApp. Sin ficha, el mensaje llevará solo el guión y el pie.
+    </p>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-600 mb-1">👨‍💼 Nombre del asesor</label>
+        <input type="text" id="var-asesor" placeholder="Ej: María González"
+          class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-600 mb-1">👤 Nombre del cliente</label>
+        <input type="text" id="var-cliente" placeholder="Ej: Juan Pérez"
+          class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-600 mb-1">🪪 Cédula</label>
+        <input type="text" id="var-cedula" placeholder="Ej: 1712345678"
+          class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-600 mb-1">📞 Teléfono cliente</label>
+        <input type="text" id="var-telefono" placeholder="Ej: 0991234567"
+          class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-600 mb-1">📍 Tienda</label>
+        <select id="var-tienda" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+          <option value="">Seleccionar tienda...</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-600 mb-1">👓 Producto</label>
+        <input type="text" id="var-producto" placeholder="Ej: Lentes progresivos Essilor"
+          class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-600 mb-1">📦 Tipo de producto</label>
+        <select id="var-tipo-producto" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+          <option value="">Seleccionar...</option>
+          <option value="Gafas oftálmicas">Gafas oftálmicas</option>
+          <option value="Gafas de sol">Gafas de sol</option>
+          <option value="Lentes de contacto">Lentes de contacto</option>
+          <option value="Accesorios">Accesorios</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-600 mb-1">🧾 Nº Factura</label>
+        <input type="text" id="var-factura" placeholder="Ej: F-2026-00458"
+          class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-600 mb-1">📅 Fecha de factura</label>
+        <input type="text" id="var-fecha-factura" placeholder="Ej: 10/05/2026"
+          class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+      </div>
+      <div id="campo-fecha-prometida" class="hidden">
+        <label class="block text-sm font-medium text-slate-600 mb-1">📅 Fecha prometida</label>
+        <input type="text" id="var-fecha-prometida" placeholder="Ej: 15/06/2026"
+          class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+      </div>
+      <div id="campo-nueva-fecha" class="hidden">
+        <label class="block text-sm font-medium text-slate-600 mb-1">📅 Nueva fecha</label>
+        <input type="text" id="var-nueva-fecha" placeholder="Ej: 20/06/2026"
+          class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+      </div>
+      <div id="campo-motivo" class="hidden">
+        <label class="block text-sm font-medium text-slate-600 mb-1">📋 Motivo del cambio/retraso</label>
+        <input type="text" id="var-motivo" placeholder="Ej: Retraso en laboratorio"
+          class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+      </div>
+    </div>
+  </div>
+
+  <div class="flex flex-wrap gap-2" id="filtro-grupos"></div>
+
+  <div id="scripts-grid" class="grid gap-5 lg:grid-cols-2">
+    <p class="text-slate-400 col-span-full text-center py-8">Cargando scripts...</p>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-sm border p-5 space-y-4">
+    <div>
+      <h3 class="font-bold text-slate-800 text-lg">💡 Respuesta inteligente al cliente</h3>
+      <p class="text-sm text-slate-500">Pegue lo que le escribió o dijo el cliente y el sistema generará una respuesta amable, en usted y lista para WhatsApp.</p>
+    </div>
+    <div class="grid lg:grid-cols-2 gap-4">
+      <div class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium text-slate-600 mb-1">💬 Mensaje del cliente</label>
+          <textarea id="mensaje-cliente" rows="5" placeholder="Ej: Estoy muy molesto porque me dijeron que mis lentes llegaban ayer y no llegaron..."
+            class="w-full border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-optica-500 outline-none"></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-600 mb-1">📌 Contexto adicional (opcional)</label>
+          <input type="text" id="contexto-respuesta" placeholder="Ej: Retraso en laboratorio, nueva fecha 22/06"
+            class="w-full border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-optica-500 outline-none">
+        </div>
+        <button type="button" id="btn-generar-respuesta"
+          class="w-full bg-optica-600 hover:bg-optica-700 text-white font-semibold px-5 py-3 rounded-xl transition">
+          ✨ Generar respuesta estructurada
+        </button>
+        <p id="respuesta-status" class="text-sm text-slate-500"></p>
+      </div>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium text-slate-600 mb-1">🎙️ Respuesta para voz</label>
+          <div id="respuesta-voz" class="bg-slate-50 border rounded-xl p-4 text-sm text-slate-700 min-h-[100px] whitespace-pre-wrap">
+            La respuesta de voz aparecerá aquí...
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-600 mb-1">💬 WhatsApp completo (ficha + respuesta)</label>
+          <div id="respuesta-whatsapp" class="bg-slate-50 border rounded-xl p-4 text-sm text-slate-700 min-h-[160px] whitespace-pre-wrap max-h-72 overflow-y-auto">
+            El mensaje completo para WhatsApp aparecerá aquí...
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button type="button" id="btn-copiar-respuesta-wa"
+            class="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+            📋 Copiar WhatsApp
+          </button>
+          <a id="link-respuesta-wa" href="#" target="_blank" rel="noopener"
+            class="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white text-center transition pointer-events-none opacity-50">
+            💬 Abrir WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.TIENDAS_SCRIPTS = {{ tiendas_json | safe }};
+</script>
+<script src="/static/js/scripts.js"></script>
+{% endblock %}

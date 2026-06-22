@@ -1,0 +1,132 @@
+{
+  "grupos": [
+    {
+      "id": "clientes_dificiles",
+      "titulo": "Clientes difíciles",
+      "escenarios": [
+        {
+          "id": "cliente_molesto",
+          "titulo": "Cliente molesto",
+          "descripcion": "Valide su emoción primero, hable con calma y ofrezca una solución concreta sin dar vueltas.",
+          "fases": {
+            "saludo": {
+              "voz": "Buenos días/tardes, {cliente}. 😊 Le habla {asesor} de Óptica Los Andes, en {tienda}. Comprendo que usted está molesto/a y tiene toda la razón de sentirse así; en su lugar, yo también me sentiría igual. Cuénteme con confianza qué ocurrió, que estoy aquí para ayudarle.",
+              "whatsapp": "Buenos días/tardes, *{cliente}*. 👋\n\nLe saluda *{asesor}*, de su tienda *{tienda}* de Óptica Los Andes.\n\nEn primer lugar, quiero que sepa que *comprendo su molestia* y que usted tiene toda la razón en sentirse así 😔 En su lugar, yo también me sentiría igual.\n\nNo estoy aquí para dar excusas, sino para *escucharle* y buscar una solución real a lo que le ocurrió con su pedido.\n\n📝 *Cuénteme con confianza qué pasó* y con gusto lo revisamos juntos. Estoy pendiente de usted 🤝"
+            },
+            "intermedio": {
+              "voz": "Gracias por haberme contado, {cliente}. 🙏 Lo que usted me indica tiene mucho sentido. Permítame revisar su caso en este momento y en breve le daré una respuesta clara, sin vueltas. Si necesito consultar algo, le avisaré y regresaré con la solución. ¿Le parece bien así?",
+              "whatsapp": "Gracias por haberme contado, *{cliente}*. 🙏\n\nLo que usted me indica es *totalmente válido* y lo estamos tomando con la seriedad que merece.\n\nEn este momento estoy revisando su expediente:\n👓 *Producto:* {producto}\n🧾 *Factura:* {factura}\n📦 *Tipo:* {tipo_producto}\n\nEn breve le confirmaré los *pasos concretos* para resolver su situación ✅ Si requiero consultar con el equipo de la tienda, le escribiré de inmediato para que usted no se quede esperando.\n\n*No se preocupe*, estoy pendiente de usted y de su caso 💙"
+            },
+            "cierre": {
+              "voz": "Muy bien, {cliente}. ✅ Quedamos así: [resumir acuerdo]. De verdad le agradezco su paciencia; usted es lo más importante para nosotros. Para cualquier consulta, puede llamarme o escribirme con confianza. Que tenga un excelente día.",
+              "whatsapp": "Muy bien, *{cliente}*. ✅\n\nLe confirmo lo acordado:\n\n📝 *[Resumir acuerdo aquí]*\n\nDe corazón, *gracias por su paciencia* y por darnos la oportunidad de resolver su situación 💙 Usted es lo más importante para nosotros en Óptica Los Andes.\n\n📲 Si necesita cualquier aclaración adicional, *no dude en escribirme*. Estamos en *{tienda}* para servirle.\n\nQue tenga un excelente día 🌟"
+            }
+          }
+        },
+        {
+          "id": "cliente_enfadado",
+          "titulo": "Cliente enfadado",
+          "descripcion": "No interrumpa. Permita que se desahogue, muestre empatía genuina y baje el ritmo de la conversación.",
+          "fases": {
+            "saludo": {
+              "voz": "Buenos días/tardes, {cliente}. Le habla {asesor}, de Óptica Los Andes en {tienda}. Observo que usted está muy molesto/a y lo comprendo; de verdad lo comprendo. No vengo a discutir, vengo a escucharle y buscarle la mejor salida. Tómese su tiempo, por favor; estoy aquí para usted.",
+              "whatsapp": "Buenos días/tardes, *{cliente}*. 👋\n\nLe saluda *{asesor}* de Óptica Los Andes — *{tienda}*.\n\nAntes que nada, quiero decirle que *comprendo su enojo* y lamento sinceramente la situación que está viviendo 😔 Usted no está exagerando: sus sentimientos son válidos.\n\n*No vengo a discutir* ni a justificar nada. Estoy aquí para escucharle con calma y buscar la *mejor solución posible* para usted.\n\n🕐 Tómese el tiempo que necesite y cuénteme qué ocurrió. Quedo *atento/a* a usted 🤝"
+            },
+            "intermedio": {
+              "voz": "{cliente}, usted tiene toda la razón en sentirse así. Lamento sinceramente lo que vivió; no es la experiencia que deseamos para nuestros clientes. Permítame revisar su expediente y ver qué podemos hacer hoy mismo. Mi compromiso es que usted no se quede sin respuesta. ¿Qué sería para usted una solución justa?",
+              "whatsapp": "*{cliente}*, usted tiene *toda la razón* en estar molesto/a 💙\n\nLamentamos profundamente lo ocurrido con su *{producto}*. Esto *no es la experiencia* que queremos que vivan nuestros clientes en Óptica Los Andes.\n\nEn este momento estoy revisando su caso personalmente para ofrecerle una solución *hoy mismo*, sin demoras innecesarias.\n\n🤝 *¿Qué resultado esperaría usted para quedar conforme?* Su respuesta me ayuda a trabajar en algo concreto que de verdad le sirva, no solo una respuesta de protocolo.\n\nMi compromiso es que *usted no se quedará sin respuesta* ✅"
+            },
+            "cierre": {
+              "voz": "{cliente}, gracias por darme la oportunidad de ayudarle. 🙏 Confirmamos: [resumir acuerdo]. Le pido disculpas por la experiencia y le aseguro que haremos seguimiento. Su bienestar es lo primero para nosotros. Cuídese mucho.",
+              "whatsapp": "Gracias, *{cliente}*, por darnos la oportunidad de ayudarle. 🙏\n\n✅ *Confirmamos lo siguiente:*\n📝 *[Resumir acuerdo aquí]*\n\nLe pedimos *disculpas sinceras* por la experiencia que vivió. Haremos *seguimiento personalizado* para asegurarnos de que todo quede resuelto como usted espera 📲\n\nSu bienestar y satisfacción son lo *más importante* para nosotros en *{tienda}* 💙\n\nCuídese mucho 🌟"
+            }
+          }
+        },
+        {
+          "id": "cliente_griton",
+          "titulo": "Cliente gritón",
+          "descripcion": "Hable más bajo y pausado. No suba el tono. Valide su emoción y tome el control con calma.",
+          "fases": {
+            "saludo": {
+              "voz": "Buenos días/tardes, {cliente}. Le habla {asesor}, de Óptica Los Andes en {tienda}. Escucho que usted está muy alterado/a y lo comprendo. Voy a hablar con calma para poder ayudarle mejor; estoy de su lado. ¿Podemos conversar un momento, por favor?",
+              "whatsapp": "Buenos días/tardes, *{cliente}*. 👋\n\nLe saluda *{asesor}* de Óptica Los Andes — *{tienda}*.\n\nEscucho que usted está muy alterado/a y *lo comprendo perfectamente* 😔 Sé que cuando algo sale mal con un pedido importante, la frustración es enorme.\n\nVoy a hablarle con *calma y respeto*, porque mi objetivo es ayudarle, no confrontarle. *Estoy de su lado* y quiero que esto se resuelva de la mejor manera.\n\n🤝 ¿Podemos conversar un momento? Cuénteme qué sucedió y lo atenderemos con la *prioridad* que merece."
+            },
+            "intermedio": {
+              "voz": "Gracias, {cliente}. Lo que usted me indica es muy importante y lo estoy tomando en serio. Voy a revisar su caso ahora y en unos minutos le daré una respuesta clara. No lo dejaré sin respuesta, se lo aseguro. Un momento, por favor.",
+              "whatsapp": "Gracias, *{cliente}*. 🙏\n\nLo que usted me indica es *muy importante* y lo estoy tomando con toda la seriedad que merece.\n\n🔍 En este momento estoy revisando su pedido:\n👓 *{producto}*\n🧾 *Factura:* {factura}\n\nEn los próximos minutos le confirmaré la *solución concreta*. *Usted no se quedará sin respuesta*, se lo aseguro ✅\n\nSi necesito un momento para consultar con el equipo, le avisaré de inmediato. *Un momento, por favor.*"
+            },
+            "cierre": {
+              "voz": "{cliente}, gracias por su paciencia. 🙏 Le confirmo: [resumir acuerdo]. Lamento el malestar y valoro mucho que me haya brindado la oportunidad de resolverlo. Quedo atento/a a cualquier seguimiento. Que esté muy bien.",
+              "whatsapp": "Gracias por su paciencia, *{cliente}*. 🙏\n\n✅ *Le confirmo lo acordado:*\n📝 *[Resumir acuerdo aquí]*\n\nLamentamos el malestar que esto le causó 😔 Valoramos mucho que nos haya brindado la *oportunidad* de resolverlo.\n\nQuedamos *atentos* en *{tienda}* para cualquier seguimiento que usted necesite 📲 Escríbanos cuando lo requiera 💙\n\nQue esté muy bien 🌟"
+            }
+          }
+        },
+        {
+          "id": "cliente_impaciente",
+          "titulo": "Cliente impaciente / exigente",
+          "descripcion": "Reconozca la urgencia, dé tiempos reales y cumpla lo que prometa. Sea directo pero amable.",
+          "fases": {
+            "saludo": {
+              "voz": "Buenos días/tardes, {cliente}. Le habla {asesor} de Óptica Los Andes, {tienda}. Comprendo que usted necesita una respuesta de inmediato y respeto su tiempo; iré directo al punto. Cuénteme su situación y le indicaré qué podemos hacer hoy, sin rodeos.",
+              "whatsapp": "Buenos días/tardes, *{cliente}*. 👋\n\nLe saluda *{asesor}* de Óptica Los Andes — *{tienda}*.\n\nComprendo que usted necesita una respuesta *de inmediato* ⏱️ y *respeto su tiempo*. No le haré perder minutos con rodeos.\n\nIré *directo al punto*: cuénteme su situación y le indicaré *hoy mismo* qué podemos hacer, con pasos claros y tiempos reales.\n\n🚀 Estoy listo/a para atenderle. ¿En qué puedo ayudarle?"
+            },
+            "intermedio": {
+              "voz": "Perfecto, {cliente}. 👍 Esto es lo que puedo hacer por usted hoy: [explicar pasos]. El tiempo estimado es [tiempo]. Si algo cambia, le avisaré antes, sin sorpresas. ¿Le funciona esta solución?",
+              "whatsapp": "Perfecto, *{cliente}*. 👍\n\nEsto es lo que *haremos por usted hoy*, de forma concreta:\n\n📌 *[Explicar pasos aquí]*\n⏱️ *Tiempo estimado:* [tiempo]\n👓 *Producto:* {producto}\n🧾 *Factura:* {factura}\n\nSi hubiera *algún cambio*, le avisaré *antes* de que pase — sin sorpresas 🔔 Mi compromiso es mantenerlo/a informado/a en todo momento.\n\n¿Le *parece bien* esta solución? 🤝"
+            },
+            "cierre": {
+              "voz": "Quedamos entonces, {cliente}. ✅ [resumir acuerdo]. Le agradezco su confianza. Le contactaré en [fecha/hora] con la confirmación. Gracias por elegir Óptica Los Andes.",
+              "whatsapp": "Quedamos así, *{cliente}*. ✅\n\n📝 *Resumen de lo acordado:*\n[Resumir acuerdo aquí]\n\n📲 Le contactaré en *[fecha/hora]* con la *confirmación final* para que usted tenga todo claro y por escrito.\n\n*Gracias por su confianza* en Óptica Los Andes y por su paciencia durante este proceso 💙\n\nEstamos en *{tienda}* para servirle 🌟"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "situaciones_operativas",
+      "titulo": "Situaciones operativas",
+      "escenarios": [
+        {
+          "id": "reprogramacion",
+          "titulo": "Reprogramación de cita o entrega",
+          "descripcion": "Avise con anticipación, explique el motivo con honestidad y ofrezca alternativas de fecha.",
+          "requiere_fechas": true,
+          "fases": {
+            "saludo": {
+              "voz": "Buenos días/tardes, {cliente}. Le habla {asesor} de Óptica Los Andes, {tienda}. Le contacto con toda honestidad: necesitamos reprogramar su cita o entrega que tenía para el {fecha_prometida}. Lamento mucho el cambio; sé que usted contaba con esa fecha y lo comprendo.",
+              "whatsapp": "Buenos días/tardes, *{cliente}*. 👋\n\nLe saluda *{asesor}* de *{tienda}*, Óptica Los Andes.\n\nLe escribo con *total honestidad* porque valoramos su confianza 📅\n\nLamentamos informarle que necesitamos *reprogramar* su cita o entrega que tenía programada para el *{fecha_prometida}*.\n\nSabemos que usted *contaba con esa fecha* y comprendemos perfectamente la molestia que esto puede causar 😔 No tomamos este cambio a la ligera.\n\n🤝 Deseamos coordinar juntos la *mejor alternativa* para que usted reciba su *{producto}* lo antes posible."
+            },
+            "intermedio": {
+              "voz": "Le comento el motivo: {motivo}. Le puedo ofrecer el {nueva_fecha}, o si usted prefiere otro día, lo ajustamos sin problema. Lo importante es que reciba sus lentes sin más contratiempos. ¿Cuál fecha le conviene más?",
+              "whatsapp": "Le informamos con *transparencia*, *{cliente}*:\n\n📋 *Motivo del cambio:*\n{motivo}\n\n📅 *Nueva fecha propuesta:* {nueva_fecha}\n\nSi esta fecha *no le conviene*, con gusto ajustamos a otro día que le quede mejor — sin problema alguno.\n\n👓 Lo más importante para nosotros es que usted reciba su *{producto}* (factura *{factura}*) *sin más contratiempos* 🙏\n\n¿Cuál fecha prefiere usted? 🤝 Quedo atento/a a su respuesta."
+            },
+            "cierre": {
+              "voz": "Perfecto, {cliente}. Queda confirmado para el {nueva_fecha}. ✅ Le enviaré un recordatorio un día antes. Disculpe las molestias y gracias por su comprensión; de verdad la valoramos. Óptica Los Andes está con usted.",
+              "whatsapp": "Confirmado, *{cliente}*. ✅\n\n📅 *Nueva fecha confirmada:* {nueva_fecha}\n👓 *Producto:* {producto}\n📍 *Tienda:* {tienda}\n\nLe enviaremos un *recordatorio un día antes* para que usted tenga todo claro 🔔\n\n*Disculpas* por las molestias ocasionadas y *gracias de corazón* por su comprensión 💙 De verdad la valoramos.\n\nÓptica Los Andes está *con usted* en todo momento 🌟"
+            }
+          }
+        },
+        {
+          "id": "retraso_envio",
+          "titulo": "Lentes no enviados en fecha prometida",
+          "descripcion": "Admita el retraso sin excusas, explique la causa con honestidad y dé una nueva fecha firme.",
+          "requiere_fechas": true,
+          "fases": {
+            "saludo": {
+              "voz": "Buenos días/tardes, {cliente}. Le habla {asesor} de Óptica Los Andes, {tienda}. Le llamo porque sé que usted esperaba sus lentes para el {fecha_prometida} y aún no los ha recibido. Comprendo su molestia; en su lugar, yo también me sentiría igual. Le pido disculpas sinceras por no cumplir la fecha que le prometimos.",
+              "whatsapp": "Buenos días/tardes, *{cliente}*. 👋\n\nLe saluda *{asesor}* de Óptica Los Andes — *{tienda}*.\n\nLe contacto porque sabemos que usted esperaba su *{producto}* para el *{fecha_prometida}* y *aún no lo ha recibido* 😔\n\n*Comprendemos su molestia* — usted tiene toda la razón. En su lugar, nosotros también nos sentiríamos igual.\n\nLe pedimos *disculpas sinceras* por no haber cumplido la fecha que le prometimos. No queremos dar excusas vacías: queremos *solucionar* esto.\n\n🙏 Gracias por su paciencia mientras le explico los siguientes pasos."
+            },
+            "intermedio": {
+              "voz": "Le explico con honestidad: {motivo}. Ya estamos gestionando su pedido con prioridad. La nueva fecha estimada es el {nueva_fecha}. Le haré seguimiento personal y le avisaré apenas estén listos. ¿Tiene usted alguna preferencia de horario o de entrega?",
+              "whatsapp": "Le explicamos con *total transparencia*, *{cliente}*:\n\n📋 *Motivo del retraso:*\n{motivo}\n\n🚀 Su pedido está siendo gestionado con *máxima prioridad*:\n👓 *Producto:* {producto}\n🧾 *Factura:* {factura}\n\n📅 *Nueva fecha estimada de entrega:* {nueva_fecha}\n\nLe haremos *seguimiento personal* 📲 y le avisaremos por este medio *apenas estén listos*, sin que usted tenga que volver a llamar.\n\n¿Tiene alguna *preferencia de horario o entrega*? Con gusto la tomamos en cuenta 🤝"
+            },
+            "cierre": {
+              "voz": "Gracias, {cliente}, por su paciencia. 🙏 Confirmamos la entrega para el {nueva_fecha}. Le contactaré ese día para confirmar. Nuevamente mis disculpas, y gracias por seguir confiando en Óptica Los Andes. Que tenga un buen día.",
+              "whatsapp": "Gracias por su paciencia, *{cliente}*. 🙏\n\n✅ *Entrega confirmada para:* {nueva_fecha}\n👓 *Producto:* {producto}\n📍 *Tienda:* {tienda}\n\nLe *contactaremos ese día* para confirmar que todo esté en orden 📲 No necesita preocuparse: *nosotros le avisamos*.\n\n*Nuevamente nuestras disculpas* por el inconveniente 😔 Y *gracias* por seguir confiando en Óptica Los Andes — eso significa mucho para nosotros 💙\n\nQue tenga un buen día 🌟"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

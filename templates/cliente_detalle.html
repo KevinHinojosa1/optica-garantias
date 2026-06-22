@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}{{ cliente.nombre }}{% endblock %}
+
+{% block content %}
+<div class="grid lg:grid-cols-3 gap-6">
+  <!-- Ficha del cliente -->
+  <div class="lg:col-span-2 space-y-6">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <a href="/clientes" class="text-optica-600 hover:underline text-sm">← Volver a atención de clientes</a>
+      <button id="btn-eliminar" class="text-sm bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 font-semibold px-4 py-2 rounded-xl transition">🗑️ Eliminar cliente</button>
+    </div>
+
+    {% if es_duplicado %}
+    <div class="bg-amber-50 border-2 border-amber-300 rounded-xl px-4 py-3 text-amber-800 text-sm font-semibold">
+      ⚠️ REGISTRO DUPLICADO — Este cliente tiene cédula o factura repetida en la base de datos. Se recomienda eliminar el registro sobrante.
+    </div>
+    {% endif %}
+
+    <div class="bg-white rounded-2xl shadow-sm border p-6 {% if es_duplicado %}border-amber-300{% endif %}">
+      <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-800">{{ cliente.nombre }}</h2>
+          <p class="text-slate-500">Cédula: {{ cliente.cedula }}</p>
+        </div>
+        <div class="flex flex-col gap-2 items-end">
+          {% if es_duplicado %}
+          <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">⚠️ DUPLICADO</span>
+          {% endif %}
+          <span class="px-4 py-1.5 rounded-full text-sm font-bold {% if cliente.dentro_garantia %}bg-green-100 text-green-800 border border-green-300{% else %}bg-red-100 text-red-800 border border-red-300{% endif %}">
+            {{ cliente.estado_garantia }}
+          </span>
+        </div>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-4 text-sm">
+        <div class="bg-slate-50 rounded-xl p-4"><span class="text-slate-400 block">Teléfono cliente</span><strong>{{ cliente.telefono }}</strong></div>
+        <div class="bg-slate-50 rounded-xl p-4"><span class="text-slate-400 block">Tienda de compra</span><strong>{{ cliente.tienda }}</strong></div>
+        <div class="bg-slate-50 rounded-xl p-4"><span class="text-slate-400 block">Producto</span><strong>{{ cliente.producto }}</strong></div>
+        <div class="bg-slate-50 rounded-xl p-4"><span class="text-slate-400 block">Tipo de producto</span><strong>{{ cliente.tipo_producto }}</strong></div>
+        <div class="bg-slate-50 rounded-xl p-4"><span class="text-slate-400 block">Nº Factura</span><strong>{{ cliente.numero_factura }}</strong></div>
+        <div class="bg-slate-50 rounded-xl p-4"><span class="text-slate-400 block">Fecha de factura</span><strong>{{ cliente.fecha_factura }}</strong></div>
+        <div class="bg-slate-50 rounded-xl p-4"><span class="text-slate-400 block">Fecha de entrega</span><strong>{{ cliente.fecha_entrega or '—' }}</strong></div>
+        <div class="bg-slate-50 rounded-xl p-4"><span class="text-slate-400 block">Días desde factura</span><strong class="text-lg">{{ cliente.dias_desde_factura }} días</strong></div>
+        <div class="bg-slate-50 rounded-xl p-4"><span class="text-slate-400 block">OLA Plus</span><strong>{% if cliente.tiene_ola_plus %}✅ Activo{% else %}No{% endif %}</strong></div>
+        <div class="bg-slate-50 rounded-xl p-4"><span class="text-slate-400 block">Código descuento</span><strong>{% if cliente.codigo_descuento %}{{ cliente.codigo_descuento }}%{% else %}—{% endif %}</strong></div>
+        <div class="bg-slate-50 rounded-xl p-4"><span class="text-slate-400 block">Descuento aplicado</span><strong>{% if cliente.porcentaje_descuento %}{{ cliente.porcentaje_descuento }}%{% else %}—{% endif %}</strong></div>
+      </div>
+
+    </div>
+
+    <!-- Descuento -->
+    <div class="bg-white rounded-2xl shadow-sm border p-6">
+      <h3 class="text-lg font-bold text-slate-800 mb-1">🏷️ Código y descuento aplicado</h3>
+      <p class="text-sm text-slate-500 mb-4">Código autorizado (10%–50%) y porcentaje real aplicado en la venta.</p>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-600 mb-1">Código de descuento (máximo)</label>
+          <select id="codigo-descuento" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+            <option value="">Sin descuento</option>
+            {% for pct in [10,15,20,25,30,35,40,45,50] %}
+            <option value="{{ pct }}" {% if cliente.codigo_descuento == pct %}selected{% endif %}>{{ pct }}%</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-600 mb-1">Porcentaje aplicado real</label>
+          <input type="number" id="porcentaje-descuento" min="10" max="50" step="5"
+            value="{{ cliente.porcentaje_descuento or '' }}" placeholder="Ej: 15"
+            class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+        </div>
+      </div>
+      <p id="descuento-error" class="hidden mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"></p>
+      <p id="descuento-ok" class="hidden mt-3 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2"></p>
+      <button id="btn-guardar-descuento" class="mt-4 bg-optica-600 hover:bg-optica-700 text-white font-semibold px-5 py-2.5 rounded-xl transition">
+        Guardar descuento
+      </button>
+    </div>
+
+    <!-- Grupo de apoyo de la tienda -->
+    <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-5">
+      <h3 class="font-bold text-emerald-900 mb-2">🏪 Grupo de Apoyo — {{ tienda_info.nombre }}</h3>
+      <p class="text-sm text-emerald-800 mb-1"><strong>Ciudad:</strong> {{ tienda_info.ciudad }}</p>
+      <p class="text-sm text-emerald-700 mb-3"><strong>Dirección:</strong> {{ tienda_info.direccion }}</p>
+      <p class="text-xs text-emerald-600 bg-white rounded-lg px-3 py-2 border border-emerald-100">
+        📲 Los mensajes se envían al grupo: <strong id="grupo-destino">{{ tienda_info.whatsapp_grupo_nombre }}</strong>
+        <br><span class="text-slate-500">(No al cliente — reporte interno para el equipo de la tienda)</span>
+      </p>
+    </div>
+
+    <!-- Módulo 3: Análisis de imagen -->
+    <div class="bg-white rounded-2xl shadow-sm border p-6">
+      <h3 class="text-xl font-bold text-slate-800 mb-4">📸 Módulo 3 — Analizar daño del producto</h3>
+      <p class="text-slate-500 text-sm mb-4">Suba la foto que el cliente envió por WhatsApp.</p>
+
+      <form id="form-analisis" class="space-y-4">
+        <input type="hidden" id="cliente-id" value="{{ cliente.id }}">
+        <div>
+          <label class="block text-sm font-medium text-slate-600 mb-1">Nombre del asesor</label>
+          <input type="text" id="asesor" placeholder="Ej: María González"
+            class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+        </div>
+        <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center cursor-pointer hover:border-optica-500 transition" id="drop-imagen">
+          <input type="file" id="imagen" accept="image/*" class="hidden">
+          <p class="text-3xl mb-2">📷</p>
+          <p class="text-slate-600">Seleccionar imagen del daño</p>
+          <img id="preview" class="hidden max-h-48 mx-auto mt-4 rounded-lg shadow" alt="Preview">
+        </div>
+        <button type="submit" id="btn-analizar"
+          class="w-full bg-optica-600 hover:bg-optica-700 text-white font-semibold py-3 rounded-xl transition">
+          🔍 Analizar con IA
+        </button>
+      </form>
+
+      <div id="resultado-analisis" class="hidden mt-6"></div>
+    </div>
+
+    <!-- Módulo 4: Reporte al grupo de apoyo -->
+    <div id="panel-reporte" class="bg-white rounded-2xl shadow-sm border p-6 transition-all">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
+        <h3 class="text-xl font-bold text-slate-800">💬 Módulo 4 — Reporte al Grupo de Apoyo</h3>
+        <span id="veredicto-reporte" class="hidden text-sm font-bold px-3 py-1.5 rounded-full border"></span>
+      </div>
+      <p class="text-sm text-slate-500 mb-4">
+        Mensaje interno para el equipo de <strong>{{ cliente.tienda }}</strong>.
+        Se actualiza automáticamente al analizar con IA. Puede editarlo antes de enviar.
+      </p>
+      <textarea id="mensaje-whatsapp" rows="12"
+        class="w-full border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-optica-500 outline-none font-mono">{{ mensaje_inicial }}</textarea>
+      <div class="flex flex-wrap gap-3 mt-4">
+        <a id="btn-descargar-pdf" href="#" target="_blank" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center gap-2">
+          📄 Descargar PDF
+        </a>
+        <button id="btn-regenerar" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold px-5 py-2.5 rounded-xl transition">
+          🔄 Regenerar reporte
+        </button>
+        <a id="btn-enviar-wa" href="{{ wa_link }}" target="_blank" rel="noopener"
+          class="bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center gap-2">
+          📤 Enviar reporte
+        </a>
+        <a id="btn-enviar-pdf-wa" href="#" target="_blank" rel="noopener"
+          class="hidden bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center gap-2">
+          📤 Enviar reporte + PDF
+        </a>
+      </div>
+      <p class="text-xs text-slate-400 mt-2">El botón <strong>reporte + PDF</strong> incluye en el mensaje el enlace de descarga del informe con foto y veredicto.</p>
+    </div>
+  </div>
+
+  <!-- Panel lateral historial reciente -->
+  <div class="space-y-6">
+    <div class="bg-white rounded-2xl shadow-sm border p-5">
+      <h3 class="font-bold text-slate-800 mb-3">📋 Consultas recientes</h3>
+      <div id="historial-lateral" class="space-y-3 text-sm max-h-96 overflow-y-auto">
+        <p class="text-slate-400">Cargando...</p>
+      </div>
+      <a href="/historial" class="block text-center text-optica-600 hover:underline text-sm mt-4">Ver historial completo →</a>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border p-5">
+      <h3 class="font-bold text-slate-800 mb-3">📜 Políticas rápidas</h3>
+      <ul class="text-xs text-slate-600 space-y-2">
+        <li>• Garantía desde <strong>fecha de facturación</strong></li>
+        <li>• Solo Nota de Crédito (1 año), sin efectivo</li>
+        <li>• Líquidos y accesorios sin garantía</li>
+        <li>• OLA Plus: 360 días + robo/accidental</li>
+        <li>• Gafas cambio: 3 días hábiles</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.CLIENTE_DATA = {{ cliente_json | safe }};
+  window.TIENDA_INFO = {{ tienda_info_json | safe }};
+</script>
+<script src="/static/js/analisis.js"></script>
+{% endblock %}

@@ -1,0 +1,19 @@
+CONFIGURACIÓN GOOGLE SHEETS — Verificación IVR
+==============================================
+
+1. Cree un proyecto en Google Cloud Console
+2. Active la API de Google Sheets y Google Drive
+3. Cree una cuenta de servicio y descargue el JSON de credenciales
+4. Guarde el archivo como: data/google/credentials.json
+5. Cree una hoja de cálculo en Google Sheets
+6. Comparta la hoja con el email de la cuenta de servicio (rol: Editor)
+7. Copie el ID de la hoja (parte de la URL) al archivo .env:
+
+   GOOGLE_CREDENTIALS_PATH=data/google/credentials.json
+   GOOGLE_SPREADSHEET_ID=su_id_de_hoja_aqui
+   GOOGLE_SHEET_IVR_NAME=IVR Verificaciones
+
+Cada verificación IVR se guarda automáticamente con:
+  Fecha | Hora | Semana | Tienda | Ciudad | Estado | Comentario | Verificador
+
+Si no configura Google Sheets, los registros se guardan igual en la base local.

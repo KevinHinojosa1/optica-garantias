@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Óptica Los Andes{% endblock %} — Garantías</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            optica: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .badge-verde { @apply bg-green-100 text-green-800 border border-green-300; }
+    .badge-rojo { @apply bg-red-100 text-red-800 border border-red-300; }
+    .badge-amarillo { @apply bg-yellow-100 text-yellow-800 border border-yellow-300; }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body class="bg-slate-50 min-h-screen">
+  <nav class="bg-optica-800 text-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">👓</span>
+        <div>
+          <h1 class="font-bold text-lg leading-tight">Óptica Los Andes</h1>
+          <p class="text-xs text-blue-200">Gestión de Garantías</p>
+        </div>
+      </div>
+      <div class="flex gap-1 sm:gap-2 text-sm">
+        <a href="/importar" class="px-3 py-2 rounded-lg transition {% if active == 'importar' %}bg-white/20 font-semibold{% else %}hover:bg-white/10{% endif %}">📥 Importar</a>
+        <a href="/clientes" class="px-3 py-2 rounded-lg transition {% if active == 'clientes' %}bg-white/20 font-semibold{% else %}hover:bg-white/10{% endif %}">👥 Atención</a>
+        <a href="/historial" class="px-3 py-2 rounded-lg transition {% if active == 'historial' %}bg-white/20 font-semibold{% else %}hover:bg-white/10{% endif %}">📋 Historial</a>
+        <a href="/ivr" class="px-3 py-2 rounded-lg transition {% if active == 'ivr' %}bg-white/20 font-semibold{% else %}hover:bg-white/10{% endif %}">📞 IVR</a>
+        <a href="/scripts" class="px-3 py-2 rounded-lg transition {% if active == 'scripts' %}bg-white/20 font-semibold{% else %}hover:bg-white/10{% endif %}">💬 Scripts</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-4 py-6">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="text-center text-xs text-slate-400 py-4 border-t mt-8">
+    Óptica Los Andes Ecuador — Sistema de Garantías v1.1
+  </footer>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

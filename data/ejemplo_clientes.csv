@@ -1,0 +1,5 @@
+nombre,cedula,telefono,tienda,producto,tipo_producto,fecha_factura,numero_factura,fecha_entrega,tiene_ola_plus
+María González Pérez,0912345678,0991234567,Quicentro Shopping,Lente Progresivo Blue AR,lente oftálmico,2025-03-15,FAC-2025-001234,2025-03-22,true
+Carlos Mendoza Ruiz,1723456789,0987654321,Mall del Sol,Armazón Titanio Flex,armazón,2024-11-20,FAC-2024-009876,2024-11-25,false
+Ana Lucía Vásquez,1309876543,0976543210,Condado Shopping,Gafa Ray-Ban Aviator,gafa,2025-06-10,FAC-2025-005432,2025-06-10,false
+Roberto Sánchez,0801122334,0965432109,San Marino Shopping,Lente de Contacto Mensual,lente de contacto,2025-06-18,FAC-2025-006789,2025-06-18,false

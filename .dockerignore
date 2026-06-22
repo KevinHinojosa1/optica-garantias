@@ -1,0 +1,12 @@
+.env
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.git/
+.gitignore
+.DS_Store
+*.db
+.pytest_cache/
+.mypy_cache/
+optica_garantias.db

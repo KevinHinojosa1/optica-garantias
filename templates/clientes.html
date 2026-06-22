@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Atención de Clientes{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <!-- Paso 1: Selección de local -->
+  <div class="bg-white rounded-2xl shadow-sm border p-6">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="flex items-center justify-center w-8 h-8 rounded-full bg-optica-600 text-white font-bold text-sm">1</span>
+      <div>
+        <h2 class="text-xl font-bold text-slate-800">Seleccionar Ciudad y Local</h2>
+        <p class="text-sm text-slate-500">No necesita importar archivo — puede registrar pacientes manualmente</p>
+      </div>
+    </div>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-600 mb-1">Ciudad <span class="text-red-500">*</span></label>
+        <select id="filtro-ciudad" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none" required>
+          <option value="">— Seleccione ciudad —</option>
+          {% for c in ciudades %}
+          <option value="{{ c }}">{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-600 mb-1">Local / Tienda <span class="text-red-500">*</span></label>
+        <select id="filtro-tienda" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none bg-slate-50" required disabled>
+          <option value="">— Primero seleccione ciudad —</option>
+        </select>
+      </div>
+    </div>
+    <p id="tienda-seleccionada" class="hidden mt-3 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-2"></p>
+  </div>
+
+  <!-- Paso 2: Tabs -->
+  <div id="panel-atencion" class="hidden space-y-6">
+    <div class="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-800">
+      💡 <strong>Sin importación:</strong> use la pestaña <strong>Registrar Paciente</strong> para ingresar datos manualmente y continuar con el análisis de garantía.
+    </div>
+
+    <div class="flex gap-2 border-b border-slate-200">
+      <button id="tab-registrar" class="tab-btn px-5 py-3 font-semibold text-optica-600 border-b-2 border-optica-600">➕ Registrar Paciente</button>
+      <button id="tab-buscar" class="tab-btn px-5 py-3 font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-600">🔍 Buscar en Base</button>
+    </div>
+
+    <!-- Tab Registrar Manual (PRIMERO / por defecto) -->
+    <div id="panel-registrar">
+      <div class="bg-white rounded-2xl shadow-sm border p-6 max-w-2xl">
+        <h3 class="text-lg font-bold text-slate-800 mb-1">Registro manual de paciente</h3>
+        <p class="text-sm text-slate-500 mb-6">Ingrese los datos del paciente directamente. No requiere importar CSV ni Excel.</p>
+
+        <form id="form-registrar" class="space-y-4">
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-medium text-slate-600 mb-1">Local de atención</label>
+              <input type="text" id="reg-tienda" readonly placeholder="Seleccione ciudad y local arriba" class="w-full border rounded-xl px-4 py-2.5 bg-slate-50 text-slate-700">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">Nombre completo *</label>
+              <input type="text" id="reg-nombre" required class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">Cédula *</label>
+              <input type="text" id="reg-cedula" required class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">Teléfono cliente *</label>
+              <input type="text" id="reg-telefono" required placeholder="0991234567" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">Nº Factura *</label>
+              <input type="text" id="reg-factura" required class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">Fecha factura *</label>
+              <input type="date" id="reg-fecha-factura" required class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">Fecha entrega</label>
+              <input type="date" id="reg-fecha-entrega" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">Tipo producto *</label>
+              <select id="reg-tipo" required class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+                <option value="">— Seleccionar —</option>
+                <option value="lente oftálmico">Lente oftálmico</option>
+                <option value="armazón">Armazón</option>
+                <option value="gafa">Gafa</option>
+                <option value="lente de contacto">Lente de contacto</option>
+              </select>
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-medium text-slate-600 mb-1">Producto *</label>
+              <input type="text" id="reg-producto" required class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">Código descuento (máx.)</label>
+              <select id="reg-codigo-descuento" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+                <option value="">Sin descuento</option>
+                <option value="10">10%</option><option value="15">15%</option><option value="20">20%</option>
+                <option value="25">25%</option><option value="30">30%</option><option value="35">35%</option>
+                <option value="40">40%</option><option value="45">45%</option><option value="50">50%</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">% aplicado real</label>
+              <input type="number" id="reg-pct-descuento" min="10" max="50" step="5" placeholder="Opcional"
+                class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+            </div>
+            <div class="flex items-center gap-2 sm:col-span-2">
+              <input type="checkbox" id="reg-ola-plus" class="w-4 h-4 rounded">
+              <label for="reg-ola-plus" class="text-sm font-medium text-slate-600">Tiene OLA Plus</label>
+            </div>
+          </div>
+          <div id="reg-error" class="hidden bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm"></div>
+          <button type="submit" id="btn-registrar" disabled class="w-full bg-optica-600 hover:bg-optica-700 disabled:bg-slate-300 text-white font-semibold py-3 rounded-xl transition">
+            Registrar paciente y continuar atención →
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Tab Buscar -->
+    <div id="panel-buscar" class="hidden space-y-4">
+      <div class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-600" id="busqueda-info">
+        Seleccione ciudad y local para ver pacientes de esa tienda
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-3">
+        <div class="relative flex-1">
+          <input type="text" id="buscador" placeholder="Filtrar por nombre, cédula, factura o teléfono en este local..."
+            class="w-full pl-10 pr-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-optica-500 outline-none">
+          <span class="absolute left-3 top-2.5 text-slate-400">🔍</span>
+        </div>
+        <button id="btn-buscar" class="bg-optica-600 hover:bg-optica-700 text-white font-semibold px-6 py-2.5 rounded-xl transition">Buscar</button>
+      </div>
+      <p class="text-xs text-slate-400">Solo se muestran pacientes del local seleccionado arriba.</p>
+
+      <div id="loading" class="text-center py-8 text-slate-400 hidden">
+        <p class="animate-pulse">Cargando clientes...</p>
+      </div>
+      <div id="lista-clientes" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"></div>
+      <div id="sin-resultados" class="hidden text-center py-12 bg-white rounded-2xl border">
+        <p class="text-4xl mb-2">🔍</p>
+        <p class="text-slate-600 font-medium">No se encontró el paciente en la base de datos</p>
+        <p class="text-slate-400 text-sm mt-2">Regístrelo manualmente sin necesidad de importar</p>
+        <button onclick="document.getElementById('tab-registrar').click()" class="mt-4 bg-optica-600 text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-optica-700 transition">➕ Registrar Paciente Manual</button>
+      </div>
+      <div id="paginacion" class="flex justify-center items-center gap-2"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.TIENDAS_DATA = {{ tiendas_json | safe }};
+</script>
+<script src="/static/js/clientes.js"></script>
+{% endblock %}

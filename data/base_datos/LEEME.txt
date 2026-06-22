@@ -1,0 +1,26 @@
+CARPETA DE BASE DE DATOS — Óptica Los Andes
+===========================================
+
+Archivo principal: pacientes.xlsx
+
+CÓMO ACTUALIZAR LA BASE
+-----------------------
+1. Edite o reemplace el archivo pacientes.xlsx en esta carpeta.
+2. Vaya a Importar en la aplicación web.
+3. Pulse "Actualizar desde carpeta" para recargar todos los pacientes.
+
+Columnas obligatorias del Excel:
+  nombre, cedula, telefono, tienda, producto, tipo_producto,
+  fecha_factura, numero_factura, fecha_entrega, tiene_ola_plus
+
+El campo "tienda" debe coincidir exactamente con un local del catálogo
+(ver lista en la pantalla de Importar).
+
+NOTAS
+-----
+- "Actualizar desde carpeta" borra los pacientes actuales e importa el Excel nuevo.
+- "Agregar desde carpeta" solo añade registros nuevos (no borra existentes).
+- Los duplicados por número de factura no se importan.
+
+Para regenerar el archivo de prueba desde cero:
+  python scripts/generar_base_datos.py
