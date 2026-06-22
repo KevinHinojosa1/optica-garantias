@@ -1,3 +1,4 @@
+import subprocess
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -5,7 +6,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from config import settings
-from database import init_db
+from database import SessionLocal, init_db
 from routers import (
     analisis_router,
     clientes_router,
@@ -18,9 +19,35 @@ from routers import (
 )
 
 
+def _bootstrap_datos():
+    """Carga inicial de BD y Excel de prueba (no bloquea si falla)."""
+    try:
+        init_db()
+        for sub in ("data/consultas", "data/base_datos", "data/google"):
+            (settings.base_dir / sub).mkdir(parents=True, exist_ok=True)
+
+        from models.cliente import Cliente
+        from services.import_service import ImportService
+
+        ruta = ImportService.ruta_archivo_base()
+        if not ruta.exists():
+            script = settings.base_dir / "scripts" / "generar_base_datos.py"
+            if script.exists():
+                subprocess.run(["python", str(script)], check=False)
+
+        db = SessionLocal()
+        try:
+            if db.query(Cliente).count() == 0 and ruta.exists():
+                ImportService.importar_desde_carpeta(db, reemplazar=True)
+        finally:
+            db.close()
+    except Exception as exc:
+        print(f"Bootstrap (no crítico): {exc}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
+    _bootstrap_datos()
     yield
 
 

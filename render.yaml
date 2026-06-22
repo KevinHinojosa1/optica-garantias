@@ -1,12 +1,15 @@
-# Despliegue gratuito en Render.com
-# Conectar repo de GitHub → New → Blueprint → seleccionar este archivo
+# Blueprint Render — runtime Python (más estable que Docker en plan free)
 services:
   - type: web
     name: optica-garantias
-    runtime: docker
+    runtime: python
     plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.0"
       - key: DATABASE_URL
         value: sqlite:///./data/optica_garantias.db
       - key: DEBUG
