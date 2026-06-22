@@ -1,19 +1,46 @@
 CONFIGURACIÓN GOOGLE SHEETS — Verificación IVR
 ==============================================
 
-1. Cree un proyecto en Google Cloud Console
+PASO 1 — Google Cloud
+---------------------
+1. Cree un proyecto en https://console.cloud.google.com
 2. Active la API de Google Sheets y Google Drive
-3. Cree una cuenta de servicio y descargue el JSON de credenciales
-4. Guarde el archivo como: data/google/credentials.json
-5. Cree una hoja de cálculo en Google Sheets
-6. Comparta la hoja con el email de la cuenta de servicio (rol: Editor)
-7. Copie el ID de la hoja (parte de la URL) al archivo .env:
+3. Cree una cuenta de servicio (IAM → Cuentas de servicio → Crear)
+4. Descargue el archivo JSON de credenciales
 
+PASO 2 — Hoja de cálculo
+------------------------
+1. Cree una hoja en Google Sheets
+2. Comparta la hoja con el email de la cuenta de servicio (rol: Editor)
+   El email aparece en el JSON: "client_email": "xxx@xxx.iam.gserviceaccount.com"
+3. Copie el ID de la hoja desde la URL:
+   https://docs.google.com/spreadsheets/d/ESTE_ES_EL_ID/edit
+
+PASO 3A — Desarrollo local (.env)
+---------------------------------
    GOOGLE_CREDENTIALS_PATH=data/google/credentials.json
    GOOGLE_SPREADSHEET_ID=su_id_de_hoja_aqui
    GOOGLE_SHEET_IVR_NAME=IVR Verificaciones
 
-Cada verificación IVR se guarda automáticamente con:
+   Guarde el JSON descargado como: data/google/credentials.json
+
+PASO 3B — Producción en Render (variables de entorno)
+-----------------------------------------------------
+En Render → su servicio → Environment:
+
+   GOOGLE_SPREADSHEET_ID = (el ID de la hoja)
+   GOOGLE_SHEET_IVR_NAME = IVR Verificaciones
+   GOOGLE_CREDENTIALS_JSON = (pegue el contenido completo del JSON en UNA sola línea)
+
+Tip: abra credentials.json en un editor, seleccione todo y péguelo minificado
+(sin saltos de línea). Render no usa archivos locales para credenciales.
+
+Después de guardar, Render redespliega automáticamente.
+En /ivr debe aparecer el badge verde: "Conectado a Google Sheets".
+
+DATOS QUE SE REGISTRAN
+----------------------
+Cada verificación IVR (✓ / ✗) agrega una fila:
   Fecha | Hora | Semana | Tienda | Ciudad | Estado | Comentario | Verificador
 
 Si no configura Google Sheets, los registros se guardan igual en la base local.

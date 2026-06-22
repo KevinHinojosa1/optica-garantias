@@ -74,6 +74,11 @@ DATABASE_URL=postgresql+psycopg://usuario:password@host/neondb?sslmode=require
 | `DATABASE_URL` | No | SQLite por defecto; Neon/Postgres para persistencia |
 | `DEBUG` | No | `false` en producción |
 | `DEFAULT_ASESOR` | No | Nombre por defecto en reportes |
+| `GOOGLE_SPREADSHEET_ID` | No | ID de la hoja para verificaciones IVR |
+| `GOOGLE_CREDENTIALS_JSON` | No | JSON de cuenta de servicio (producción) |
+| `GOOGLE_SHEET_IVR_NAME` | No | Nombre de la pestaña (default: IVR Verificaciones) |
+
+Ver instrucciones detalladas en `data/google/CONFIGURACION_GOOGLE_SHEETS.txt`.
 
 ---
 

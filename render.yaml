@@ -20,3 +20,9 @@ services:
         sync: false
       - key: DEFAULT_ASESOR
         value: Asesor Virtual
+      - key: GOOGLE_SPREADSHEET_ID
+        sync: false
+      - key: GOOGLE_SHEET_IVR_NAME
+        value: IVR Verificaciones
+      - key: GOOGLE_CREDENTIALS_JSON
+        sync: false

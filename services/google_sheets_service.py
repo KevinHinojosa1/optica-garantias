@@ -10,7 +10,37 @@ class GoogleSheetsService:
 
     @classmethod
     def configurado(cls) -> bool:
-        return bool(settings.google_spreadsheet_id and settings.google_credentials_path)
+        if not settings.google_spreadsheet_id:
+            return False
+        if settings.google_credentials_json.strip():
+            try:
+                json.loads(settings.google_credentials_json)
+                return True
+            except json.JSONDecodeError:
+                return False
+        if settings.google_credentials_path:
+            return Path(settings.google_credentials_path).exists()
+        return False
+
+    @classmethod
+    def _cargar_credenciales(cls):
+        from google.oauth2.service_account import Credentials
+
+        scopes = [
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive",
+        ]
+
+        json_raw = settings.google_credentials_json.strip()
+        if json_raw:
+            info = json.loads(json_raw)
+            return Credentials.from_service_account_info(info, scopes=scopes)
+
+        cred_path = Path(settings.google_credentials_path)
+        if cred_path.exists():
+            return Credentials.from_service_account_file(str(cred_path), scopes=scopes)
+
+        return None
 
     @classmethod
     def _obtener_cliente(cls):
@@ -19,19 +49,12 @@ class GoogleSheetsService:
         if not cls.configurado():
             return None
 
-        cred_path = Path(settings.google_credentials_path)
-        if not cred_path.exists():
-            return None
-
         try:
             import gspread
-            from google.oauth2.service_account import Credentials
 
-            scopes = [
-                "https://www.googleapis.com/auth/spreadsheets",
-                "https://www.googleapis.com/auth/drive",
-            ]
-            creds = Credentials.from_service_account_file(str(cred_path), scopes=scopes)
+            creds = cls._cargar_credenciales()
+            if not creds:
+                return None
             cls._client = gspread.authorize(creds)
             return cls._client
         except Exception:

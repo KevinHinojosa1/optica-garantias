@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     consultas_imagenes_dir: str = "data/consultas"
     base_dir: Path = BASE_DIR
     google_credentials_path: str = ""
+    google_credentials_json: str = ""
     google_spreadsheet_id: str = ""
     google_sheet_ivr_name: str = "IVR Verificaciones"
 
