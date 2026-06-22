@@ -49,14 +49,16 @@ async function cargarHistorial() {
           ${h.porcentaje_descuento ? `<br>Aplic. ${h.porcentaje_descuento}%` : ''}
         </td>
         <td class="px-4 py-3 text-right whitespace-nowrap">
-          <a href="/api/historial/${h.id}/pdf" target="_blank"
-            class="text-sm bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-semibold px-3 py-1.5 rounded-lg transition inline-block mr-1">
-            📄 PDF
-          </a>
-          <button data-id="${h.id}" data-nombre="${escapeHtml(h.cliente_nombre)}"
-            class="btn-eliminar-consulta text-sm bg-red-50 text-red-600 hover:bg-red-100 font-semibold px-3 py-1.5 rounded-lg transition">
-            🗑️
-          </button>
+          <div class="inline-flex flex-col sm:flex-row gap-1 sm:gap-0">
+            <a href="/api/historial/${h.id}/pdf" target="_blank"
+              class="text-xs sm:text-sm bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-semibold px-2.5 sm:px-3 py-1.5 rounded-lg transition inline-block sm:mr-1">
+              📄 PDF
+            </a>
+            <button data-id="${h.id}" data-nombre="${escapeHtml(h.cliente_nombre)}"
+              class="btn-eliminar-consulta text-xs sm:text-sm bg-red-50 text-red-600 hover:bg-red-100 font-semibold px-2.5 sm:px-3 py-1.5 rounded-lg transition">
+              🗑️
+            </button>
+          </div>
         </td>
       </tr>
     `).join('');

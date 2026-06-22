@@ -5,22 +5,22 @@
 <div class="space-y-6">
   <div class="flex flex-wrap items-start justify-between gap-4">
     <div>
-      <h2 class="text-2xl font-bold text-slate-800">📞 Verificación IVR — Todas las Tiendas</h2>
+      <h2 class="text-xl sm:text-2xl font-bold text-slate-800">📞 Verificación IVR — Todas las Tiendas</h2>
       <p class="text-slate-500">Marque si el IVR funciona en cada local. Se guarda fecha, hora y comentario.</p>
       <p class="text-sm text-slate-400 mt-1">Semana actual: <strong>{{ semana_actual }}</strong></p>
     </div>
-    <div class="flex flex-wrap items-center gap-2 justify-end">
+    <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto sm:justify-end">
       <a href="/api/ivr/exportar?semana={{ semana_actual }}" id="btn-exportar-ivr"
-        class="bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center gap-2">
+        class="w-full sm:w-auto text-center bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center justify-center gap-2">
         📥 Exportar Excel
       </a>
       {% if google_sheets_activo %}
-      <span class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-xl">
+      <span class="inline-flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 sm:px-4 py-2 rounded-xl text-center">
         ✅ Conectado a Google Sheets
       </span>
       {% else %}
-      <span class="inline-flex items-center gap-2 text-sm font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-4 py-2 rounded-xl">
-        ⚠️ Google Sheets no configurado — guarda solo en base local
+      <span class="inline-flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 sm:px-4 py-2 rounded-xl text-center">
+        ⚠️ Solo base local
       </span>
       {% endif %}
     </div>
@@ -35,14 +35,14 @@
     <p class="text-xs text-slate-400 pb-2">Se usará en cada marca ✓ / ✗ y en Google Sheets</p>
   </div>
 
-  <div class="flex flex-wrap gap-2">
+  <div class="flex gap-2 overflow-x-auto overflow-touch pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
     {% for c in ciudades %}
-    <button class="filtro-ciudad px-4 py-2 rounded-xl text-sm font-semibold border transition bg-white hover:bg-slate-50" data-ciudad="{{ c }}">{{ c }}</button>
+    <button class="filtro-ciudad shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-white hover:bg-slate-50 whitespace-nowrap" data-ciudad="{{ c }}">{{ c }}</button>
     {% endfor %}
-    <button class="filtro-ciudad px-4 py-2 rounded-xl text-sm font-semibold border transition bg-optica-600 text-white" data-ciudad="">Todas</button>
+    <button class="filtro-ciudad shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-optica-600 text-white whitespace-nowrap" data-ciudad="">Todas</button>
   </div>
 
-  <div id="ivr-grid" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"></div>
+  <div id="ivr-grid" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"></div>
 
   <div class="bg-white rounded-2xl shadow-sm border p-6">
     <h3 class="font-bold text-slate-800 mb-4">📋 Registros recientes IVR</h3>
@@ -50,8 +50,8 @@
   </div>
 </div>
 
-<div id="modal-editar-ivr" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-  <div class="bg-white rounded-2xl shadow-xl border w-full max-w-md p-6 space-y-4">
+<div id="modal-editar-ivr" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40">
+  <div class="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl border w-full max-w-md max-h-[90vh] overflow-y-auto p-5 sm:p-6 space-y-4">
     <div class="flex items-start justify-between gap-3">
       <div>
         <h3 class="font-bold text-slate-800 text-lg">✏️ Modificar registro IVR</h3>

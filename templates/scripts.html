@@ -5,11 +5,11 @@
 <div class="space-y-6">
   <div class="flex flex-wrap items-start justify-between gap-4">
     <div>
-      <h2 class="text-2xl font-bold text-slate-800">💬 Scripts Profesionales de Atención</h2>
+      <h2 class="text-xl sm:text-2xl font-bold text-slate-800">💬 Scripts Profesionales de Atención</h2>
       <p class="text-slate-500">Guiones de saludo, intermedio y cierre para voz y WhatsApp — clientes difíciles y situaciones operativas.</p>
     </div>
     <a href="/api/scripts/exportar" id="btn-exportar-scripts"
-      class="bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center gap-2">
+      class="w-full sm:w-auto text-center bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center justify-center gap-2">
       📥 Exportar Excel
     </a>
   </div>
@@ -105,9 +105,9 @@
     </div>
   </div>
 
-  <div class="flex flex-wrap gap-2" id="filtro-grupos"></div>
+  <div class="flex gap-2 overflow-x-auto overflow-touch pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible sm:pb-0" id="filtro-grupos"></div>
 
-  <div id="scripts-grid" class="grid gap-5 lg:grid-cols-2">
+  <div id="scripts-grid" class="grid gap-4 sm:gap-5 md:grid-cols-2">
     <p class="text-slate-400 col-span-full text-center py-8">Cargando scripts...</p>
   </div>
 

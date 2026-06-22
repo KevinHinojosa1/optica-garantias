@@ -271,13 +271,13 @@ function renderGrid() {
 function renderFiltros() {
   const btns = datos.grupos.map(g => `
     <button type="button" data-grupo="${g.id}"
-      class="filtro-grupo px-4 py-2 rounded-xl text-sm font-semibold border transition bg-white hover:bg-slate-50">
+      class="filtro-grupo shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-white hover:bg-slate-50 whitespace-nowrap">
       ${escapeHtml(g.titulo)}
     </button>
   `).join('');
   filtroGrupos.innerHTML = btns + `
     <button type="button" data-grupo=""
-      class="filtro-grupo px-4 py-2 rounded-xl text-sm font-semibold border transition bg-optica-600 text-white">
+      class="filtro-grupo shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-optica-600 text-white whitespace-nowrap">
       Todos
     </button>
   `;
@@ -285,9 +285,9 @@ function renderFiltros() {
   filtroGrupos.querySelectorAll('.filtro-grupo').forEach(btn => {
     btn.addEventListener('click', () => {
       filtroGrupos.querySelectorAll('.filtro-grupo').forEach(b => {
-        b.className = 'filtro-grupo px-4 py-2 rounded-xl text-sm font-semibold border transition bg-white hover:bg-slate-50';
+        b.className = 'filtro-grupo shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-white hover:bg-slate-50 whitespace-nowrap';
       });
-      btn.className = 'filtro-grupo px-4 py-2 rounded-xl text-sm font-semibold border transition bg-optica-600 text-white';
+      btn.className = 'filtro-grupo shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-optica-600 text-white whitespace-nowrap';
       grupoFiltro = btn.dataset.grupo;
       actualizarCamposFechas();
       renderGrid();

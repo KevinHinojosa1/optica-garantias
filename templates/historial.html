@@ -6,16 +6,16 @@
   <div class="lg:col-span-2">
     <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
       <div>
-        <h2 class="text-2xl font-bold text-slate-800">📋 Módulo 5 — Historial</h2>
+        <h2 class="text-xl sm:text-2xl font-bold text-slate-800">📋 Módulo 5 — Historial</h2>
         <p class="text-slate-500">Consultas de garantía con PDF e imagen · <span id="contador-historial" class="font-medium text-slate-600">—</span></p>
       </div>
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-col sm:flex-row flex-wrap gap-2 w-full sm:w-auto">
         <a href="/api/historial/exportar" id="btn-exportar"
-          class="bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center gap-2">
+          class="w-full sm:w-auto text-center bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center justify-center gap-2">
           📥 Exportar Excel
         </a>
         <button id="btn-limpiar-historial"
-          class="bg-red-50 hover:bg-red-100 text-red-700 font-semibold px-5 py-2.5 rounded-xl border border-red-200 transition">
+          class="w-full sm:w-auto bg-red-50 hover:bg-red-100 text-red-700 font-semibold px-5 py-2.5 rounded-xl border border-red-200 transition">
           🗑️ Limpiar historial
         </button>
       </div>
@@ -27,8 +27,8 @@
     </div>
 
     <div id="tabla-historial" class="hidden bg-white rounded-2xl shadow-sm border overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+      <div class="overflow-x-auto overflow-touch">
+        <table class="w-full text-xs sm:text-sm min-w-[640px]">
           <thead class="bg-slate-50 text-slate-600">
             <tr>
               <th class="text-left px-4 py-3 font-semibold">Fecha</th>
@@ -52,7 +52,7 @@
   </div>
 
   <div>
-    <div class="bg-white rounded-2xl shadow-sm border p-5 sticky top-6">
+    <div class="bg-white rounded-2xl shadow-sm border p-4 sm:p-5 lg:sticky lg:top-6">
       <h3 class="font-bold text-slate-800 mb-4">📜 Políticas de Óptica Los Andes</h3>
       <div class="space-y-4">
         {% for p in politicas %}

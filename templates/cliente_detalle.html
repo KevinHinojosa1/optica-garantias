@@ -5,9 +5,9 @@
 <div class="grid lg:grid-cols-3 gap-6">
   <!-- Ficha del cliente -->
   <div class="lg:col-span-2 space-y-6">
-    <div class="flex flex-wrap items-center justify-between gap-3">
+    <div class="flex flex-col-reverse sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-between gap-3">
       <a href="/clientes" class="text-optica-600 hover:underline text-sm">← Volver a atención de clientes</a>
-      <button id="btn-eliminar" class="text-sm bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 font-semibold px-4 py-2 rounded-xl transition">🗑️ Eliminar cliente</button>
+      <button id="btn-eliminar" class="w-full sm:w-auto text-sm bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 font-semibold px-4 py-2 rounded-xl transition">🗑️ Eliminar cliente</button>
     </div>
 
     {% if es_duplicado %}
@@ -16,13 +16,13 @@
     </div>
     {% endif %}
 
-    <div class="bg-white rounded-2xl shadow-sm border p-6 {% if es_duplicado %}border-amber-300{% endif %}">
+    <div class="bg-white rounded-2xl shadow-sm border p-4 sm:p-6 {% if es_duplicado %}border-amber-300{% endif %}">
       <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
-        <div>
-          <h2 class="text-2xl font-bold text-slate-800">{{ cliente.nombre }}</h2>
+        <div class="min-w-0 flex-1">
+          <h2 class="text-xl sm:text-2xl font-bold text-slate-800 break-words">{{ cliente.nombre }}</h2>
           <p class="text-slate-500">Cédula: {{ cliente.cedula }}</p>
         </div>
-        <div class="flex flex-col gap-2 items-end">
+        <div class="flex flex-row sm:flex-col flex-wrap gap-2 items-start sm:items-end w-full sm:w-auto">
           {% if es_duplicado %}
           <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">⚠️ DUPLICADO</span>
           {% endif %}
@@ -49,7 +49,7 @@
     </div>
 
     <!-- Descuento -->
-    <div class="bg-white rounded-2xl shadow-sm border p-6">
+    <div class="bg-white rounded-2xl shadow-sm border p-4 sm:p-6">
       <h3 class="text-lg font-bold text-slate-800 mb-1">🏷️ Código y descuento aplicado</h3>
       <p class="text-sm text-slate-500 mb-4">Código autorizado (10%–50%) y porcentaje real aplicado en la venta.</p>
       <div class="grid sm:grid-cols-2 gap-4">
@@ -88,8 +88,8 @@
     </div>
 
     <!-- Módulo 3: Análisis de imagen -->
-    <div class="bg-white rounded-2xl shadow-sm border p-6">
-      <h3 class="text-xl font-bold text-slate-800 mb-4">📸 Módulo 3 — Analizar daño del producto</h3>
+    <div class="bg-white rounded-2xl shadow-sm border p-4 sm:p-6">
+      <h3 class="text-lg sm:text-xl font-bold text-slate-800 mb-4">📸 Módulo 3 — Analizar daño del producto</h3>
       <p class="text-slate-500 text-sm mb-4">Suba la foto que el cliente envió por WhatsApp.</p>
 
       <form id="form-analisis" class="space-y-4">
@@ -115,9 +115,9 @@
     </div>
 
     <!-- Módulo 4: Reporte al grupo de apoyo -->
-    <div id="panel-reporte" class="bg-white rounded-2xl shadow-sm border p-6 transition-all">
-      <div class="flex flex-wrap items-center justify-between gap-3 mb-2">
-        <h3 class="text-xl font-bold text-slate-800">💬 Módulo 4 — Reporte al Grupo de Apoyo</h3>
+    <div id="panel-reporte" class="bg-white rounded-2xl shadow-sm border p-4 sm:p-6 transition-all">
+      <div class="flex flex-wrap items-start sm:items-center justify-between gap-3 mb-2">
+        <h3 class="text-lg sm:text-xl font-bold text-slate-800">💬 Módulo 4 — Reporte al Grupo de Apoyo</h3>
         <span id="veredicto-reporte" class="hidden text-sm font-bold px-3 py-1.5 rounded-full border"></span>
       </div>
       <p class="text-sm text-slate-500 mb-4">
@@ -126,19 +126,19 @@
       </p>
       <textarea id="mensaje-whatsapp" rows="12"
         class="w-full border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-optica-500 outline-none font-mono">{{ mensaje_inicial }}</textarea>
-      <div class="flex flex-wrap gap-3 mt-4">
-        <a id="btn-descargar-pdf" href="#" target="_blank" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center gap-2">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+        <a id="btn-descargar-pdf" href="#" target="_blank" class="hidden w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center justify-center gap-2">
           📄 Descargar PDF
         </a>
-        <button id="btn-regenerar" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold px-5 py-2.5 rounded-xl transition">
+        <button id="btn-regenerar" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold px-5 py-2.5 rounded-xl transition">
           🔄 Regenerar reporte
         </button>
         <a id="btn-enviar-wa" href="{{ wa_link }}" target="_blank" rel="noopener"
-          class="bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center gap-2">
+          class="w-full text-center bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center justify-center gap-2">
           📤 Enviar reporte
         </a>
         <a id="btn-enviar-pdf-wa" href="#" target="_blank" rel="noopener"
-          class="hidden bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center gap-2">
+          class="hidden w-full text-center bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center justify-center gap-2">
           📤 Enviar reporte + PDF
         </a>
       </div>

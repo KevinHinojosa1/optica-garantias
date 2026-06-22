@@ -23,9 +23,9 @@ function escapeHtml(t) {
 document.querySelectorAll('.filtro-ciudad').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.filtro-ciudad').forEach(b => {
-      b.className = 'filtro-ciudad px-4 py-2 rounded-xl text-sm font-semibold border transition bg-white hover:bg-slate-50';
+      b.className = 'filtro-ciudad shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-white hover:bg-slate-50 whitespace-nowrap';
     });
-    btn.className = 'filtro-ciudad px-4 py-2 rounded-xl text-sm font-semibold border transition bg-optica-600 text-white';
+    btn.className = 'filtro-ciudad shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-optica-600 text-white whitespace-nowrap';
     ciudadFiltro = btn.dataset.ciudad;
     renderGrid();
   });
@@ -205,8 +205,8 @@ async function cargarHistorialIvr() {
       return;
     }
     historialDiv.innerHTML = `
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+      <div class="overflow-x-auto overflow-touch">
+        <table class="w-full text-xs sm:text-sm min-w-[640px]">
           <thead class="bg-slate-50 text-slate-600">
             <tr>
               <th class="text-left px-3 py-2">Fecha/Hora</th>

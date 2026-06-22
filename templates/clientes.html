@@ -4,11 +4,11 @@
 {% block content %}
 <div class="space-y-6">
   <!-- Paso 1: Selección de local -->
-  <div class="bg-white rounded-2xl shadow-sm border p-6">
-    <div class="flex items-center gap-3 mb-4">
-      <span class="flex items-center justify-center w-8 h-8 rounded-full bg-optica-600 text-white font-bold text-sm">1</span>
-      <div>
-        <h2 class="text-xl font-bold text-slate-800">Seleccionar Ciudad y Local</h2>
+  <div class="bg-white rounded-2xl shadow-sm border p-4 sm:p-6">
+    <div class="flex items-start sm:items-center gap-3 mb-4">
+      <span class="flex items-center justify-center w-8 h-8 rounded-full bg-optica-600 text-white font-bold text-sm shrink-0">1</span>
+      <div class="min-w-0">
+        <h2 class="text-lg sm:text-xl font-bold text-slate-800">Seleccionar Ciudad y Local</h2>
         <p class="text-sm text-slate-500">No necesita importar archivo — puede registrar pacientes manualmente</p>
       </div>
     </div>
@@ -38,14 +38,14 @@
       💡 <strong>Sin importación:</strong> use la pestaña <strong>Registrar Paciente</strong> para ingresar datos manualmente y continuar con el análisis de garantía.
     </div>
 
-    <div class="flex gap-2 border-b border-slate-200">
-      <button id="tab-registrar" class="tab-btn px-5 py-3 font-semibold text-optica-600 border-b-2 border-optica-600">➕ Registrar Paciente</button>
-      <button id="tab-buscar" class="tab-btn px-5 py-3 font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-600">🔍 Buscar en Base</button>
+    <div class="flex gap-1 sm:gap-2 border-b border-slate-200 overflow-x-auto overflow-touch -mx-1 px-1">
+      <button id="tab-registrar" class="tab-btn shrink-0 px-4 sm:px-5 py-3 text-sm sm:text-base font-semibold text-optica-600 border-b-2 border-optica-600 whitespace-nowrap">➕ Registrar Paciente</button>
+      <button id="tab-buscar" class="tab-btn shrink-0 px-4 sm:px-5 py-3 text-sm sm:text-base font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-600 whitespace-nowrap">🔍 Buscar en Base</button>
     </div>
 
     <!-- Tab Registrar Manual (PRIMERO / por defecto) -->
     <div id="panel-registrar">
-      <div class="bg-white rounded-2xl shadow-sm border p-6 max-w-2xl">
+      <div class="bg-white rounded-2xl shadow-sm border p-4 sm:p-6 max-w-2xl">
         <h3 class="text-lg font-bold text-slate-800 mb-1">Registro manual de paciente</h3>
         <p class="text-sm text-slate-500 mb-6">Ingrese los datos del paciente directamente. No requiere importar CSV ni Excel.</p>
 

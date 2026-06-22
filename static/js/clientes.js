@@ -124,15 +124,15 @@ function activarTab(tab) {
       alert('Seleccione primero la ciudad y el local para buscar pacientes de esa tienda.');
       return;
     }
-    tabBuscar.className = 'tab-btn px-5 py-3 font-semibold text-optica-600 border-b-2 border-optica-600';
-    tabRegistrar.className = 'tab-btn px-5 py-3 font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-600';
+    tabBuscar.className = 'tab-btn shrink-0 px-4 sm:px-5 py-3 text-sm sm:text-base font-semibold text-optica-600 border-b-2 border-optica-600 whitespace-nowrap';
+    tabRegistrar.className = 'tab-btn shrink-0 px-4 sm:px-5 py-3 text-sm sm:text-base font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-600 whitespace-nowrap';
     panelBuscar.classList.remove('hidden');
     panelRegistrar.classList.add('hidden');
     actualizarInfoBusqueda();
     cargarClientes();
   } else {
-    tabRegistrar.className = 'tab-btn px-5 py-3 font-semibold text-optica-600 border-b-2 border-optica-600';
-    tabBuscar.className = 'tab-btn px-5 py-3 font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-600';
+    tabRegistrar.className = 'tab-btn shrink-0 px-4 sm:px-5 py-3 text-sm sm:text-base font-semibold text-optica-600 border-b-2 border-optica-600 whitespace-nowrap';
+    tabBuscar.className = 'tab-btn shrink-0 px-4 sm:px-5 py-3 text-sm sm:text-base font-semibold text-slate-400 border-b-2 border-transparent hover:text-slate-600 whitespace-nowrap';
     panelRegistrar.classList.remove('hidden');
     panelBuscar.classList.add('hidden');
   }
