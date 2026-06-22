@@ -1,6 +1,6 @@
 import io
 import re
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -48,7 +48,7 @@ class ImportService:
         return df
 
     @staticmethod
-    def parse_date(value) -> datetime.date | None:
+    def parse_date(value) -> date | None:
         if pd.isna(value) or value == "" or value is None:
             return None
         if isinstance(value, datetime):
