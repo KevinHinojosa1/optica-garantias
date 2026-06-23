@@ -1,4 +1,5 @@
 import json
+from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -17,8 +18,11 @@ templates = Jinja2Templates(directory="templates")
 
 @router.get("/ivr", response_class=HTMLResponse)
 async def pagina_ivr(request: Request):
-    tiendas = [t for t in TiendasService.listar() if t["id"] != "central-call-center"]
+    tiendas = TiendasService.listar_ivr()
     ciudades = sorted({t["ciudad"] for t in tiendas})
+    dia_hoy = TiendasService.dia_ivr_laboral(date.today())
+    nombres_dia = {1: "Lunes", 2: "Martes", 3: "Miércoles", 4: "Jueves", 5: "Viernes"}
+    conteo_dia = {d: sum(1 for t in tiendas if t.get("dia_ivr") == d) for d in range(1, 6)}
     return templates.TemplateResponse(
         request,
         "ivr.html",
@@ -28,6 +32,10 @@ async def pagina_ivr(request: Request):
             "ciudades": ciudades,
             "google_sheets_activo": GoogleSheetsService.configurado(),
             "semana_actual": IvrService.semana_iso(),
+            "dia_hoy": dia_hoy,
+            "nombre_dia_hoy": nombres_dia.get(dia_hoy, ""),
+            "total_tiendas": len(tiendas),
+            "conteo_dia": conteo_dia,
         },
     )
 

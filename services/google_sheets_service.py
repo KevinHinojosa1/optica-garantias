@@ -104,7 +104,7 @@ class GoogleSheetsService:
                     ]
                 )
 
-            estado = "✅ FUNCIONA" if funciona else "❌ NO FUNCIONA"
+            estado = (comentario or "").strip() or ("✅ FUNCIONA" if funciona else "❌ NO FUNCIONA")
             ws.append_row(
                 [
                     fecha.isoformat(),

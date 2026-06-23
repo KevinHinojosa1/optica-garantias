@@ -11,6 +11,20 @@ from services.tiendas_service import TiendasService
 
 
 class IvrService:
+    SUGERENCIAS_ESTADO = {
+        "funciona bien ivr": True,
+        "funciona bien, no contesta": True,
+        "funciona bien no contesta": True,
+        "no funciona ivr": False,
+        "funciona ivr pero se cuelga la llamada": False,
+    }
+
+    @classmethod
+    def etiqueta_estado(cls, funciona: bool, comentario: str | None = None) -> str:
+        if comentario and comentario.strip():
+            return comentario.strip()
+        return "Funciona" if funciona else "No funciona"
+
     @staticmethod
     def semana_iso(fecha: date | None = None) -> str:
         f = fecha or date.today()
@@ -165,13 +179,15 @@ class IvrService:
         resumen = IvrService.resumen_semana(db, sem)
         registros = IvrService.listar_recientes(db, limit=10_000)
 
+        tiendas_map = {t["id"]: t for t in TiendasService.listar_ivr()}
         filas_resumen = [
             {
+                "Día IVR": tiendas_map.get(r["tienda_id"], {}).get("dia_ivr", ""),
                 "Ciudad": r["ciudad"],
                 "Tienda": r["tienda_nombre"],
                 "Estado": (
-                    "Funciona" if r["funciona"] is True
-                    else "No funciona" if r["funciona"] is False
+                    IvrService.etiqueta_estado(r["funciona"], r["comentario"])
+                    if r["funciona"] is not None
                     else "Sin verificar"
                 ),
                 "Comentario": r["comentario"] or "",
@@ -191,7 +207,7 @@ class IvrService:
                 "Semana": r.semana,
                 "Ciudad": r.ciudad,
                 "Tienda": r.tienda_nombre,
-                "Estado": "Funciona" if r.funciona else "No funciona",
+                "Estado": IvrService.etiqueta_estado(r.funciona, r.comentario),
                 "Comentario": r.comentario or "",
                 "Verificador": r.verificado_por,
             }

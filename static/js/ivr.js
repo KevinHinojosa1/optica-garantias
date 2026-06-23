@@ -1,9 +1,38 @@
 const TIENDAS = window.TIENDAS_IVR || [];
 const grid = document.getElementById('ivr-grid');
 const historialDiv = document.getElementById('ivr-historial');
+const contadorDiv = document.getElementById('ivr-contador');
 const inputVerificador = document.getElementById('verificador-ivr');
 let ciudadFiltro = '';
+let diaFiltro = window.DIA_HOY ? 'hoy' : '1';
 let estados = {};
+
+const SUGERENCIAS_IVR = [
+  {
+    texto: 'Funciona bien IVR',
+    funciona: true,
+    base: 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100',
+    activa: 'bg-emerald-600 border-emerald-600 text-white ring-2 ring-emerald-300',
+  },
+  {
+    texto: 'Funciona bien, no contesta',
+    funciona: true,
+    base: 'bg-amber-50 border-amber-200 text-amber-800 hover:bg-amber-100',
+    activa: 'bg-amber-500 border-amber-500 text-white ring-2 ring-amber-300',
+  },
+  {
+    texto: 'No funciona IVR',
+    funciona: false,
+    base: 'bg-red-50 border-red-200 text-red-800 hover:bg-red-100',
+    activa: 'bg-red-600 border-red-600 text-white ring-2 ring-red-300',
+  },
+  {
+    texto: 'Funciona IVR pero se cuelga la llamada',
+    funciona: false,
+    base: 'bg-orange-50 border-orange-200 text-orange-800 hover:bg-orange-100',
+    activa: 'bg-orange-500 border-orange-600 text-white ring-2 ring-orange-300',
+  },
+];
 
 function scriptLlamada(nombre) {
   const quien = nombre?.trim() || '…';
@@ -19,6 +48,57 @@ function escapeHtml(t) {
   d.textContent = t ?? '';
   return d.innerHTML;
 }
+
+function normalizarTexto(t) {
+  return (t || '').trim().toLowerCase();
+}
+
+function etiquetaEstado(registro) {
+  if (registro.comentario) return registro.comentario;
+  if (registro.funciona === true) return 'Funciona bien IVR';
+  if (registro.funciona === false) return 'No funciona IVR';
+  return '—';
+}
+
+function claseSugerencia(comentario, sugerencia) {
+  return normalizarTexto(comentario) === normalizarTexto(sugerencia.texto)
+    ? sugerencia.activa
+    : sugerencia.base;
+}
+
+function htmlSugerencias(tiendaId, comentarioActual) {
+  return SUGERENCIAS_IVR.map(s => {
+    const textoJs = s.texto.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    return `
+    <button type="button"
+      onclick="aplicarSugerencia('${tiendaId}', '${textoJs}', ${s.funciona})"
+      class="w-full text-left px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border transition ${claseSugerencia(comentarioActual, s)}">
+      ${escapeHtml(s.texto)}
+    </button>`;
+  }).join('');
+}
+
+function htmlSugerenciasEditar(comentarioActual) {
+  return SUGERENCIAS_IVR.map((s, i) => `
+    <button type="button" data-sug-idx="${i}"
+      class="sug-editar w-full text-left px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border transition ${claseSugerencia(comentarioActual, s)}">
+      ${escapeHtml(s.texto)}
+    </button>
+  `).join('');
+}
+
+function setFiltroDiaActivo(btn) {
+  document.querySelectorAll('.filtro-dia').forEach(b => {
+    b.className = 'filtro-dia shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-white hover:bg-slate-50 whitespace-nowrap';
+  });
+  btn.className = 'filtro-dia shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-optica-600 text-white whitespace-nowrap';
+  diaFiltro = btn.dataset.dia;
+  renderGrid();
+}
+
+document.querySelectorAll('.filtro-dia').forEach(btn => {
+  btn.addEventListener('click', () => setFiltroDiaActivo(btn));
+});
 
 document.querySelectorAll('.filtro-ciudad').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -41,51 +121,78 @@ async function cargarEstado() {
   renderGrid();
 }
 
+function filtrarTiendas() {
+  let lista = TIENDAS;
+  if (diaFiltro === 'hoy' && window.DIA_HOY) {
+    lista = lista.filter(t => t.dia_ivr === window.DIA_HOY);
+  } else if (diaFiltro !== 'todas' && diaFiltro !== '') {
+    lista = lista.filter(t => t.dia_ivr === Number(diaFiltro));
+  }
+  if (ciudadFiltro) {
+    lista = lista.filter(t => t.ciudad === ciudadFiltro);
+  }
+  return lista;
+}
+
 function cardTienda(tienda) {
   const e = estados[tienda.id] || {};
-  const funciona = e.funciona;
   const verificado = e.verificado_at
     ? new Date(e.verificado_at).toLocaleString('es-EC')
     : 'Sin verificar esta semana';
-
-  const btnOk = funciona === true
-    ? 'bg-emerald-600 text-white ring-2 ring-emerald-300'
-    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200';
-  const btnNo = funciona === false
-    ? 'bg-red-600 text-white ring-2 ring-red-300'
-    : 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200';
+  const comentario = e.comentario || '';
 
   return `
-    <div class="bg-white rounded-2xl shadow-sm border p-5 flex flex-col gap-3" id="card-${tienda.id}">
+    <div class="bg-white rounded-2xl shadow-sm border p-4 sm:p-5 flex flex-col gap-3" id="card-${tienda.id}">
       <div>
-        <p class="text-xs font-semibold text-optica-600 uppercase">${escapeHtml(tienda.ciudad)}</p>
-        <h4 class="font-bold text-slate-800">${escapeHtml(tienda.nombre)}</h4>
+        <div class="flex flex-wrap items-center gap-2 mb-1">
+          <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-optica-50 text-optica-700 border border-optica-200">Día ${tienda.dia_ivr}</span>
+          <p class="text-xs font-semibold text-optica-600 uppercase">${escapeHtml(tienda.ciudad)}</p>
+        </div>
+        <h4 class="font-bold text-slate-800 leading-snug">${escapeHtml(tienda.nombre)}</h4>
         <p class="text-xs text-slate-400 mt-1">Última verificación: ${verificado}</p>
+        ${comentario ? `<p class="text-xs font-medium text-slate-600 mt-1 bg-slate-50 rounded-lg px-2 py-1 border">${escapeHtml(comentario)}</p>` : ''}
       </div>
       <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
         <p class="text-xs font-semibold text-slate-500 uppercase mb-1">🎙️ Script de llamada</p>
         <p class="script-llamada text-sm text-slate-700 leading-relaxed italic">${escapeHtml(scriptLlamada(nombreVerificador()))}</p>
       </div>
-      <div class="flex gap-2">
-        <button onclick="marcarIvr('${tienda.id}', true)" class="flex-1 py-2.5 rounded-xl font-bold text-sm transition ${btnOk}">✓ Funciona</button>
-        <button onclick="marcarIvr('${tienda.id}', false)" class="flex-1 py-2.5 rounded-xl font-bold text-sm transition ${btnNo}">✗ No funciona</button>
+      <div>
+        <p class="text-xs font-semibold text-slate-500 uppercase mb-2">Sugerencias rápidas</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          ${htmlSugerencias(tienda.id, comentario)}
+        </div>
       </div>
-      <textarea id="comentario-${tienda.id}" rows="2" placeholder="Comentario (opcional)..."
-        class="w-full border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-optica-500 outline-none">${escapeHtml(e.comentario || '')}</textarea>
+      <textarea id="comentario-${tienda.id}" rows="2" placeholder="Comentario adicional (opcional)..."
+        class="w-full border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-optica-500 outline-none">${escapeHtml(comentario && !SUGERENCIAS_IVR.some(s => normalizarTexto(s.texto) === normalizarTexto(comentario)) ? comentario : '')}</textarea>
       <p id="status-${tienda.id}" class="text-xs text-slate-400 min-h-[1rem]"></p>
     </div>
   `;
 }
 
+function actualizarContador(cantidad) {
+  if (!contadorDiv) return;
+  let diaLabel = 'todas las tiendas';
+  if (diaFiltro === 'hoy' && window.DIA_HOY) diaLabel = `Día ${window.DIA_HOY} (hoy)`;
+  else if (diaFiltro !== 'todas') diaLabel = `Día ${diaFiltro}`;
+  const ciudadLabel = ciudadFiltro ? ` · ${ciudadFiltro}` : '';
+  contadorDiv.textContent = `Mostrando ${cantidad} tienda(s) — ${diaLabel}${ciudadLabel}`;
+}
+
 function renderGrid() {
-  const lista = ciudadFiltro
-    ? TIENDAS.filter(t => t.ciudad === ciudadFiltro)
-    : TIENDAS;
+  const lista = filtrarTiendas();
+  actualizarContador(lista.length);
+  if (!lista.length) {
+    grid.innerHTML = '<p class="col-span-full text-center text-slate-400 py-8">No hay tiendas con este filtro</p>';
+    return;
+  }
   grid.innerHTML = lista.map(cardTienda).join('');
 }
 
-async function marcarIvr(tiendaId, funciona) {
-  const comentario = document.getElementById(`comentario-${tiendaId}`)?.value || '';
+async function marcarIvr(tiendaId, funciona, comentarioForzado = null) {
+  const extra = document.getElementById(`comentario-${tiendaId}`)?.value.trim() || '';
+  const comentario = comentarioForzado
+    ? (extra ? `${comentarioForzado} — ${extra}` : comentarioForzado)
+    : extra;
   const verificadoPor = document.getElementById('verificador-ivr')?.value.trim() || 'Equipo de Tienda';
   const status = document.getElementById(`status-${tiendaId}`);
   status.textContent = 'Guardando...';
@@ -108,7 +215,7 @@ async function marcarIvr(tiendaId, funciona) {
     const hora = new Date(data.created_at).toLocaleString('es-EC');
     let msg = `✅ Guardado ${hora}`;
     if (data.google_sheets_ok) msg += ' · Google Sheets ✓';
-    else msg += ` · ${data.google_sheets_mensaje}`;
+    else if (data.google_sheets_mensaje) msg += ` · ${data.google_sheets_mensaje}`;
     status.textContent = msg;
     status.className = 'text-xs text-emerald-600 font-medium';
 
@@ -119,35 +226,52 @@ async function marcarIvr(tiendaId, funciona) {
     status.className = 'text-xs text-red-600';
   }
 }
+
+async function aplicarSugerencia(tiendaId, texto, funciona) {
+  await marcarIvr(tiendaId, funciona, texto);
+}
+window.aplicarSugerencia = aplicarSugerencia;
 window.marcarIvr = marcarIvr;
 
 let editarFunciona = true;
+let editarSugerenciaTexto = '';
 let historialRegistros = {};
 
 const modalEditar = document.getElementById('modal-editar-ivr');
 const editarStatus = document.getElementById('editar-ivr-status');
+const editarSugerencias = document.getElementById('editar-sugerencias');
 
-function actualizarBotonesEstadoEditar() {
-  const btnSi = document.getElementById('editar-funciona-si');
-  const btnNo = document.getElementById('editar-funciona-no');
-  if (editarFunciona) {
-    btnSi.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm bg-emerald-600 text-white ring-2 ring-emerald-300';
-    btnNo.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm border border-red-200 bg-red-50 text-red-700';
-  } else {
-    btnSi.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm border border-emerald-200 bg-emerald-50 text-emerald-700';
-    btnNo.className = 'flex-1 py-2.5 rounded-xl font-bold text-sm bg-red-600 text-white ring-2 ring-red-300';
-  }
+function seleccionarSugerenciaEditar(sugerencia) {
+  editarFunciona = sugerencia.funciona;
+  editarSugerenciaTexto = sugerencia.texto;
+  editarSugerencias.innerHTML = htmlSugerenciasEditar(sugerencia.texto);
+  editarSugerencias.querySelectorAll('.sug-editar').forEach((btn, idx) => {
+    btn.addEventListener('click', () => seleccionarSugerenciaEditar(SUGERENCIAS_IVR[idx]));
+  });
 }
 
 function abrirModalEditar(registro) {
   document.getElementById('editar-ivr-id').value = registro.id;
   document.getElementById('modal-ivr-tienda').textContent =
     `${registro.tienda_nombre} (${registro.ciudad}) · ${new Date(registro.created_at).toLocaleString('es-EC')}`;
-  document.getElementById('editar-comentario').value = registro.comentario || '';
   document.getElementById('editar-verificador').value =
     registro.verificado_por || document.getElementById('verificador-ivr')?.value.trim() || '';
-  editarFunciona = registro.funciona;
-  actualizarBotonesEstadoEditar();
+
+  const comentario = registro.comentario || '';
+  const sugerencia = SUGERENCIAS_IVR.find(s => normalizarTexto(s.texto) === normalizarTexto(comentario));
+  if (sugerencia) {
+    seleccionarSugerenciaEditar(sugerencia);
+    document.getElementById('editar-comentario').value = '';
+  } else {
+    editarFunciona = registro.funciona;
+    editarSugerenciaTexto = registro.funciona ? 'Funciona bien IVR' : 'No funciona IVR';
+    editarSugerencias.innerHTML = htmlSugerenciasEditar(editarSugerenciaTexto);
+    editarSugerencias.querySelectorAll('.sug-editar').forEach((btn, idx) => {
+      btn.addEventListener('click', () => seleccionarSugerenciaEditar(SUGERENCIAS_IVR[idx]));
+    });
+    document.getElementById('editar-comentario').value = comentario;
+  }
+
   editarStatus.textContent = '';
   modalEditar.classList.remove('hidden');
 }
@@ -158,6 +282,8 @@ function cerrarModalEditar() {
 
 async function guardarEdicionIvr() {
   const id = document.getElementById('editar-ivr-id').value;
+  const extra = document.getElementById('editar-comentario').value.trim();
+  const comentario = extra ? `${editarSugerenciaTexto} — ${extra}` : editarSugerenciaTexto;
   editarStatus.textContent = 'Guardando...';
   editarStatus.className = 'text-sm text-slate-500';
   try {
@@ -166,7 +292,7 @@ async function guardarEdicionIvr() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         funciona: editarFunciona,
-        comentario: document.getElementById('editar-comentario').value,
+        comentario,
         verificado_por: document.getElementById('editar-verificador').value.trim() || 'Equipo de Tienda',
       }),
     });
@@ -206,13 +332,12 @@ async function cargarHistorialIvr() {
     }
     historialDiv.innerHTML = `
       <div class="overflow-x-auto overflow-touch">
-        <table class="w-full text-xs sm:text-sm min-w-[640px]">
+        <table class="w-full text-xs sm:text-sm min-w-[720px]">
           <thead class="bg-slate-50 text-slate-600">
             <tr>
               <th class="text-left px-3 py-2">Fecha/Hora</th>
               <th class="text-left px-3 py-2">Tienda</th>
               <th class="text-left px-3 py-2">Estado</th>
-              <th class="text-left px-3 py-2">Comentario</th>
               <th class="text-left px-3 py-2">Verificador</th>
               <th class="text-right px-3 py-2">Acciones</th>
             </tr>
@@ -222,8 +347,7 @@ async function cargarHistorialIvr() {
               <tr class="border-t hover:bg-slate-50/50">
                 <td class="px-3 py-2 whitespace-nowrap">${new Date(r.created_at).toLocaleString('es-EC')}</td>
                 <td class="px-3 py-2">${escapeHtml(r.tienda_nombre)} <span class="text-slate-400 text-xs">(${escapeHtml(r.ciudad)})</span></td>
-                <td class="px-3 py-2 font-bold ${r.funciona ? 'text-emerald-600' : 'text-red-600'}">${r.funciona ? '✓ Funciona' : '✗ No funciona'}</td>
-                <td class="px-3 py-2 text-slate-500 max-w-xs truncate" title="${escapeHtml(r.comentario || '')}">${escapeHtml(r.comentario || '—')}</td>
+                <td class="px-3 py-2 font-medium text-slate-700">${escapeHtml(etiquetaEstado(r))}</td>
                 <td class="px-3 py-2">${escapeHtml(r.verificado_por)}</td>
                 <td class="px-3 py-2 text-right whitespace-nowrap">
                   <button type="button" data-id="${r.id}"
@@ -258,14 +382,6 @@ async function cargarHistorialIvr() {
   }
 }
 
-document.getElementById('editar-funciona-si')?.addEventListener('click', () => {
-  editarFunciona = true;
-  actualizarBotonesEstadoEditar();
-});
-document.getElementById('editar-funciona-no')?.addEventListener('click', () => {
-  editarFunciona = false;
-  actualizarBotonesEstadoEditar();
-});
 document.getElementById('btn-guardar-editar-ivr')?.addEventListener('click', guardarEdicionIvr);
 document.getElementById('btn-cancelar-editar-ivr')?.addEventListener('click', cerrarModalEditar);
 document.getElementById('btn-cerrar-modal-ivr')?.addEventListener('click', cerrarModalEditar);

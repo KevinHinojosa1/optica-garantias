@@ -1,5 +1,6 @@
 import json
 import unicodedata
+from datetime import date
 from pathlib import Path
 
 TIENDAS_FILE = Path(__file__).parent.parent / "data" / "tiendas.json"
@@ -80,3 +81,18 @@ class TiendasService:
     def ciudad_de_tienda(cls, nombre: str) -> str | None:
         tienda = cls.buscar_por_nombre(nombre)
         return tienda["ciudad"] if tienda else None
+
+    @classmethod
+    def dia_ivr_laboral(cls, fecha: date | None = None) -> int | None:
+        """Lunes=1 … Viernes=5. Fin de semana devuelve None."""
+        f = fecha or date.today()
+        if f.weekday() > 4:
+            return None
+        return f.weekday() + 1
+
+    @classmethod
+    def listar_ivr(cls, dia: int | None = None) -> list[dict]:
+        tiendas = [t for t in cls.listar() if t.get("id") != "central-call-center"]
+        if dia is None:
+            return tiendas
+        return [t for t in tiendas if t.get("dia_ivr") == dia]

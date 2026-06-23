@@ -1,153 +1,676 @@
 [
   {
-    "id": "quito-megamaxi-6diciembre",
-    "nombre": "Megamaxi 6 de Diciembre",
+    "id": "atahualpa-outlet",
+    "nombre": "Atahualpa Outlet",
     "ciudad": "Quito",
-    "direccion": "Av. 6 de Diciembre S/N y Calle Alemán, Local #711",
-    "whatsapp_grupo": "593999000001",
-    "whatsapp_grupo_nombre": "Apoyo Garantías — Megamaxi 6 de Diciembre"
+    "direccion": "Local Óptica Los Andes — Atahualpa Outlet",
+    "dia_ivr": 1,
+    "whatsapp_grupo": "593999000100",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Atahualpa Outlet"
   },
   {
-    "id": "quito-supermaxi-eloy-alfaro",
-    "nombre": "Supermaxi Eloy Alfaro",
+    "id": "coral-carapungo",
+    "nombre": "Coral Carapungo",
     "ciudad": "Quito",
-    "direccion": "Av. Eloy Alfaro 44-110 y Av. Río Coca, Local #4",
-    "whatsapp_grupo": "593999000002",
-    "whatsapp_grupo_nombre": "Apoyo Garantías — Supermaxi Eloy Alfaro"
+    "direccion": "Local Óptica Los Andes — Coral Carapungo",
+    "dia_ivr": 1,
+    "whatsapp_grupo": "593999000101",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Coral Carapungo"
   },
   {
-    "id": "quito-quicentro",
-    "nombre": "Quicentro Shopping",
-    "ciudad": "Quito",
-    "direccion": "Av. Naciones Unidas S/N y Av. Shyris, Local PB056-055",
-    "whatsapp_grupo": "593999000003",
-    "whatsapp_grupo_nombre": "Apoyo Garantías — Quicentro Shopping"
+    "id": "cuenca-centro",
+    "nombre": "Cuenca Centro",
+    "ciudad": "Cuenca",
+    "direccion": "Local Óptica Los Andes — Cuenca Centro",
+    "dia_ivr": 1,
+    "whatsapp_grupo": "593999000102",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Cuenca Centro"
   },
   {
-    "id": "quito-rio-amazonas",
-    "nombre": "Río Amazonas",
-    "ciudad": "Quito",
-    "direccion": "Av. Río Amazonas N13-30 y Av. Naciones Unidas, Local A-129",
-    "whatsapp_grupo": "593999000004",
-    "whatsapp_grupo_nombre": "Apoyo Garantías — Río Amazonas"
+    "id": "cuenca-don-bosco",
+    "nombre": "Cuenca Don Bosco",
+    "ciudad": "Cuenca",
+    "direccion": "Local Óptica Los Andes — Cuenca Don Bosco",
+    "dia_ivr": 1,
+    "whatsapp_grupo": "593999000103",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Cuenca Don Bosco"
   },
   {
-    "id": "quito-12-octubre",
-    "nombre": "Supermaxi 12 de Octubre",
-    "ciudad": "Quito",
-    "direccion": "Av. 12 de Octubre 16-26 y Madrid, Local #121",
-    "whatsapp_grupo": "593999000005",
-    "whatsapp_grupo_nombre": "Apoyo Garantías — 12 de Octubre"
+    "id": "mall-del-rio-cuenca",
+    "nombre": "Mall del Rio Cuenca",
+    "ciudad": "Cuenca",
+    "direccion": "Local Óptica Los Andes — Mall del Rio Cuenca",
+    "dia_ivr": 1,
+    "whatsapp_grupo": "593999000104",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Mall del Rio Cuenca"
   },
   {
-    "id": "quito-condado",
-    "nombre": "Condado Shopping",
-    "ciudad": "Quito",
-    "direccion": "Av. De la Prensa S/N y Av. Kennedy, Local #714",
-    "whatsapp_grupo": "593999000006",
-    "whatsapp_grupo_nombre": "Apoyo Garantías — Condado Shopping"
+    "id": "mall-del-rio-isla-sgh",
+    "nombre": "Mall del Rio Isla Sgh",
+    "ciudad": "Cuenca",
+    "direccion": "Local Óptica Los Andes — Mall del Rio Isla Sgh",
+    "dia_ivr": 1,
+    "whatsapp_grupo": "593999000105",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Mall del Rio Isla Sgh"
   },
   {
-    "id": "quito-scala",
+    "id": "mall-el-jardin",
+    "nombre": "Mall el Jardin",
+    "ciudad": "Cuenca",
+    "direccion": "Local Óptica Los Andes — Mall el Jardin",
+    "dia_ivr": 1,
+    "whatsapp_grupo": "593999000106",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Mall el Jardin"
+  },
+  {
+    "id": "mall-el-jardin-sgh",
+    "nombre": "Mall el Jardin Sgh",
+    "ciudad": "Cuenca",
+    "direccion": "Local Óptica Los Andes — Mall el Jardin Sgh",
+    "dia_ivr": 1,
+    "whatsapp_grupo": "593999000107",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Mall el Jardin Sgh"
+  },
+  {
+    "id": "megamaxi-6-de-diciembre-ola-kids",
+    "nombre": "Megamaxi 6 de Diciembre Ola Kids",
+    "ciudad": "Quito",
+    "direccion": "Local Óptica Los Andes — Megamaxi 6 de Diciembre Ola Kids",
+    "dia_ivr": 1,
+    "whatsapp_grupo": "593999000108",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Megamaxi 6 de Diciembre Ola Kids"
+  },
+  {
+    "id": "multiplaza-el-batan-cuenca",
+    "nombre": "Multiplaza el Batan Cuenca",
+    "ciudad": "Cuenca",
+    "direccion": "Local Óptica Los Andes — Multiplaza el Batan Cuenca",
+    "dia_ivr": 1,
+    "whatsapp_grupo": "593999000109",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Multiplaza el Batan Cuenca"
+  },
+  {
+    "id": "multiplaza-miraflores-cuenca",
+    "nombre": "Multiplaza Miraflores Cuenca",
+    "ciudad": "Cuenca",
+    "direccion": "Local Óptica Los Andes — Multiplaza Miraflores Cuenca",
+    "dia_ivr": 1,
+    "whatsapp_grupo": "593999000110",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Multiplaza Miraflores Cuenca"
+  },
+  {
+    "id": "paseo-san-francisco",
+    "nombre": "Paseo San Francisco",
+    "ciudad": "Cuenca",
+    "direccion": "Local Óptica Los Andes — Paseo San Francisco",
+    "dia_ivr": 1,
+    "whatsapp_grupo": "593999000111",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Paseo San Francisco"
+  },
+  {
+    "id": "paseo-san-francisco-isla-sgh",
+    "nombre": "Paseo San Francisco Isla Sgh",
+    "ciudad": "Cuenca",
+    "direccion": "Local Óptica Los Andes — Paseo San Francisco Isla Sgh",
+    "dia_ivr": 1,
+    "whatsapp_grupo": "593999000112",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Paseo San Francisco Isla Sgh"
+  },
+  {
+    "id": "multiplaza-esmeraldas",
+    "nombre": "Multiplaza Esmeraldas",
+    "ciudad": "Esmeraldas",
+    "direccion": "Local Óptica Los Andes — Multiplaza Esmeraldas",
+    "dia_ivr": 1,
+    "whatsapp_grupo": "593999000113",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Multiplaza Esmeraldas"
+  },
+  {
+    "id": "paseo-shopping-santo-domingo",
+    "nombre": "Paseo Shopping Santo Domingo",
+    "ciudad": "Santo Domingo",
+    "direccion": "Local Óptica Los Andes — Paseo Shopping Santo Domingo",
+    "dia_ivr": 1,
+    "whatsapp_grupo": "593999000114",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Paseo Shopping Santo Domingo"
+  },
+  {
+    "id": "portal-shopping-carapungo",
+    "nombre": "Portal Shopping Carapungo",
+    "ciudad": "Quito",
+    "direccion": "Local Óptica Los Andes — Portal Shopping Carapungo",
+    "dia_ivr": 2,
+    "whatsapp_grupo": "593999000115",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Portal Shopping Carapungo"
+  },
+  {
+    "id": "quicentro-sur",
+    "nombre": "Quicentro Sur",
+    "ciudad": "Quito",
+    "direccion": "Local Óptica Los Andes — Quicentro Sur",
+    "dia_ivr": 2,
+    "whatsapp_grupo": "593999000116",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Quicentro Sur"
+  },
+  {
+    "id": "recreo-1",
+    "nombre": "Recreo 1",
+    "ciudad": "Quito",
+    "direccion": "Local Óptica Los Andes — Recreo 1",
+    "dia_ivr": 2,
+    "whatsapp_grupo": "593999000117",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Recreo 1"
+  },
+  {
+    "id": "recreo-2",
+    "nombre": "Recreo 2",
+    "ciudad": "Quito",
+    "direccion": "Local Óptica Los Andes — Recreo 2",
+    "dia_ivr": 2,
+    "whatsapp_grupo": "593999000118",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Recreo 2"
+  },
+  {
+    "id": "scala-sgh",
+    "nombre": "Scala Sgh",
+    "ciudad": "Quito",
+    "direccion": "Local Óptica Los Andes — Scala Sgh",
+    "dia_ivr": 2,
+    "whatsapp_grupo": "593999000119",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Scala Sgh"
+  },
+  {
+    "id": "scala-shopping",
     "nombre": "Scala Shopping",
     "ciudad": "Quito",
-    "direccion": "Av. Interoceánica Km 12 Sector Primavera, Local L288",
-    "whatsapp_grupo": "593999000007",
+    "direccion": "Local Óptica Los Andes — Scala Shopping",
+    "dia_ivr": 2,
+    "whatsapp_grupo": "593999000120",
     "whatsapp_grupo_nombre": "Apoyo Garantías — Scala Shopping"
   },
   {
-    "id": "quito-cumbaya",
-    "nombre": "Villa Cumbayá",
+    "id": "villa-cumbaya",
+    "nombre": "Villa Cumbaya",
     "ciudad": "Quito",
-    "direccion": "Av. Interoceánica, Local #3",
-    "whatsapp_grupo": "593999000008",
-    "whatsapp_grupo_nombre": "Apoyo Garantías — Villa Cumbayá"
+    "direccion": "Local Óptica Los Andes — Villa Cumbaya",
+    "dia_ivr": 2,
+    "whatsapp_grupo": "593999000121",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Villa Cumbaya"
   },
   {
-    "id": "quito-aeropuerto",
-    "nombre": "Centro Comercial Aeropuerto",
+    "id": "aeropuerto-outlet",
+    "nombre": "Aeropuerto Outlet",
     "ciudad": "Quito",
-    "direccion": "Av. De la Prensa S/N y Humberto Salas, Local 10",
-    "whatsapp_grupo": "593999000009",
-    "whatsapp_grupo_nombre": "Apoyo Garantías — Aeropuerto"
+    "direccion": "Local Óptica Los Andes — Aeropuerto Outlet",
+    "dia_ivr": 2,
+    "whatsapp_grupo": "593999000122",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Aeropuerto Outlet"
   },
   {
-    "id": "quito-el-fortin",
-    "nombre": "Mall El Fortín",
+    "id": "bosque-1",
+    "nombre": "Bosque 1",
     "ciudad": "Quito",
-    "direccion": "Av. Modesto Luque S/N y Casuarina, Local #123",
-    "whatsapp_grupo": "593999000010",
-    "whatsapp_grupo_nombre": "Apoyo Garantías — Mall El Fortín"
+    "direccion": "Local Óptica Los Andes — Bosque 1",
+    "dia_ivr": 2,
+    "whatsapp_grupo": "593999000123",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Bosque 1"
   },
   {
-    "id": "gye-san-marino",
-    "nombre": "San Marino Shopping",
+    "id": "bosque-4",
+    "nombre": "Bosque 4",
+    "ciudad": "Quito",
+    "direccion": "Local Óptica Los Andes — Bosque 4",
+    "dia_ivr": 2,
+    "whatsapp_grupo": "593999000124",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Bosque 4"
+  },
+  {
+    "id": "cci-1",
+    "nombre": "Cci 1",
+    "ciudad": "Quito",
+    "direccion": "Local Óptica Los Andes — Cci 1",
+    "dia_ivr": 2,
+    "whatsapp_grupo": "593999000125",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Cci 1"
+  },
+  {
+    "id": "cci-2",
+    "nombre": "Cci 2",
+    "ciudad": "Quito",
+    "direccion": "Local Óptica Los Andes — Cci 2",
+    "dia_ivr": 2,
+    "whatsapp_grupo": "593999000126",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Cci 2"
+  },
+  {
+    "id": "centro-historico-quito-chile-y-flores",
+    "nombre": "Centro Historico Quito Chile y Flores",
+    "ciudad": "Quito",
+    "direccion": "Local Óptica Los Andes — Centro Historico Quito Chile y Flores",
+    "dia_ivr": 2,
+    "whatsapp_grupo": "593999000127",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Centro Historico Quito Chile y Flores"
+  },
+  {
+    "id": "condado-shopping",
+    "nombre": "Condado Shopping",
+    "ciudad": "Quito",
+    "direccion": "Local Óptica Los Andes — Condado Shopping",
+    "dia_ivr": 2,
+    "whatsapp_grupo": "593999000128",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Condado Shopping"
+  },
+  {
+    "id": "condado-osh",
+    "nombre": "Condado Osh",
+    "ciudad": "Quito",
+    "direccion": "Local Óptica Los Andes — Condado Osh",
+    "dia_ivr": 2,
+    "whatsapp_grupo": "593999000129",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Condado Osh"
+  },
+  {
+    "id": "ibarra-plaza",
+    "nombre": "Ibarra Plaza",
+    "ciudad": "Ibarra",
+    "direccion": "Local Óptica Los Andes — Ibarra Plaza",
+    "dia_ivr": 3,
+    "whatsapp_grupo": "593999000130",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Ibarra Plaza"
+  },
+  {
+    "id": "ibarra-laguna-mall",
+    "nombre": "Ibarra Laguna Mall",
+    "ciudad": "Ibarra",
+    "direccion": "Local Óptica Los Andes — Ibarra Laguna Mall",
+    "dia_ivr": 3,
+    "whatsapp_grupo": "593999000131",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Ibarra Laguna Mall"
+  },
+  {
+    "id": "mall-de-los-andes-ambato",
+    "nombre": "Mall de los Andes Ambato",
+    "ciudad": "Ambato",
+    "direccion": "Local Óptica Los Andes — Mall de los Andes Ambato",
+    "dia_ivr": 3,
+    "whatsapp_grupo": "593999000132",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Mall de los Andes Ambato"
+  },
+  {
+    "id": "paseo-shopping-ambato",
+    "nombre": "Paseo Shopping Ambato",
+    "ciudad": "Ambato",
+    "direccion": "Local Óptica Los Andes — Paseo Shopping Ambato",
+    "dia_ivr": 3,
+    "whatsapp_grupo": "593999000133",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Paseo Shopping Ambato"
+  },
+  {
+    "id": "paseo-shopping-riobamba",
+    "nombre": "Paseo Shopping Riobamba",
+    "ciudad": "Riobamba",
+    "direccion": "Local Óptica Los Andes — Paseo Shopping Riobamba",
+    "dia_ivr": 3,
+    "whatsapp_grupo": "593999000134",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Paseo Shopping Riobamba"
+  },
+  {
+    "id": "plaza-aki-ibarra",
+    "nombre": "Plaza Aki Ibarra",
+    "ciudad": "Ibarra",
+    "direccion": "Local Óptica Los Andes — Plaza Aki Ibarra",
+    "dia_ivr": 3,
+    "whatsapp_grupo": "593999000135",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Plaza Aki Ibarra"
+  },
+  {
+    "id": "quicentro-shopping-norte",
+    "nombre": "Quicentro Shopping Norte",
+    "ciudad": "Quito",
+    "direccion": "Local Óptica Los Andes — Quicentro Shopping Norte",
+    "dia_ivr": 3,
+    "whatsapp_grupo": "593999000136",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Quicentro Shopping Norte"
+  },
+  {
+    "id": "quicentro-shopping-osh",
+    "nombre": "Quicentro Shopping Osh",
+    "ciudad": "Quito",
+    "direccion": "Local Óptica Los Andes — Quicentro Shopping Osh",
+    "dia_ivr": 3,
+    "whatsapp_grupo": "593999000137",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Quicentro Shopping Osh"
+  },
+  {
+    "id": "multiplaza-riobamba",
+    "nombre": "Multiplaza Riobamba",
+    "ciudad": "Riobamba",
+    "direccion": "Local Óptica Los Andes — Multiplaza Riobamba",
+    "dia_ivr": 3,
+    "whatsapp_grupo": "593999000138",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Multiplaza Riobamba"
+  },
+  {
+    "id": "riocentro-6-de-dic-ola",
+    "nombre": "Riocentro 6 de Dic Ola",
+    "ciudad": "Quito",
+    "direccion": "Local Óptica Los Andes — Riocentro 6 de Dic Ola",
+    "dia_ivr": 3,
+    "whatsapp_grupo": "593999000139",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Riocentro 6 de Dic Ola"
+  },
+  {
+    "id": "san-luis",
+    "nombre": "San Luis",
+    "ciudad": "Quito",
+    "direccion": "Local Óptica Los Andes — San Luis",
+    "dia_ivr": 3,
+    "whatsapp_grupo": "593999000140",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — San Luis"
+  },
+  {
+    "id": "san-luis-shopping-osh",
+    "nombre": "San Luis Shopping Osh",
+    "ciudad": "Quito",
+    "direccion": "Local Óptica Los Andes — San Luis Shopping Osh",
+    "dia_ivr": 3,
+    "whatsapp_grupo": "593999000141",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — San Luis Shopping Osh"
+  },
+  {
+    "id": "supermaxi-12-de-octubre",
+    "nombre": "Supermaxi 12 de Octubre",
+    "ciudad": "Quito",
+    "direccion": "Local Óptica Los Andes — Supermaxi 12 de Octubre",
+    "dia_ivr": 3,
+    "whatsapp_grupo": "593999000142",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Supermaxi 12 de Octubre"
+  },
+  {
+    "id": "el-dorado",
+    "nombre": "El Dorado",
     "ciudad": "Guayaquil",
-    "direccion": "Av. Carlos Luis Plaza Dañín S/N y Av. Francisco de Orellana, Local #25",
-    "whatsapp_grupo": "593999000011",
-    "whatsapp_grupo_nombre": "Apoyo Garantías — San Marino Shopping"
+    "direccion": "Local Óptica Los Andes — El Dorado",
+    "dia_ivr": 3,
+    "whatsapp_grupo": "593999000143",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — El Dorado"
   },
   {
-    "id": "gye-riocentro-ceibos",
-    "nombre": "Riocentro Los Ceibos",
+    "id": "mall-del-pacifico-manta",
+    "nombre": "Mall del Pacifico Manta",
+    "ciudad": "Manta",
+    "direccion": "Local Óptica Los Andes — Mall del Pacifico Manta",
+    "dia_ivr": 3,
+    "whatsapp_grupo": "593999000144",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Mall del Pacifico Manta"
+  },
+  {
+    "id": "mall-del-pacifico-manta-2",
+    "nombre": "Mall del Pacifico Manta 2",
+    "ciudad": "Manta",
+    "direccion": "Local Óptica Los Andes — Mall del Pacifico Manta 2",
+    "dia_ivr": 4,
+    "whatsapp_grupo": "593999000145",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Mall del Pacifico Manta 2"
+  },
+  {
+    "id": "mall-del-sol-1",
+    "nombre": "Mall del Sol 1",
     "ciudad": "Guayaquil",
-    "direccion": "Av. El Bombero S/N y Leopoldo Carrera, Km 6 Vía a la Costa, Local #50",
-    "whatsapp_grupo": "593999000012",
-    "whatsapp_grupo_nombre": "Apoyo Garantías — Riocentro Los Ceibos"
+    "direccion": "Local Óptica Los Andes — Mall del Sol 1",
+    "dia_ivr": 4,
+    "whatsapp_grupo": "593999000146",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Mall del Sol 1"
   },
   {
-    "id": "gye-mall-del-sol",
-    "nombre": "Mall del Sol",
+    "id": "portoviejo-multiplaza",
+    "nombre": "Portoviejo Multiplaza",
+    "ciudad": "Portoviejo",
+    "direccion": "Local Óptica Los Andes — Portoviejo Multiplaza",
+    "dia_ivr": 4,
+    "whatsapp_grupo": "593999000147",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Portoviejo Multiplaza"
+  },
+  {
+    "id": "paseo-shopping-duran-outlet",
+    "nombre": "Paseo Shopping Duran Outlet",
+    "ciudad": "Durán",
+    "direccion": "Local Óptica Los Andes — Paseo Shopping Duran Outlet",
+    "dia_ivr": 4,
+    "whatsapp_grupo": "593999000148",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Paseo Shopping Duran Outlet"
+  },
+  {
+    "id": "paseo-shopping-machala",
+    "nombre": "Paseo Shopping Machala",
+    "ciudad": "Machala",
+    "direccion": "Local Óptica Los Andes — Paseo Shopping Machala",
+    "dia_ivr": 4,
+    "whatsapp_grupo": "593999000149",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Paseo Shopping Machala"
+  },
+  {
+    "id": "paseo-shopping-manta",
+    "nombre": "Paseo Shopping Manta",
+    "ciudad": "Manta",
+    "direccion": "Local Óptica Los Andes — Paseo Shopping Manta",
+    "dia_ivr": 4,
+    "whatsapp_grupo": "593999000150",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Paseo Shopping Manta"
+  },
+  {
+    "id": "paseo-shopping-portoviejo",
+    "nombre": "Paseo Shopping Portoviejo",
+    "ciudad": "Portoviejo",
+    "direccion": "Local Óptica Los Andes — Paseo Shopping Portoviejo",
+    "dia_ivr": 4,
+    "whatsapp_grupo": "593999000151",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Paseo Shopping Portoviejo"
+  },
+  {
+    "id": "paseo-shopping-quevedo",
+    "nombre": "Paseo Shopping Quevedo",
+    "ciudad": "Quevedo",
+    "direccion": "Local Óptica Los Andes — Paseo Shopping Quevedo",
+    "dia_ivr": 4,
+    "whatsapp_grupo": "593999000152",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Paseo Shopping Quevedo"
+  },
+  {
+    "id": "plaza-el-batan-gye",
+    "nombre": "Plaza el Batan GYE",
     "ciudad": "Guayaquil",
-    "direccion": "Av. Constitución S/N y Juan Tanga Marengo, Local B-27",
-    "whatsapp_grupo": "593999000013",
-    "whatsapp_grupo_nombre": "Apoyo Garantías — Mall del Sol"
+    "direccion": "Local Óptica Los Andes — Plaza el Batan GYE",
+    "dia_ivr": 4,
+    "whatsapp_grupo": "593999000153",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Plaza el Batan GYE"
   },
   {
-    "id": "gye-citymall",
-    "nombre": "Citymall",
+    "id": "riocentro-entre-rios",
+    "nombre": "Riocentro Entre Rios",
     "ciudad": "Guayaquil",
-    "direccion": "Calle Felipe Pezo S/N y Benjamín Carrión, Local #147-148",
-    "whatsapp_grupo": "593999000014",
-    "whatsapp_grupo_nombre": "Apoyo Garantías — Citymall"
+    "direccion": "Local Óptica Los Andes — Riocentro Entre Rios",
+    "dia_ivr": 4,
+    "whatsapp_grupo": "593999000154",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Riocentro Entre Rios"
   },
   {
-    "id": "gye-riocentro-norte",
-    "nombre": "Riocentro Norte",
+    "id": "riocentro-entre-rios-sgh",
+    "nombre": "Riocentro Entre Rios Sgh",
     "ciudad": "Guayaquil",
-    "direccion": "Av. Francisco de Orellana S/N y Av. Guillermo Pareja Rolando, Local #4-5-6",
-    "whatsapp_grupo": "593999000015",
-    "whatsapp_grupo_nombre": "Apoyo Garantías — Riocentro Norte"
+    "direccion": "Local Óptica Los Andes — Riocentro Entre Rios Sgh",
+    "dia_ivr": 4,
+    "whatsapp_grupo": "593999000155",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Riocentro Entre Rios Sgh"
   },
   {
-    "id": "gye-riocentro-sur",
-    "nombre": "Riocentro Sur",
+    "id": "san-marino",
+    "nombre": "San Marino",
     "ciudad": "Guayaquil",
-    "direccion": "Av. 25 de Julio, Local #8",
-    "whatsapp_grupo": "593999000016",
-    "whatsapp_grupo_nombre": "Apoyo Garantías — Riocentro Sur"
+    "direccion": "Local Óptica Los Andes — San Marino",
+    "dia_ivr": 4,
+    "whatsapp_grupo": "593999000156",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — San Marino"
   },
   {
-    "id": "gye-mall-del-sur",
+    "id": "village-plaza",
+    "nombre": "Village Plaza",
+    "ciudad": "Guayaquil",
+    "direccion": "Local Óptica Los Andes — Village Plaza",
+    "dia_ivr": 4,
+    "whatsapp_grupo": "593999000157",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Village Plaza"
+  },
+  {
+    "id": "city-mall",
+    "nombre": "City Mall",
+    "ciudad": "Guayaquil",
+    "direccion": "Local Óptica Los Andes — City Mall",
+    "dia_ivr": 4,
+    "whatsapp_grupo": "593999000158",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — City Mall"
+  },
+  {
+    "id": "hiper-daule",
+    "nombre": "Hiper Daule",
+    "ciudad": "Daule",
+    "direccion": "Local Óptica Los Andes — Hiper Daule",
+    "dia_ivr": 4,
+    "whatsapp_grupo": "593999000159",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Hiper Daule"
+  },
+  {
+    "id": "mall-del-sur",
     "nombre": "Mall del Sur",
     "ciudad": "Guayaquil",
-    "direccion": "Av. 25 de Julio S/N, Local #4",
-    "whatsapp_grupo": "593999000017",
+    "direccion": "Local Óptica Los Andes — Mall del Sur",
+    "dia_ivr": 5,
+    "whatsapp_grupo": "593999000160",
     "whatsapp_grupo_nombre": "Apoyo Garantías — Mall del Sur"
   },
   {
-    "id": "gye-village-plaza",
-    "nombre": "Village Plaza",
+    "id": "mall-el-fortin-outlet",
+    "nombre": "Mall el Fortin Outlet",
+    "ciudad": "Quito",
+    "direccion": "Local Óptica Los Andes — Mall el Fortin Outlet",
+    "dia_ivr": 5,
+    "whatsapp_grupo": "593999000161",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Mall el Fortin Outlet"
+  },
+  {
+    "id": "paseo-shopping-peninsula",
+    "nombre": "Paseo Shopping Peninsula",
     "ciudad": "Guayaquil",
-    "direccion": "Vía Samborondón Km 1½, Local #7",
-    "whatsapp_grupo": "593999000018",
-    "whatsapp_grupo_nombre": "Apoyo Garantías — Village Plaza"
+    "direccion": "Local Óptica Los Andes — Paseo Shopping Peninsula",
+    "dia_ivr": 5,
+    "whatsapp_grupo": "593999000162",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Paseo Shopping Peninsula"
+  },
+  {
+    "id": "policentro",
+    "nombre": "Policentro",
+    "ciudad": "Guayaquil",
+    "direccion": "Local Óptica Los Andes — Policentro",
+    "dia_ivr": 5,
+    "whatsapp_grupo": "593999000163",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Policentro"
+  },
+  {
+    "id": "riocentro-ceibos",
+    "nombre": "Riocentro Ceibos",
+    "ciudad": "Guayaquil",
+    "direccion": "Local Óptica Los Andes — Riocentro Ceibos",
+    "dia_ivr": 5,
+    "whatsapp_grupo": "593999000164",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Riocentro Ceibos"
+  },
+  {
+    "id": "riocentro-los-ceibos-2",
+    "nombre": "Riocentro los Ceibos 2",
+    "ciudad": "Guayaquil",
+    "direccion": "Local Óptica Los Andes — Riocentro los Ceibos 2",
+    "dia_ivr": 5,
+    "whatsapp_grupo": "593999000165",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Riocentro los Ceibos 2"
+  },
+  {
+    "id": "riocentro-norte",
+    "nombre": "Riocentro Norte",
+    "ciudad": "Guayaquil",
+    "direccion": "Local Óptica Los Andes — Riocentro Norte",
+    "dia_ivr": 5,
+    "whatsapp_grupo": "593999000166",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Riocentro Norte"
+  },
+  {
+    "id": "riocentro-sur",
+    "nombre": "Riocentro Sur",
+    "ciudad": "Guayaquil",
+    "direccion": "Local Óptica Los Andes — Riocentro Sur",
+    "dia_ivr": 5,
+    "whatsapp_grupo": "593999000167",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Riocentro Sur"
+  },
+  {
+    "id": "rotonda",
+    "nombre": "Rotonda",
+    "ciudad": "Guayaquil",
+    "direccion": "Local Óptica Los Andes — Rotonda",
+    "dia_ivr": 5,
+    "whatsapp_grupo": "593999000168",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Rotonda"
+  },
+  {
+    "id": "mall-del-norte",
+    "nombre": "Mall del Norte",
+    "ciudad": "Guayaquil",
+    "direccion": "Local Óptica Los Andes — Mall del Norte",
+    "dia_ivr": 5,
+    "whatsapp_grupo": "593999000169",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Mall del Norte"
+  },
+  {
+    "id": "plaza-pacifico",
+    "nombre": "Plaza Pacifico",
+    "ciudad": "Guayaquil",
+    "direccion": "Local Óptica Los Andes — Plaza Pacifico",
+    "dia_ivr": 5,
+    "whatsapp_grupo": "593999000170",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Plaza Pacifico"
+  },
+  {
+    "id": "quicentro-shopping-2-sgh",
+    "nombre": "Quicentro Shopping 2 Sgh",
+    "ciudad": "Quito",
+    "direccion": "Local Óptica Los Andes — Quicentro Shopping 2 Sgh",
+    "dia_ivr": 5,
+    "whatsapp_grupo": "593999000171",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Quicentro Shopping 2 Sgh"
+  },
+  {
+    "id": "buijo",
+    "nombre": "Buijo",
+    "ciudad": "Machala",
+    "direccion": "Local Óptica Los Andes — Buijo",
+    "dia_ivr": 5,
+    "whatsapp_grupo": "593999000172",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Buijo"
+  },
+  {
+    "id": "mall-del-alto",
+    "nombre": "Mall del Alto",
+    "ciudad": "Cuenca",
+    "direccion": "Local Óptica Los Andes — Mall del Alto",
+    "dia_ivr": 5,
+    "whatsapp_grupo": "593999000173",
+    "whatsapp_grupo_nombre": "Apoyo Garantías — Mall del Alto"
   },
   {
     "id": "central-call-center",
     "nombre": "Call Center Central",
     "ciudad": "Nacional",
     "direccion": "1800 ÓPTICA (678422) — Coordinación nacional de garantías",
+    "dia_ivr": 0,
     "whatsapp_grupo": "5931800678422",
     "whatsapp_grupo_nombre": "Apoyo Garantías — Call Center Central"
   }

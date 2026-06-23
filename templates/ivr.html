@@ -5,9 +5,11 @@
 <div class="space-y-6">
   <div class="flex flex-wrap items-start justify-between gap-4">
     <div>
-      <h2 class="text-xl sm:text-2xl font-bold text-slate-800">📞 Verificación IVR — Todas las Tiendas</h2>
-      <p class="text-slate-500">Marque si el IVR funciona en cada local. Se guarda fecha, hora y comentario.</p>
-      <p class="text-sm text-slate-400 mt-1">Semana actual: <strong>{{ semana_actual }}</strong></p>
+      <h2 class="text-xl sm:text-2xl font-bold text-slate-800">📞 Verificación IVR — {{ total_tiendas }} Tiendas</h2>
+      <p class="text-slate-500">Plan semanal: <strong>15 tiendas por día</strong> (lunes a viernes). Use las sugerencias rápidas en cada tarjeta.</p>
+      <p class="text-sm text-slate-400 mt-1">Semana actual: <strong>{{ semana_actual }}</strong>
+        {% if dia_hoy %} · Hoy: <strong>{{ nombre_dia_hoy }}</strong> (Día {{ dia_hoy }}){% else %} · Fin de semana — seleccione un día{% endif %}
+      </p>
     </div>
     <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto sm:justify-end">
       <a href="/api/ivr/exportar?semana={{ semana_actual }}" id="btn-exportar-ivr"
@@ -32,26 +34,49 @@
       <input type="text" id="verificador-ivr" placeholder="Ej: María González — Equipo TI"
         class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
     </div>
-    <p class="text-xs text-slate-400 pb-2">Se usará en cada marca ✓ / ✗ y en Google Sheets</p>
+    <p class="text-xs text-slate-400 pb-2">Se usa en el script de llamada y en cada registro</p>
   </div>
 
-  <div class="flex gap-2 overflow-x-auto overflow-touch pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
-    {% for c in ciudades %}
-    <button class="filtro-ciudad shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-white hover:bg-slate-50 whitespace-nowrap" data-ciudad="{{ c }}">{{ c }}</button>
-    {% endfor %}
-    <button class="filtro-ciudad shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-optica-600 text-white whitespace-nowrap" data-ciudad="">Todas</button>
+  <div class="bg-optica-50 border border-optica-200 rounded-2xl p-4 space-y-3">
+    <p class="text-sm font-semibold text-slate-700">📅 Día de verificación</p>
+    <div class="flex gap-2 overflow-x-auto overflow-touch pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible">
+      {% if dia_hoy %}
+      <button type="button" class="filtro-dia shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-optica-600 text-white whitespace-nowrap" data-dia="hoy">
+        📅 Hoy — {{ nombre_dia_hoy }} ({{ conteo_dia[dia_hoy] }})
+      </button>
+      {% endif %}
+      {% for d in range(1, 6) %}
+      <button type="button" class="filtro-dia shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-white hover:bg-slate-50 whitespace-nowrap {% if not dia_hoy and d == 1 %}bg-optica-600 text-white{% endif %}" data-dia="{{ d }}">
+        Día {{ d }} ({{ conteo_dia[d] }})
+      </button>
+      {% endfor %}
+      <button type="button" class="filtro-dia shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-white hover:bg-slate-50 whitespace-nowrap" data-dia="todas">
+        Todas ({{ total_tiendas }})
+      </button>
+    </div>
   </div>
 
+  <div>
+    <p class="text-sm font-semibold text-slate-600 mb-2">🏙️ Filtrar por ciudad</p>
+    <div class="flex gap-2 overflow-x-auto overflow-touch pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
+      {% for c in ciudades %}
+      <button class="filtro-ciudad shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-white hover:bg-slate-50 whitespace-nowrap" data-ciudad="{{ c }}">{{ c }}</button>
+      {% endfor %}
+      <button class="filtro-ciudad shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-optica-600 text-white whitespace-nowrap" data-ciudad="">Todas</button>
+    </div>
+  </div>
+
+  <p id="ivr-contador" class="text-sm text-slate-500"></p>
   <div id="ivr-grid" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"></div>
 
-  <div class="bg-white rounded-2xl shadow-sm border p-6">
+  <div class="bg-white rounded-2xl shadow-sm border p-4 sm:p-6">
     <h3 class="font-bold text-slate-800 mb-4">📋 Registros recientes IVR</h3>
     <div id="ivr-historial" class="text-sm text-slate-500">Cargando...</div>
   </div>
 </div>
 
 <div id="modal-editar-ivr" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40">
-  <div class="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl border w-full max-w-md max-h-[90vh] overflow-y-auto p-5 sm:p-6 space-y-4">
+  <div class="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl border w-full max-w-lg max-h-[90vh] overflow-y-auto p-5 sm:p-6 space-y-4">
     <div class="flex items-start justify-between gap-3">
       <div>
         <h3 class="font-bold text-slate-800 text-lg">✏️ Modificar registro IVR</h3>
@@ -61,17 +86,12 @@
     </div>
     <input type="hidden" id="editar-ivr-id">
     <div>
-      <label class="block text-sm font-medium text-slate-600 mb-2">Estado</label>
-      <div class="flex gap-2">
-        <button type="button" id="editar-funciona-si"
-          class="flex-1 py-2.5 rounded-xl font-bold text-sm border border-emerald-200 bg-emerald-50 text-emerald-700">✓ Funciona</button>
-        <button type="button" id="editar-funciona-no"
-          class="flex-1 py-2.5 rounded-xl font-bold text-sm border border-red-200 bg-red-50 text-red-700">✗ No funciona</button>
-      </div>
+      <label class="block text-sm font-medium text-slate-600 mb-2">Sugerencias de estado</label>
+      <div id="editar-sugerencias" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
     </div>
     <div>
-      <label class="block text-sm font-medium text-slate-600 mb-1">Comentario</label>
-      <textarea id="editar-comentario" rows="3"
+      <label class="block text-sm font-medium text-slate-600 mb-1">Comentario adicional (opcional)</label>
+      <textarea id="editar-comentario" rows="2" placeholder="Nota extra si aplica..."
         class="w-full border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-optica-500 outline-none"></textarea>
     </div>
     <div>
@@ -98,6 +118,7 @@
 <script>
   window.TIENDAS_IVR = {{ tiendas_json | safe }};
   window.SEMANA_ACTUAL = "{{ semana_actual }}";
+  window.DIA_HOY = {{ dia_hoy if dia_hoy else 'null' }};
 </script>
 <script src="/static/js/ivr.js"></script>
 {% endblock %}
