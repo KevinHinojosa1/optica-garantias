@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from templates_shared import templates
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -9,7 +9,7 @@ from services.import_service import ImportService
 from services.tiendas_service import TiendasService
 
 router = APIRouter(tags=["Módulo 1 - Importación"])
-templates = Jinja2Templates(directory="templates")
+
 
 
 @router.get("/importar", response_class=HTMLResponse)

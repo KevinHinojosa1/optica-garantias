@@ -7,6 +7,9 @@ let ciudadFiltro = '';
 let diaFiltro = window.DIA_HOY ? 'hoy' : '1';
 let estados = {};
 
+const BTN_FILTRO = 'shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium glass-btn whitespace-nowrap text-slate-600';
+const BTN_FILTRO_ACTIVE = BTN_FILTRO + ' glass-btn-active';
+
 const SUGERENCIAS_IVR = [
   {
     texto: 'Funciona bien IVR',
@@ -69,12 +72,12 @@ function claseSugerencia(comentario, sugerencia) {
 function claseValBoton(funciona, esperado) {
   if (funciona === esperado) {
     return esperado
-      ? 'bg-emerald-600 text-white ring-2 ring-emerald-300 border-emerald-600'
-      : 'bg-red-600 text-white ring-2 ring-red-300 border-red-600';
+      ? 'glass-btn glass-val-ok glass-val-ok-active border'
+      : 'glass-btn glass-val-no glass-val-no-active border';
   }
   return esperado
-    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-    : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100';
+    ? 'glass-btn glass-val-ok border hover:opacity-90'
+    : 'glass-btn glass-val-no border hover:opacity-90';
 }
 
 function htmlSugerencias(tiendaId, comentarioActual) {
@@ -100,9 +103,9 @@ function htmlSugerenciasEditar(comentarioActual) {
 
 function setFiltroDiaActivo(btn) {
   document.querySelectorAll('.filtro-dia').forEach(b => {
-    b.className = 'filtro-dia shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-white hover:bg-slate-50 whitespace-nowrap';
+    b.className = 'filtro-dia ' + BTN_FILTRO;
   });
-  btn.className = 'filtro-dia shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-optica-600 text-white whitespace-nowrap';
+  btn.className = 'filtro-dia ' + BTN_FILTRO_ACTIVE;
   diaFiltro = btn.dataset.dia;
   renderGrid();
 }
@@ -114,9 +117,9 @@ document.querySelectorAll('.filtro-dia').forEach(btn => {
 document.querySelectorAll('.filtro-ciudad').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.filtro-ciudad').forEach(b => {
-      b.className = 'filtro-ciudad shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-white hover:bg-slate-50 whitespace-nowrap';
+      b.className = 'filtro-ciudad ' + BTN_FILTRO;
     });
-    btn.className = 'filtro-ciudad shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-optica-600 text-white whitespace-nowrap';
+    btn.className = 'filtro-ciudad ' + BTN_FILTRO_ACTIVE;
     ciudadFiltro = btn.dataset.ciudad;
     renderGrid();
   });
@@ -157,50 +160,50 @@ function cardTienda(tienda) {
   const gestionExtra = comentario && !esSugerencia ? comentario : '';
 
   return `
-    <div class="bg-white rounded-2xl shadow-sm border p-4 sm:p-5 flex flex-col gap-3" id="card-${tienda.id}">
+    <div class="glass-card p-4 sm:p-5 flex flex-col gap-3" id="card-${tienda.id}">
       <div>
-        <div class="flex flex-wrap items-center gap-2 mb-1">
-          <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-optica-50 text-optica-700 border border-optica-200">Día ${tienda.dia_ivr}</span>
-          <p class="text-xs font-semibold text-optica-600 uppercase">${escapeHtml(tienda.ciudad)}</p>
-          ${funciona === true ? '<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">IVR Vale: 1</span>' : ''}
-          ${funciona === false ? '<span class="text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-800 border border-red-300">IVR Vale: 0</span>' : ''}
+        <div class="flex flex-wrap items-center gap-2 mb-1.5">
+          <span class="glass-pill text-xs font-medium px-2 py-0.5 rounded-full text-slate-600">Día ${tienda.dia_ivr}</span>
+          <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">${escapeHtml(tienda.ciudad)}</span>
+          ${funciona === true ? '<span class="glass-pill text-xs font-semibold px-2 py-0.5 rounded-full text-emerald-700">Vale: 1</span>' : ''}
+          ${funciona === false ? '<span class="glass-pill text-xs font-semibold px-2 py-0.5 rounded-full text-red-600">Vale: 0</span>' : ''}
         </div>
-        <h4 class="font-bold text-slate-800 leading-snug">${escapeHtml(tienda.nombre)}</h4>
-        <p class="text-xs text-slate-400 mt-1">Última verificación: ${verificado}</p>
-        ${comentario && esSugerencia ? `<p class="text-xs font-medium text-slate-600 mt-1 bg-slate-50 rounded-lg px-2 py-1 border">${escapeHtml(comentario)}</p>` : ''}
+        <h4 class="font-semibold text-slate-800 leading-snug">${escapeHtml(tienda.nombre)}</h4>
+        <p class="text-xs text-slate-400 mt-1">${verificado}</p>
+        ${comentario && esSugerencia ? `<p class="text-xs text-slate-600 mt-2 glass-card-inner px-2.5 py-1.5">${escapeHtml(comentario)}</p>` : ''}
       </div>
-      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-        <p class="text-xs font-semibold text-slate-500 uppercase mb-1">🎙️ Script de llamada</p>
-        <p class="script-llamada text-sm text-slate-700 leading-relaxed italic">${escapeHtml(scriptLlamada(nombreVerificador()))}</p>
+      <div class="glass-card-inner p-3">
+        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Script</p>
+        <p class="script-llamada text-sm text-slate-600 leading-relaxed italic">${escapeHtml(scriptLlamada(nombreVerificador()))}</p>
       </div>
-      <div class="flex items-center justify-between gap-3 p-3 rounded-xl border border-slate-200 bg-white">
+      <div class="flex items-center justify-between gap-3 glass-card-inner p-3">
         <div>
-          <p class="text-xs font-semibold text-slate-600 uppercase">Verificación IVR</p>
-          <p class="text-xs text-slate-400">✓ = 1 en reporte · ✗ = 0</p>
+          <p class="text-xs font-medium text-slate-600 uppercase tracking-wide">IVR Vale</p>
+          <p class="text-xs text-slate-400">✓ → 1 · ✗ → 0</p>
         </div>
         <div class="flex gap-2 shrink-0">
           <button type="button" onclick="marcarValIvr('${tienda.id}', true)"
-            class="w-11 h-11 rounded-xl font-bold text-lg border transition ${claseValBoton(funciona, true)}" title="IVR vale — guarda 1">✓</button>
+            class="w-10 h-10 rounded-xl font-semibold text-base transition ${claseValBoton(funciona, true)}" title="Guardar 1">✓</button>
           <button type="button" onclick="marcarValIvr('${tienda.id}', false)"
-            class="w-11 h-11 rounded-xl font-bold text-lg border transition ${claseValBoton(funciona, false)}" title="IVR no vale — guarda 0">✗</button>
+            class="w-10 h-10 rounded-xl font-semibold text-base transition ${claseValBoton(funciona, false)}" title="Guardar 0">✗</button>
         </div>
       </div>
       <div>
-        <p class="text-xs font-semibold text-slate-500 uppercase mb-2">Sugerencias rápidas</p>
+        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Sugerencias</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           ${htmlSugerencias(tienda.id, comentario)}
         </div>
       </div>
       <div>
-        <label class="block text-xs font-medium text-slate-500 mb-1">Detalle de gestión (opcional)</label>
-        <textarea id="gestion-${tienda.id}" rows="2" placeholder="Nota operativa adicional..."
-          class="w-full border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-optica-500 outline-none">${escapeHtml(gestionExtra)}</textarea>
+        <label class="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Detalle gestión</label>
+        <textarea id="gestion-${tienda.id}" rows="2" placeholder="Nota operativa..."
+          class="glass-textarea w-full px-3 py-2 text-sm">${escapeHtml(gestionExtra)}</textarea>
       </div>
-      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3">
-        <label class="block text-xs font-semibold text-slate-700 mb-1">📝 Comentario de auditoría</label>
-        <p class="text-xs text-slate-500 mb-2">Observaciones del equipo de control de calidad tras la gestión.</p>
-        <textarea id="auditoria-${tienda.id}" rows="3" placeholder="Ej: Se validó el flujo. Se recomienda revisar el mensaje de bienvenida..."
-          class="w-full border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-optica-500 outline-none bg-white">${escapeHtml(auditoria)}</textarea>
+      <div class="glass-card-inner p-3">
+        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Auditoría</label>
+        <p class="text-xs text-slate-500 mb-2">Comentario de control de calidad.</p>
+        <textarea id="auditoria-${tienda.id}" rows="3" placeholder="Observaciones del auditor..."
+          class="glass-textarea w-full px-3 py-2 text-sm">${escapeHtml(auditoria)}</textarea>
       </div>
       <p id="status-${tienda.id}" class="text-xs text-slate-400 min-h-[1rem]"></p>
     </div>
@@ -295,8 +298,8 @@ function actualizarBotonesValEditar() {
   const btnSi = document.getElementById('editar-val-si');
   const btnNo = document.getElementById('editar-val-no');
   if (!btnSi || !btnNo) return;
-  btnSi.className = `flex-1 py-2.5 rounded-xl font-bold text-lg border transition ${claseValBoton(editarFunciona, true)}`;
-  btnNo.className = `flex-1 py-2.5 rounded-xl font-bold text-lg border transition ${claseValBoton(editarFunciona, false)}`;
+  btnSi.className = `flex-1 py-2.5 rounded-xl font-semibold text-lg transition ${claseValBoton(editarFunciona, true)}`;
+  btnNo.className = `flex-1 py-2.5 rounded-xl font-semibold text-lg transition ${claseValBoton(editarFunciona, false)}`;
 }
 
 function seleccionarSugerenciaEditar(sugerencia) {

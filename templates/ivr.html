@@ -2,126 +2,127 @@
 {% block title %}Verificación IVR{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-  <div class="flex flex-wrap items-start justify-between gap-4">
-    <div>
-      <h2 class="text-xl sm:text-2xl font-bold text-slate-800">📞 Verificación IVR — {{ total_tiendas }} Tiendas</h2>
-      <p class="text-slate-500">Plan semanal: <strong>15 tiendas por día</strong> (lunes a viernes). Use las sugerencias rápidas en cada tarjeta.</p>
-      <p class="text-sm text-slate-400 mt-1">Semana actual: <strong>{{ semana_actual }}</strong>
-        {% if dia_hoy %} · Hoy: <strong>{{ nombre_dia_hoy }}</strong> (Día {{ dia_hoy }}){% else %} · Fin de semana — seleccione un día{% endif %}
-      </p>
-    </div>
-    <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto sm:justify-end">
-      <a href="/api/ivr/exportar?semana={{ semana_actual }}" id="btn-exportar-ivr"
-        class="w-full sm:w-auto text-center bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center justify-center gap-2">
-        📥 Exportar Excel
-      </a>
-      {% if google_sheets_activo %}
-      <span class="inline-flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 sm:px-4 py-2 rounded-xl text-center">
-        ✅ Conectado a Google Sheets
-      </span>
-      {% else %}
-      <span class="inline-flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 sm:px-4 py-2 rounded-xl text-center">
-        ⚠️ Solo base local
-      </span>
-      {% endif %}
+<div class="space-y-5">
+  <div class="glass-card p-5 sm:p-6">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <p class="text-xs font-medium text-optica-600 uppercase tracking-wide mb-1">Módulo IVR · v{{ asset_version }}</p>
+        <h2 class="text-xl sm:text-2xl font-semibold glass-title">Verificación IVR — {{ total_tiendas }} tiendas</h2>
+        <p class="glass-subtle text-sm mt-1">15 tiendas por día · ✓ = 1 · ✗ = 0 · sugerencias + auditoría</p>
+        <p class="text-xs text-slate-400 mt-2">Semana <strong>{{ semana_actual }}</strong>
+          {% if dia_hoy %} · Hoy: <strong>{{ nombre_dia_hoy }}</strong> (día {{ dia_hoy }}){% else %} · Fin de semana{% endif %}
+        </p>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+        <a href="/api/ivr/exportar?semana={{ semana_actual }}" id="btn-exportar-ivr"
+          class="glass-btn glass-btn-active text-center font-medium px-5 py-2.5 rounded-xl transition inline-flex items-center justify-center gap-2 text-sm">
+          Exportar Excel
+        </a>
+        {% if google_sheets_activo %}
+        <span class="glass-pill inline-flex items-center justify-center text-xs font-medium text-emerald-700 px-3 py-2 rounded-xl">
+          Sheets conectado
+        </span>
+        {% else %}
+        <span class="glass-pill inline-flex items-center justify-center text-xs font-medium text-slate-500 px-3 py-2 rounded-xl">
+          Solo base local
+        </span>
+        {% endif %}
+      </div>
     </div>
   </div>
 
-  <div class="bg-white rounded-2xl shadow-sm border p-4 flex flex-wrap items-end gap-4">
+  <div class="glass-card p-4 flex flex-wrap items-end gap-4">
     <div class="flex-1 min-w-[200px]">
-      <label class="block text-sm font-medium text-slate-600 mb-1">Nombre del verificador</label>
-      <input type="text" id="verificador-ivr" placeholder="Ej: María González — Equipo TI"
-        class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+      <label class="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1.5">Verificador</label>
+      <input type="text" id="verificador-ivr" placeholder="Nombre del verificador"
+        class="glass-input w-full px-4 py-2.5 text-sm">
     </div>
-    <p class="text-xs text-slate-400 pb-2">Se usa en el script de llamada y en cada registro</p>
   </div>
 
-  <div class="bg-optica-50 border border-optica-200 rounded-2xl p-4 space-y-3">
-    <p class="text-sm font-semibold text-slate-700">📅 Día de verificación</p>
+  <div class="glass-card p-4 space-y-3">
+    <p class="text-xs font-medium text-slate-500 uppercase tracking-wide">Día de verificación</p>
     <div class="flex gap-2 overflow-x-auto overflow-touch pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible">
       {% if dia_hoy %}
-      <button type="button" class="filtro-dia shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-optica-600 text-white whitespace-nowrap" data-dia="hoy">
-        📅 Hoy — {{ nombre_dia_hoy }} ({{ conteo_dia[dia_hoy] }})
+      <button type="button" class="filtro-dia shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium glass-btn glass-btn-active whitespace-nowrap" data-dia="hoy">
+        Hoy — {{ nombre_dia_hoy }} ({{ conteo_dia[dia_hoy] }})
       </button>
       {% endif %}
       {% for d in range(1, 6) %}
-      <button type="button" class="filtro-dia shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-white hover:bg-slate-50 whitespace-nowrap {% if not dia_hoy and d == 1 %}bg-optica-600 text-white{% endif %}" data-dia="{{ d }}">
+      <button type="button" class="filtro-dia shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium glass-btn whitespace-nowrap text-slate-600 {% if not dia_hoy and d == 1 %}glass-btn-active{% endif %}" data-dia="{{ d }}">
         Día {{ d }} ({{ conteo_dia[d] }})
       </button>
       {% endfor %}
-      <button type="button" class="filtro-dia shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-white hover:bg-slate-50 whitespace-nowrap" data-dia="todas">
+      <button type="button" class="filtro-dia shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium glass-btn whitespace-nowrap text-slate-600" data-dia="todas">
         Todas ({{ total_tiendas }})
       </button>
     </div>
   </div>
 
-  <div>
-    <p class="text-sm font-semibold text-slate-600 mb-2">🏙️ Filtrar por ciudad</p>
-    <div class="flex gap-2 overflow-x-auto overflow-touch pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
+  <div class="glass-card p-4">
+    <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Ciudad</p>
+    <div class="flex gap-2 overflow-x-auto overflow-touch pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible">
       {% for c in ciudades %}
-      <button class="filtro-ciudad shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-white hover:bg-slate-50 whitespace-nowrap" data-ciudad="{{ c }}">{{ c }}</button>
+      <button class="filtro-ciudad shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium glass-btn whitespace-nowrap text-slate-600" data-ciudad="{{ c }}">{{ c }}</button>
       {% endfor %}
-      <button class="filtro-ciudad shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-optica-600 text-white whitespace-nowrap" data-ciudad="">Todas</button>
+      <button class="filtro-ciudad shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium glass-btn glass-btn-active whitespace-nowrap" data-ciudad="">Todas</button>
     </div>
   </div>
 
-  <p id="ivr-contador" class="text-sm text-slate-500"></p>
+  <p id="ivr-contador" class="text-sm text-slate-500 px-1"></p>
   <div id="ivr-grid" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"></div>
 
-  <div class="bg-white rounded-2xl shadow-sm border p-4 sm:p-6">
-    <h3 class="font-bold text-slate-800 mb-4">📋 Registros recientes IVR</h3>
+  <div class="glass-card p-4 sm:p-6">
+    <h3 class="font-semibold text-slate-700 mb-4">Registros recientes</h3>
     <div id="ivr-historial" class="text-sm text-slate-500">Cargando...</div>
   </div>
 </div>
 
-<div id="modal-editar-ivr" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/40">
-  <div class="bg-white rounded-t-2xl sm:rounded-2xl shadow-xl border w-full max-w-lg max-h-[90vh] overflow-y-auto p-5 sm:p-6 space-y-4">
+<div id="modal-editar-ivr" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 glass-modal-overlay">
+  <div class="glass-modal rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-5 sm:p-6 space-y-4">
     <div class="flex items-start justify-between gap-3">
       <div>
-        <h3 class="font-bold text-slate-800 text-lg">✏️ Modificar registro IVR</h3>
+        <h3 class="font-semibold text-slate-800 text-lg">Editar registro</h3>
         <p id="modal-ivr-tienda" class="text-sm text-slate-500 mt-1"></p>
       </div>
-      <button type="button" id="btn-cerrar-modal-ivr" class="text-slate-400 hover:text-slate-600 text-xl leading-none">&times;</button>
+      <button type="button" id="btn-cerrar-modal-ivr" class="text-slate-400 hover:text-slate-600 text-xl leading-none w-8 h-8 glass-btn rounded-lg">&times;</button>
     </div>
     <input type="hidden" id="editar-ivr-id">
     <div>
-      <label class="block text-sm font-medium text-slate-600 mb-2">IVR Vale — reporte numérico</label>
+      <label class="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">IVR Vale (reporte)</label>
       <div class="flex gap-2">
         <button type="button" id="editar-val-si"
-          class="flex-1 py-2.5 rounded-xl font-bold text-lg border border-emerald-200 bg-emerald-50 text-emerald-700">✓ 1</button>
+          class="flex-1 py-2.5 rounded-xl font-semibold text-lg glass-btn glass-val-ok border">✓ 1</button>
         <button type="button" id="editar-val-no"
-          class="flex-1 py-2.5 rounded-xl font-bold text-lg border border-red-200 bg-red-50 text-red-700">✗ 0</button>
+          class="flex-1 py-2.5 rounded-xl font-semibold text-lg glass-btn glass-val-no border">✗ 0</button>
       </div>
     </div>
     <div>
-      <label class="block text-sm font-medium text-slate-600 mb-2">Sugerencias de estado</label>
+      <label class="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Sugerencias</label>
       <div id="editar-sugerencias" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
     </div>
     <div>
-      <label class="block text-sm font-medium text-slate-600 mb-1">Detalle de gestión (opcional)</label>
-      <textarea id="editar-comentario" rows="2" placeholder="Nota operativa de la verificación..."
-        class="w-full border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-optica-500 outline-none"></textarea>
+      <label class="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Detalle de gestión</label>
+      <textarea id="editar-comentario" rows="2" placeholder="Nota operativa..."
+        class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
     </div>
-    <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
-      <label class="block text-sm font-semibold text-slate-700 mb-1">📝 Comentario de auditoría</label>
-      <p class="text-xs text-slate-500 mb-2">Observaciones del equipo de control de calidad tras la gestión.</p>
-      <textarea id="editar-auditoria" rows="3" placeholder="Ej: Se validó el flujo completo. Se recomienda revisar el mensaje de bienvenida..."
-        class="w-full border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-optica-500 outline-none bg-white"></textarea>
+    <div class="glass-card-inner p-4">
+      <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Comentario de auditoría</label>
+      <p class="text-xs text-slate-500 mb-2">Observaciones de control de calidad tras la gestión.</p>
+      <textarea id="editar-auditoria" rows="3" placeholder="Observaciones del auditor..."
+        class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
     </div>
     <div>
-      <label class="block text-sm font-medium text-slate-600 mb-1">Verificador</label>
-      <input type="text" id="editar-verificador"
-        class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
+      <label class="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Verificador</label>
+      <input type="text" id="editar-verificador" class="glass-input w-full px-4 py-2.5 text-sm">
     </div>
     <p id="editar-ivr-status" class="text-sm min-h-[1.25rem]"></p>
     <div class="flex gap-2">
       <button type="button" id="btn-guardar-editar-ivr"
-        class="flex-1 bg-optica-600 hover:bg-optica-700 text-white font-semibold py-2.5 rounded-xl transition">
-        Guardar cambios
+        class="flex-1 glass-btn glass-btn-active font-medium py-2.5 rounded-xl transition text-sm">
+        Guardar
       </button>
       <button type="button" id="btn-cancelar-editar-ivr"
-        class="px-5 py-2.5 rounded-xl border font-semibold text-slate-600 hover:bg-slate-50 transition">
+        class="px-5 py-2.5 rounded-xl glass-btn font-medium text-slate-600 text-sm">
         Cancelar
       </button>
     </div>
@@ -135,5 +136,5 @@
   window.SEMANA_ACTUAL = "{{ semana_actual }}";
   window.DIA_HOY = {{ dia_hoy if dia_hoy else 'null' }};
 </script>
-<script src="/static/js/ivr.js"></script>
+<script src="/static/js/ivr.js?v={{ asset_version }}"></script>
 {% endblock %}

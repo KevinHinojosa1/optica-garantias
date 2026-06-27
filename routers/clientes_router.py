@@ -3,7 +3,7 @@ import math
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from templates_shared import templates
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -17,7 +17,7 @@ from services.tiendas_service import TiendasService
 from services.whatsapp_service import WhatsAppService
 
 router = APIRouter(tags=["Módulo 2 - Clientes"])
-templates = Jinja2Templates(directory="templates")
+
 
 
 def cliente_to_response(cliente: Cliente, es_duplicado: bool = False) -> ClienteResponse:

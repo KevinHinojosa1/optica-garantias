@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
-from fastapi.templating import Jinja2Templates
+from templates_shared import templates
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -10,7 +10,7 @@ from services.historial_service import HistorialService
 from services.pdf_service import PdfService
 
 router = APIRouter(tags=["Módulo 5 - Historial"])
-templates = Jinja2Templates(directory="templates")
+
 
 POLITICAS = [
     {

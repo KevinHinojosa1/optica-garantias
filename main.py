@@ -54,10 +54,24 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     description="Sistema de gestión de garantías para Óptica Los Andes Ecuador",
-    version="1.0.0",
+    version="1.2.2",
     lifespan=lifespan,
 )
 
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request as StarletteRequest
+
+
+class NoCacheMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: StarletteRequest, call_next):
+        response = await call_next(request)
+        if request.url.path.startswith("/static/") or request.url.path in ("/ivr", "/"):
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+            response.headers["Pragma"] = "no-cache"
+        return response
+
+
+app.add_middleware(NoCacheMiddleware)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(import_router)

@@ -3,7 +3,7 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
-from fastapi.templating import Jinja2Templates
+from templates_shared import templates
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -13,7 +13,6 @@ from services.ivr_service import IvrService
 from services.tiendas_service import TiendasService
 
 router = APIRouter(tags=["Módulo 6 - IVR"])
-templates = Jinja2Templates(directory="templates")
 
 
 def _ivr_response(reg, sheets: dict | None = None) -> IvrRegistroResponse:

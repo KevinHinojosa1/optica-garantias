@@ -2,7 +2,7 @@ import json
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
-from fastapi.templating import Jinja2Templates
+from templates_shared import templates
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -19,7 +19,7 @@ from services.scripts_service import ScriptsService
 from services.tiendas_service import TiendasService
 
 router = APIRouter(tags=["Módulo 7 - Scripts"])
-templates = Jinja2Templates(directory="templates")
+
 
 
 @router.get("/scripts", response_class=HTMLResponse)
