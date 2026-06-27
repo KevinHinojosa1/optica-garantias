@@ -31,6 +31,12 @@ class IvrService:
         year, week, _ = f.isocalendar()
         return f"{year}-W{week:02d}"
 
+    @staticmethod
+    def ivr_vale(funciona: bool | None) -> int | None:
+        if funciona is None:
+            return None
+        return 1 if funciona else 0
+
     @classmethod
     def registrar(
         cls,
@@ -39,6 +45,7 @@ class IvrService:
         tienda_id: str,
         funciona: bool,
         comentario: str = "",
+        comentario_auditoria: str = "",
         verificado_por: str = "Sistema",
     ) -> dict:
         tienda = TiendasService.obtener(tienda_id)
@@ -55,6 +62,7 @@ class IvrService:
             ciudad=tienda["ciudad"],
             funciona=funciona,
             comentario=comentario.strip() or None,
+            comentario_auditoria=comentario_auditoria.strip() or None,
             verificado_por=verificado_por.strip() or "Sistema",
             fecha=hoy,
             semana=semana,
@@ -72,6 +80,7 @@ class IvrService:
             ciudad=tienda["ciudad"],
             funciona=funciona,
             comentario=comentario,
+            comentario_auditoria=comentario_auditoria,
             verificado_por=verificado_por,
         )
 
@@ -106,6 +115,7 @@ class IvrService:
         *,
         funciona: bool,
         comentario: str = "",
+        comentario_auditoria: str = "",
         verificado_por: str = "Sistema",
     ) -> IvrVerificacion:
         registro = cls.obtener(db, registro_id)
@@ -113,6 +123,7 @@ class IvrService:
             raise ValueError("Registro IVR no encontrado.")
         registro.funciona = funciona
         registro.comentario = comentario.strip() or None
+        registro.comentario_auditoria = comentario_auditoria.strip() or None
         registro.verificado_por = verificado_por.strip() or "Sistema"
         db.commit()
         db.refresh(registro)
@@ -152,7 +163,9 @@ class IvrService:
                         "tienda_nombre": t["nombre"],
                         "ciudad": t["ciudad"],
                         "funciona": u.funciona,
+                        "ivr_vale": IvrService.ivr_vale(u.funciona),
                         "comentario": u.comentario,
+                        "comentario_auditoria": u.comentario_auditoria,
                         "verificado_at": u.created_at.isoformat(),
                         "verificado_por": u.verificado_por,
                         "semana": u.semana,
@@ -165,7 +178,9 @@ class IvrService:
                         "tienda_nombre": t["nombre"],
                         "ciudad": t["ciudad"],
                         "funciona": None,
+                        "ivr_vale": None,
                         "comentario": None,
+                        "comentario_auditoria": None,
                         "verificado_at": None,
                         "verificado_por": None,
                         "semana": sem,
@@ -185,12 +200,13 @@ class IvrService:
                 "Día IVR": tiendas_map.get(r["tienda_id"], {}).get("dia_ivr", ""),
                 "Ciudad": r["ciudad"],
                 "Tienda": r["tienda_nombre"],
-                "Estado": (
+                "IVR Vale": r["ivr_vale"] if r["ivr_vale"] is not None else "",
+                "Detalle gestión": (
                     IvrService.etiqueta_estado(r["funciona"], r["comentario"])
                     if r["funciona"] is not None
                     else "Sin verificar"
                 ),
-                "Comentario": r["comentario"] or "",
+                "Comentario auditoría": r.get("comentario_auditoria") or "",
                 "Verificador": r["verificado_por"] or "",
                 "Última verificación": (
                     datetime.fromisoformat(r["verificado_at"]).strftime("%Y-%m-%d %H:%M")
@@ -207,8 +223,9 @@ class IvrService:
                 "Semana": r.semana,
                 "Ciudad": r.ciudad,
                 "Tienda": r.tienda_nombre,
-                "Estado": IvrService.etiqueta_estado(r.funciona, r.comentario),
-                "Comentario": r.comentario or "",
+                "IVR Vale": IvrService.ivr_vale(r.funciona),
+                "Detalle gestión": IvrService.etiqueta_estado(r.funciona, r.comentario),
+                "Comentario auditoría": r.comentario_auditoria or "",
                 "Verificador": r.verificado_por,
             }
             for r in registros

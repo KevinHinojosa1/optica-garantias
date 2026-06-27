@@ -71,7 +71,8 @@ class GoogleSheetsService:
         ciudad: str,
         funciona: bool,
         comentario: str,
-        verificado_por: str,
+        comentario_auditoria: str = "",
+        verificado_por: str = "",
     ) -> dict:
         if not cls.configurado():
             return {"ok": False, "motivo": "Google Sheets no configurado"}
@@ -97,14 +98,16 @@ class GoogleSheetsService:
                         "Semana",
                         "Tienda",
                         "Ciudad",
-                        "Estado IVR",
-                        "Comentario",
+                        "IVR Vale",
+                        "Detalle gestión",
+                        "Comentario auditoría",
                         "Verificado por",
                         "Timestamp UTC",
                     ]
                 )
 
-            estado = (comentario or "").strip() or ("✅ FUNCIONA" if funciona else "❌ NO FUNCIONA")
+            ivr_vale = 1 if funciona else 0
+            detalle = (comentario or "").strip() or ("Funciona" if funciona else "No funciona")
             ws.append_row(
                 [
                     fecha.isoformat(),
@@ -112,8 +115,9 @@ class GoogleSheetsService:
                     semana,
                     tienda_nombre,
                     ciudad,
-                    estado,
-                    comentario or "",
+                    ivr_vale,
+                    detalle,
+                    comentario_auditoria or "",
                     verificado_por,
                     hora.isoformat(),
                 ],

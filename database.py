@@ -49,6 +49,12 @@ def migrate_db():
             _agregar_columna_si_falta(conn, "historial_consultas", cols, "porcentaje_descuento", "porcentaje_descuento INTEGER")
             _agregar_columna_si_falta(conn, "historial_consultas", cols, "imagen_path", "imagen_path VARCHAR(300)")
 
+        if "ivr_verificaciones" in tablas:
+            cols = {c["name"] for c in inspector.get_columns("ivr_verificaciones")}
+            _agregar_columna_si_falta(
+                conn, "ivr_verificaciones", cols, "comentario_auditoria", "comentario_auditoria TEXT"
+            )
+
 
 def init_db():
     from models import cliente, historial, ivr  # noqa: F401

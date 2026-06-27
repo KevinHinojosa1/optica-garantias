@@ -16,6 +16,26 @@ router = APIRouter(tags=["Módulo 6 - IVR"])
 templates = Jinja2Templates(directory="templates")
 
 
+def _ivr_response(reg, sheets: dict | None = None) -> IvrRegistroResponse:
+    sheets = sheets or {}
+    return IvrRegistroResponse(
+        id=reg.id,
+        tienda_id=reg.tienda_id,
+        tienda_nombre=reg.tienda_nombre,
+        ciudad=reg.ciudad,
+        funciona=reg.funciona,
+        ivr_vale=IvrService.ivr_vale(reg.funciona),
+        comentario=reg.comentario,
+        comentario_auditoria=reg.comentario_auditoria,
+        verificado_por=reg.verificado_por,
+        fecha=reg.fecha.isoformat(),
+        semana=reg.semana,
+        created_at=reg.created_at,
+        google_sheets_ok=sheets.get("ok", False),
+        google_sheets_mensaje=sheets.get("motivo", ""),
+    )
+
+
 @router.get("/ivr", response_class=HTMLResponse)
 async def pagina_ivr(request: Request):
     tiendas = TiendasService.listar_ivr()
@@ -60,24 +80,11 @@ async def registrar_ivr(payload: IvrRegistroRequest, db: Session = Depends(get_d
             tienda_id=payload.tienda_id,
             funciona=payload.funciona,
             comentario=payload.comentario,
+            comentario_auditoria=payload.comentario_auditoria,
             verificado_por=payload.verificado_por,
         )
         reg = resultado["registro"]
-        sheets = resultado["google_sheets"]
-        return IvrRegistroResponse(
-            id=reg.id,
-            tienda_id=reg.tienda_id,
-            tienda_nombre=reg.tienda_nombre,
-            ciudad=reg.ciudad,
-            funciona=reg.funciona,
-            comentario=reg.comentario,
-            verificado_por=reg.verificado_por,
-            fecha=reg.fecha.isoformat(),
-            semana=reg.semana,
-            created_at=reg.created_at,
-            google_sheets_ok=sheets.get("ok", False),
-            google_sheets_mensaje=sheets.get("motivo", ""),
-        )
+        return _ivr_response(reg, resultado["google_sheets"])
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:
@@ -96,7 +103,9 @@ async def historial_ivr(db: Session = Depends(get_db), limit: int = 50):
                 "tienda_nombre": r.tienda_nombre,
                 "ciudad": r.ciudad,
                 "funciona": r.funciona,
+                "ivr_vale": IvrService.ivr_vale(r.funciona),
                 "comentario": r.comentario,
+                "comentario_auditoria": r.comentario_auditoria,
                 "verificado_por": r.verificado_por,
                 "fecha": r.fecha.isoformat(),
                 "semana": r.semana,
@@ -120,20 +129,10 @@ async def actualizar_ivr(
             registro_id,
             funciona=payload.funciona,
             comentario=payload.comentario,
+            comentario_auditoria=payload.comentario_auditoria,
             verificado_por=payload.verificado_por,
         )
-        return IvrRegistroResponse(
-            id=reg.id,
-            tienda_id=reg.tienda_id,
-            tienda_nombre=reg.tienda_nombre,
-            ciudad=reg.ciudad,
-            funciona=reg.funciona,
-            comentario=reg.comentario,
-            verificado_por=reg.verificado_por,
-            fecha=reg.fecha.isoformat(),
-            semana=reg.semana,
-            created_at=reg.created_at,
-        )
+        return _ivr_response(reg)
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except Exception as exc:

@@ -15,6 +15,7 @@ class IvrVerificacion(Base):
     ciudad: Mapped[str] = mapped_column(String(80), nullable=False)
     funciona: Mapped[bool] = mapped_column(Boolean, nullable=False)
     comentario: Mapped[str | None] = mapped_column(Text, nullable=True)
+    comentario_auditoria: Mapped[str | None] = mapped_column(Text, nullable=True)
     verificado_por: Mapped[str] = mapped_column(String(100), nullable=False, default="Sistema")
     fecha: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     semana: Mapped[str] = mapped_column(String(12), nullable=False, index=True)
