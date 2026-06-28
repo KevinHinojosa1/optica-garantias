@@ -69,16 +69,25 @@ function construirFichaDesdeFormulario() {
   };
 }
 
+function grupoActivo() {
+  if (!grupoFiltro) return null;
+  return datos.grupos.find(g => g.id === grupoFiltro) || null;
+}
+
 function esPosventa() {
   return grupoFiltro === 'posventa';
 }
 
-function grupoPosventa() {
-  return datos.grupos.find(g => g.id === 'posventa');
+function esGarantiaNoAprobada() {
+  return grupoFiltro === 'garantia_no_aprobada';
+}
+
+function esModoSimple() {
+  return !!grupoActivo()?.solo_asesor_cliente;
 }
 
 function variables() {
-  if (esPosventa()) {
+  if (esModoSimple()) {
     return {
       asesor: val('var-asesor') || PLACEHOLDER,
       cliente: val('var-cliente') || PLACEHOLDER,
@@ -129,7 +138,7 @@ function armarWhatsAppPosventa(plantilla) {
 }
 
 async function armarWhatsAppCompleto(plantilla) {
-  if (esPosventa()) {
+  if (esModoSimple()) {
     return armarWhatsAppPosventa(plantilla);
   }
   const ficha = construirFichaDesdeFormulario();
@@ -328,30 +337,27 @@ function renderFiltros() {
   });
 }
 
-function renderPalabrasCalma() {
-  const panel = document.getElementById('panel-palabras-calma');
-  const lista = document.getElementById('lista-palabras-calma');
+function renderFrasesCopiables(panelId, listaId, items, btnClass, labelClass, btnStyle, visible) {
+  const panel = document.getElementById(panelId);
+  const lista = document.getElementById(listaId);
   if (!panel || !lista) return;
 
-  const grupo = grupoPosventa();
-  const items = grupo?.palabras_calma || [];
-
-  if (!esPosventa() || !items.length) {
+  if (!visible || !items.length) {
     panel.classList.add('hidden');
     lista.innerHTML = '';
     return;
   }
 
   panel.classList.remove('hidden');
-  lista.innerHTML = items.map((bloque, bi) => `
+  lista.innerHTML = items.map(bloque => `
     <div>
-      <p class="text-xs font-bold uppercase text-violet-700 mb-2">${escapeHtml(bloque.situacion)}</p>
+      <p class="text-xs font-bold uppercase ${labelClass} mb-2">${escapeHtml(bloque.situacion)}</p>
       <div class="flex flex-wrap gap-2">
         ${(bloque.frases || []).map(frase => {
           const texto = personalizar(frase);
           return `
             <button type="button"
-              class="btn-calma text-left text-sm bg-white border border-violet-200 hover:bg-violet-100 hover:border-violet-300 rounded-xl px-3 py-2 transition text-slate-700">
+              class="${btnClass} ${btnStyle} text-left text-sm bg-white rounded-xl px-3 py-2 transition text-slate-700">
               ${escapeHtml(texto)}
             </button>
           `;
@@ -360,32 +366,63 @@ function renderPalabrasCalma() {
     </div>
   `).join('');
 
-  lista.querySelectorAll('.btn-calma').forEach(btn => {
+  lista.querySelectorAll(`.${btnClass}`).forEach(btn => {
     btn.addEventListener('click', () => copiarTexto(btn.textContent.trim(), btn));
   });
 }
 
+function renderPalabrasCalma() {
+  const grupo = grupoActivo();
+  renderFrasesCopiables(
+    'panel-palabras-calma',
+    'lista-palabras-calma',
+    esPosventa() ? (grupo?.palabras_calma || []) : [],
+    'btn-calma',
+    'text-violet-700',
+    'border border-violet-200 hover:bg-violet-100 hover:border-violet-300',
+    esPosventa(),
+  );
+}
+
+function renderSituacionesRetiro() {
+  const grupo = grupoActivo();
+  renderFrasesCopiables(
+    'panel-situaciones-retiro',
+    'lista-situaciones-retiro',
+    esGarantiaNoAprobada() ? (grupo?.situaciones_retiro || []) : [],
+    'btn-retiro',
+    'text-amber-800',
+    'border border-amber-200 hover:bg-amber-100 hover:border-amber-300',
+    esGarantiaNoAprobada(),
+  );
+}
+
 function actualizarModoPosventa() {
-  const posventa = esPosventa();
-  document.getElementById('bloque-ficha-completa')?.classList.toggle('hidden', posventa);
-  document.getElementById('campos-ficha-extended')?.classList.toggle('hidden', posventa);
-  document.getElementById('bloque-respuesta-ia')?.classList.toggle('hidden', posventa);
-  document.getElementById('aviso-ficha-wa')?.classList.toggle('hidden', posventa);
+  const simple = esModoSimple();
+  document.getElementById('bloque-ficha-completa')?.classList.toggle('hidden', simple);
+  document.getElementById('campos-ficha-extended')?.classList.toggle('hidden', simple);
+  document.getElementById('bloque-respuesta-ia')?.classList.toggle('hidden', simple);
+  document.getElementById('aviso-ficha-wa')?.classList.toggle('hidden', simple);
 
   const titulo = document.getElementById('titulo-datos-ficha');
   const desc = document.getElementById('desc-datos-ficha');
   if (titulo) {
-    titulo.textContent = posventa
-      ? '📞 Datos de la llamada'
-      : '📋 Datos de la ficha';
+    if (esPosventa()) titulo.textContent = '📞 Datos de la llamada';
+    else if (esGarantiaNoAprobada()) titulo.textContent = '📞 Datos de la comunicación';
+    else titulo.textContent = '📋 Datos de la ficha';
   }
   if (desc) {
-    desc.textContent = posventa
-      ? 'Solo necesita el nombre del asesor y del cliente. Llamada breve de experiencia — escuche con empatía, sin indagar de más.'
-      : 'Complete manualmente o cargue desde Atención/Historial. La ficha en WhatsApp solo aparece cuando hay datos reales del cliente (nombre + tienda o factura).';
+    if (esPosventa()) {
+      desc.textContent = 'Solo necesita el nombre del asesor y del cliente. Llamada breve de experiencia — escuche con empatía, sin indagar de más.';
+    } else if (esGarantiaNoAprobada()) {
+      desc.textContent = 'Solo asesor y cliente. Informe con respeto que la garantía no fue aprobada e indique que puede retirar su compra en la tienda.';
+    } else {
+      desc.textContent = 'Complete manualmente o cargue desde Atención/Historial. La ficha en WhatsApp solo aparece cuando hay datos reales del cliente (nombre + tienda o factura).';
+    }
   }
 
   renderPalabrasCalma();
+  renderSituacionesRetiro();
 }
 
 function actualizarCamposFechas() {
@@ -572,6 +609,7 @@ const CAMPOS = [
 function onCampoChange() {
   actualizarTodos();
   if (esPosventa()) renderPalabrasCalma();
+  if (esGarantiaNoAprobada()) renderSituacionesRetiro();
 }
 
 CAMPOS.forEach(id => {

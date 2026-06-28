@@ -136,8 +136,8 @@
         {
           "situacion": "Inicio de llamada",
           "frases": [
+            "Me comunico con usted porque hace poco realizó una compra con nosotros y nos importa mucho saber cómo fue su experiencia.",
             "Le llamo solo un momentito, no le quito mucho tiempo.",
-            "Su opinión nos importa mucho y queremos escucharle con calma.",
             "No vengo a justificar nada; solo a conocer cómo fue su experiencia."
           ]
         },
@@ -176,8 +176,8 @@
           "descripcion": "Llamada breve de experiencia: salude con calidez, escuche sin justificar y cierre en menos de 3 minutos. No indague de más.",
           "fases": {
             "saludo": {
-              "voz": "Buenos días/tardes, ¿hablo con {cliente}? Le habla {asesor} de Óptica Los Andes. Le llamo solo un momentito porque nos importa mucho su opinión. ¿Cómo le fue en general con nosotros?",
-              "whatsapp": "Buenos días/tardes, *{cliente}*. 👋\n\nLe saluda *{asesor}* de Óptica Los Andes.\n\nLe escribo brevemente porque *valoramos mucho su opinión* y nos gustaría saber cómo fue su experiencia con nosotros.\n\n🤝 ¿Cómo le fue en general? Solo queremos escucharle con calma."
+              "voz": "Buenos días/tardes, ¿hablo con {cliente}? Le habla {asesor} de Óptica Los Andes. Me comunico con usted porque hace poco realizó una compra con nosotros y nos importa mucho saber cómo fue su experiencia. ¿Cómo le fue en general?",
+              "whatsapp": "Buenos días/tardes, *{cliente}*. 👋\n\nLe saluda *{asesor}* de Óptica Los Andes.\n\nMe comunico con usted porque *hace poco realizó una compra con nosotros* y nos importa mucho saber *cómo fue su experiencia*.\n\n🤝 ¿Cómo le fue en general? Solo queremos escucharle con calma."
             },
             "intermedio": {
               "voz": "Gracias por contarme, {cliente}. Lo que me dice es muy valioso para nosotros. Comprendo cómo se sintió y lamento que no haya sido la experiencia que usted esperaba. Con lo que me compartió es suficiente; no le quito más tiempo.",
@@ -205,6 +205,124 @@
             "cierre": {
               "voz": "Gracias nuevamente, {cliente}. Valoramos mucho que nos haya dado la oportunidad de escucharle. Que esté muy bien.",
               "whatsapp": "Gracias nuevamente, *{cliente}*. 💙\n\nValoramos mucho que nos haya dado la *oportunidad de escucharle*.\n\nQue esté muy bien 🌟"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "garantia_no_aprobada",
+      "titulo": "Garantía no aprobada — retiro en tienda",
+      "solo_asesor_cliente": true,
+      "situaciones_retiro": [
+        {
+          "situacion": "Informar que no se aprobó la garantía",
+          "frases": [
+            "{cliente}, le comento con respeto que, tras revisar su caso, la garantía no fue aprobada en esta ocasión.",
+            "Entendemos que esta noticia no es la que usted esperaba, y lamento tener que comunicársela.",
+            "La decisión se tomó según los criterios de revisión de garantía de Óptica Los Andes."
+          ]
+        },
+        {
+          "situacion": "Invitar a retirar en tienda",
+          "frases": [
+            "Sus lentes siguen disponibles y puede acercarse a la tienda donde realizó su compra para retirarlos.",
+            "Sus gafas están listas para que usted las retire en la tienda donde las adquirió.",
+            "Puede pasar por la tienda en el horario que le quede más cómodo para retirar lo que compró.",
+            "No es necesario una cita: solo acérquese a la tienda con su documento de identidad."
+          ]
+        },
+        {
+          "situacion": "Cliente molesto o confundido",
+          "frases": [
+            "Comprendo su molestia y tiene toda la razón en querer una explicación clara.",
+            "Escucho lo que usted me dice; no vengo a discutir, sino a orientarle con respeto.",
+            "Si desea, en tienda el equipo puede explicarle el detalle de la revisión con más calma."
+          ]
+        },
+        {
+          "situacion": "Cierre amable",
+          "frases": [
+            "Gracias por su tiempo, {cliente}. Quedamos atentos si necesita algo más.",
+            "Lamentamos no haber podido aprobar la garantía, pero sus lentes o gafas le esperan en tienda.",
+            "Que tenga un buen día y gracias por su comprensión."
+          ]
+        }
+      ],
+      "escenarios": [
+        {
+          "id": "retiro_lentes",
+          "titulo": "Retiro de lentes oftálmicos",
+          "descripcion": "Comunicar que la garantía no fue aprobada e indicar que puede retirar sus lentes en la tienda donde compró.",
+          "fases": {
+            "saludo": {
+              "voz": "Buenos días/tardes, ¿hablo con {cliente}? Le habla {asesor} de Óptica Los Andes. Me comunico con usted para informarle el resultado de la revisión de garantía de sus lentes.",
+              "whatsapp": "Buenos días/tardes, *{cliente}*. 👋\n\nLe saluda *{asesor}* de Óptica Los Andes.\n\nMe comunico con usted para informarle el *resultado de la revisión de garantía* de sus lentes."
+            },
+            "intermedio": {
+              "voz": "{cliente}, con respeto le comento que en esta ocasión la garantía no fue aprobada. Lamento que no sea la respuesta que usted esperaba. Sus lentes siguen disponibles y puede acercarse a la tienda donde realizó su compra para retirarlos, en el horario que le quede más cómodo.",
+              "whatsapp": "{cliente}, con respeto le informamos que en esta ocasión la *garantía no fue aprobada* 😔\n\nLamentamos que no sea la respuesta que usted esperaba.\n\n✅ Sus *lentes* siguen disponibles y puede *acercarse a la tienda* donde realizó su compra para retirarlos, en el horario que le quede más cómodo."
+            },
+            "cierre": {
+              "voz": "Gracias por su tiempo, {cliente}. Si tiene alguna duda, en tienda con gusto le orientan. Que tenga un buen día.",
+              "whatsapp": "Gracias por su tiempo, *{cliente}*. 🙏\n\nSi tiene alguna duda, en *tienda* con gusto le orientan.\n\nQue tenga un buen día 💙"
+            }
+          }
+        },
+        {
+          "id": "retiro_gafas",
+          "titulo": "Retiro de gafas",
+          "descripcion": "Comunicar garantía no aprobada e indicar retiro de gafas en tienda.",
+          "fases": {
+            "saludo": {
+              "voz": "Buenos días/tardes, ¿hablo con {cliente}? Le habla {asesor} de Óptica Los Andes. Le llamo para contarle el resultado de la revisión de garantía de sus gafas.",
+              "whatsapp": "Buenos días/tardes, *{cliente}*. 👋\n\nLe saluda *{asesor}* de Óptica Los Andes.\n\nLe escribo para contarle el *resultado de la revisión de garantía* de sus gafas."
+            },
+            "intermedio": {
+              "voz": "{cliente}, lamento informarle que la garantía no fue aprobada en esta ocasión. Comprendo que esto le incomoda. Sus gafas están disponibles para que usted las retire en la tienda donde las compró, cuando le sea posible.",
+              "whatsapp": "{cliente}, lamentamos informarle que la *garantía no fue aprobada* en esta ocasión.\n\nComprendemos que esto le incomoda 😔\n\n✅ Sus *gafas* están disponibles para que usted las *retire en la tienda* donde las compró, cuando le sea posible."
+            },
+            "cierre": {
+              "voz": "Gracias, {cliente}. Puede acercarse con su documento de identidad. Quedo atento/a si necesita algo más. Que esté muy bien.",
+              "whatsapp": "Gracias, *{cliente}*. 🙏\n\nPuede acercarse con su *documento de identidad*.\n\nQuedamos atentos si necesita algo más 💙"
+            }
+          }
+        },
+        {
+          "id": "retiro_contacto",
+          "titulo": "Retiro de lentes de contacto",
+          "descripcion": "Comunicar garantía no aprobada e indicar retiro de lentes de contacto en tienda.",
+          "fases": {
+            "saludo": {
+              "voz": "Buenos días/tardes, ¿hablo con {cliente}? Le habla {asesor} de Óptica Los Andes. Me comunico con usted por el resultado de la garantía de sus lentes de contacto.",
+              "whatsapp": "Buenos días/tardes, *{cliente}*. 👋\n\nLe saluda *{asesor}* de Óptica Los Andes.\n\nMe comunico con usted por el *resultado de la garantía* de sus lentes de contacto."
+            },
+            "intermedio": {
+              "voz": "{cliente}, le comento con respeto que la garantía no fue aprobada. Lamento la noticia. Sus lentes de contacto pueden retirarse en la tienda donde realizó su compra, en el horario de su preferencia.",
+              "whatsapp": "{cliente}, con respeto le informamos que la *garantía no fue aprobada*. Lamentamos la noticia.\n\n✅ Sus *lentes de contacto* pueden *retirarse en la tienda* donde realizó su compra, en el horario de su preferencia."
+            },
+            "cierre": {
+              "voz": "Gracias por su comprensión, {cliente}. En tienda le entregarán su pedido. Que tenga un excelente día.",
+              "whatsapp": "Gracias por su comprensión, *{cliente}*. 🙏\n\nEn *tienda* le entregarán su pedido.\n\nQue tenga un excelente día 🌟"
+            }
+          }
+        },
+        {
+          "id": "retiro_general",
+          "titulo": "Retiro de pedido (general)",
+          "descripcion": "Para cualquier producto comprado: garantía no aprobada y retiro en tienda.",
+          "fases": {
+            "saludo": {
+              "voz": "Buenos días/tardes, ¿hablo con {cliente}? Le habla {asesor} de Óptica Los Andes. Me comunico con usted para informarle el resultado de la revisión de garantía de su compra.",
+              "whatsapp": "Buenos días/tardes, *{cliente}*. 👋\n\nLe saluda *{asesor}* de Óptica Los Andes.\n\nMe comunico con usted para informarle el *resultado de la revisión de garantía* de su compra."
+            },
+            "intermedio": {
+              "voz": "{cliente}, con respeto le informo que la garantía no fue aprobada en esta ocasión. Lamento que no sea lo que usted esperaba. Lo que compró sigue disponible y puede acercarse a la tienda donde realizó su compra para retirarlo: sus lentes, gafas o el producto que adquirió.",
+              "whatsapp": "{cliente}, con respeto le informamos que la *garantía no fue aprobada* en esta ocasión 😔\n\nLamentamos que no sea lo que usted esperaba.\n\n✅ Lo que compró *sigue disponible* y puede *acercarse a la tienda* donde realizó su compra para retirarlo: sus *lentes, gafas o el producto* que adquirió."
+            },
+            "cierre": {
+              "voz": "Gracias, {cliente}, por su tiempo. Si necesita orientación, en tienda con gusto le ayudan. Que tenga un buen día.",
+              "whatsapp": "Gracias, *{cliente}*, por su tiempo. 🙏\n\nSi necesita orientación, en *tienda* con gusto le ayudan.\n\nQue tenga un buen día 💙"
             }
           }
         }
