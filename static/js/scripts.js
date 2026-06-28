@@ -69,7 +69,21 @@ function construirFichaDesdeFormulario() {
   };
 }
 
+function esPosventa() {
+  return grupoFiltro === 'posventa';
+}
+
+function grupoPosventa() {
+  return datos.grupos.find(g => g.id === 'posventa');
+}
+
 function variables() {
+  if (esPosventa()) {
+    return {
+      asesor: val('var-asesor') || PLACEHOLDER,
+      cliente: val('var-cliente') || PLACEHOLDER,
+    };
+  }
   const f = construirFichaDesdeFormulario();
   const t = TIENDAS.find(x => x.nombre === f.tienda) || {};
   return {
@@ -99,7 +113,25 @@ function personalizar(texto) {
   return r;
 }
 
+function armarWhatsAppPosventa(plantilla) {
+  const cuerpo = personalizar(plantilla);
+  const asesor = val('var-asesor');
+  const pie = [
+    asesor ? `👨‍💼 *Asesor:* ${asesor}` : '',
+    '💙 *Gracias por confiar en Óptica Los Andes*',
+    '_Ante cualquier consulta, estamos para servirle._',
+  ].filter(Boolean).join('\n');
+  return {
+    mensaje: `${cuerpo}\n\n${pie}`,
+    wa_link: '',
+    incluye_ficha: false,
+  };
+}
+
 async function armarWhatsAppCompleto(plantilla) {
+  if (esPosventa()) {
+    return armarWhatsAppPosventa(plantilla);
+  }
   const ficha = construirFichaDesdeFormulario();
   const res = await fetch('/api/scripts/armar-whatsapp', {
     method: 'POST',
@@ -290,9 +322,70 @@ function renderFiltros() {
       btn.className = 'filtro-grupo shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-optica-600 text-white whitespace-nowrap';
       grupoFiltro = btn.dataset.grupo;
       actualizarCamposFechas();
+      actualizarModoPosventa();
       renderGrid();
     });
   });
+}
+
+function renderPalabrasCalma() {
+  const panel = document.getElementById('panel-palabras-calma');
+  const lista = document.getElementById('lista-palabras-calma');
+  if (!panel || !lista) return;
+
+  const grupo = grupoPosventa();
+  const items = grupo?.palabras_calma || [];
+
+  if (!esPosventa() || !items.length) {
+    panel.classList.add('hidden');
+    lista.innerHTML = '';
+    return;
+  }
+
+  panel.classList.remove('hidden');
+  lista.innerHTML = items.map((bloque, bi) => `
+    <div>
+      <p class="text-xs font-bold uppercase text-violet-700 mb-2">${escapeHtml(bloque.situacion)}</p>
+      <div class="flex flex-wrap gap-2">
+        ${(bloque.frases || []).map(frase => {
+          const texto = personalizar(frase);
+          return `
+            <button type="button"
+              class="btn-calma text-left text-sm bg-white border border-violet-200 hover:bg-violet-100 hover:border-violet-300 rounded-xl px-3 py-2 transition text-slate-700">
+              ${escapeHtml(texto)}
+            </button>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  lista.querySelectorAll('.btn-calma').forEach(btn => {
+    btn.addEventListener('click', () => copiarTexto(btn.textContent.trim(), btn));
+  });
+}
+
+function actualizarModoPosventa() {
+  const posventa = esPosventa();
+  document.getElementById('bloque-ficha-completa')?.classList.toggle('hidden', posventa);
+  document.getElementById('campos-ficha-extended')?.classList.toggle('hidden', posventa);
+  document.getElementById('bloque-respuesta-ia')?.classList.toggle('hidden', posventa);
+  document.getElementById('aviso-ficha-wa')?.classList.toggle('hidden', posventa);
+
+  const titulo = document.getElementById('titulo-datos-ficha');
+  const desc = document.getElementById('desc-datos-ficha');
+  if (titulo) {
+    titulo.textContent = posventa
+      ? '📞 Datos de la llamada'
+      : '📋 Datos de la ficha';
+  }
+  if (desc) {
+    desc.textContent = posventa
+      ? 'Solo necesita el nombre del asesor y del cliente. Llamada breve de experiencia — escuche con empatía, sin indagar de más.'
+      : 'Complete manualmente o cargue desde Atención/Historial. La ficha en WhatsApp solo aparece cuando hay datos reales del cliente (nombre + tienda o factura).';
+  }
+
+  renderPalabrasCalma();
 }
 
 function actualizarCamposFechas() {
@@ -467,6 +560,7 @@ async function cargarScripts() {
   const res = await fetch('/api/scripts');
   datos = await res.json();
   renderFiltros();
+  actualizarModoPosventa();
   renderGrid();
 }
 
@@ -475,9 +569,14 @@ const CAMPOS = [
   'var-producto', 'var-tipo-producto', 'var-factura', 'var-fecha-factura',
   'var-fecha-prometida', 'var-nueva-fecha', 'var-motivo',
 ];
+function onCampoChange() {
+  actualizarTodos();
+  if (esPosventa()) renderPalabrasCalma();
+}
+
 CAMPOS.forEach(id => {
-  document.getElementById(id)?.addEventListener('input', actualizarTodos);
-  document.getElementById(id)?.addEventListener('change', actualizarTodos);
+  document.getElementById(id)?.addEventListener('input', onCampoChange);
+  document.getElementById(id)?.addEventListener('change', onCampoChange);
 });
 
 document.getElementById('btn-buscar-ficha')?.addEventListener('click', buscarFichas);

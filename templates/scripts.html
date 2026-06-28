@@ -14,7 +14,7 @@
     </a>
   </div>
 
-  <div class="bg-optica-50 border border-optica-200 rounded-2xl p-5">
+  <div id="bloque-ficha-completa" class="bg-optica-50 border border-optica-200 rounded-2xl p-5">
     <h3 class="font-bold text-slate-800 mb-1">🔍 Cargar ficha completa</h3>
     <p class="text-sm text-slate-500 mb-4">Busque un cliente en Atención o una consulta del Historial para llenar todos los datos y armar WhatsApp listo para enviar.</p>
     <div class="flex flex-wrap gap-3 mb-3">
@@ -29,9 +29,9 @@
     <p id="ficha-origen" class="text-sm text-emerald-700 font-medium mt-3 hidden"></p>
   </div>
 
-  <div class="bg-white rounded-2xl shadow-sm border p-5">
-    <h3 class="font-bold text-slate-800 mb-1">📋 Datos de la ficha</h3>
-    <p class="text-sm text-slate-500 mb-4">Complete manualmente o cargue desde Atención/Historial. La ficha en WhatsApp solo aparece cuando hay datos reales del cliente (nombre + tienda o factura).</p>
+  <div id="bloque-datos-ficha" class="bg-white rounded-2xl shadow-sm border p-5">
+    <h3 id="titulo-datos-ficha" class="font-bold text-slate-800 mb-1">📋 Datos de la ficha</h3>
+    <p id="desc-datos-ficha" class="text-sm text-slate-500 mb-4">Complete manualmente o cargue desde Atención/Historial. La ficha en WhatsApp solo aparece cuando hay datos reales del cliente (nombre + tienda o factura).</p>
     <p id="aviso-ficha-wa" class="hidden text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2 mb-4">
       ⚠️ Cargue la ficha del cliente para incluir sus datos en el WhatsApp. Sin ficha, el mensaje llevará solo el guión y el pie.
     </p>
@@ -46,6 +46,7 @@
         <input type="text" id="var-cliente" placeholder="Ej: Juan Pérez"
           class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
       </div>
+      <div id="campos-ficha-extended" class="contents">
       <div>
         <label class="block text-sm font-medium text-slate-600 mb-1">🪪 Cédula</label>
         <input type="text" id="var-cedula" placeholder="Ej: 1712345678"
@@ -102,7 +103,14 @@
         <input type="text" id="var-motivo" placeholder="Ej: Retraso en laboratorio"
           class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
       </div>
+      </div>
     </div>
+  </div>
+
+  <div id="panel-palabras-calma" class="hidden bg-violet-50 border border-violet-200 rounded-2xl p-5">
+    <h3 class="font-bold text-slate-800 mb-1">🕊️ Palabras de calma — Posventa</h3>
+    <p class="text-sm text-slate-500 mb-4">Frases empáticas para usar durante la llamada. Haga clic en cualquiera para copiarla.</p>
+    <div id="lista-palabras-calma" class="space-y-4"></div>
   </div>
 
   <div class="flex gap-2 overflow-x-auto overflow-touch pb-1 -mx-1 px-1 sm:flex-wrap sm:overflow-visible sm:pb-0" id="filtro-grupos"></div>
@@ -111,7 +119,7 @@
     <p class="text-slate-400 col-span-full text-center py-8">Cargando scripts...</p>
   </div>
 
-  <div class="bg-white rounded-2xl shadow-sm border p-5 space-y-4">
+  <div id="bloque-respuesta-ia" class="bg-white rounded-2xl shadow-sm border p-5 space-y-4">
     <div>
       <h3 class="font-bold text-slate-800 text-lg">💡 Respuesta inteligente al cliente</h3>
       <p class="text-sm text-slate-500">Pegue lo que le escribió o dijo el cliente y el sistema generará una respuesta amable, en usted y lista para WhatsApp.</p>
