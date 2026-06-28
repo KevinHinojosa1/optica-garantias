@@ -127,6 +127,50 @@
           }
         }
       ]
+    },
+    {
+      "id": "posventa",
+      "titulo": "Posventa — calificación baja",
+      "escenarios": [
+        {
+          "id": "llamada_mala_calificacion",
+          "titulo": "Llamada por mala calificación",
+          "descripcion": "Contactar al cliente para conocer su experiencia real. Escuchar sin justificar ni defenderse; el objetivo es entender, no convencer.",
+          "fases": {
+            "saludo": {
+              "voz": "Buenos días/tardes, {cliente}. Le habla {asesor} de Óptica Los Andes, de la tienda {tienda}. Le llamo porque valoramos mucho su opinión y nos gustaría conocer cómo fue su experiencia con nosotros. No le voy a leer un guión ni a ofrecerle nada todavía; solo quiero escucharle con calma. ¿Tiene un momento para contarme qué pasó?",
+              "whatsapp": "Buenos días/tardes, *{cliente}*. 👋\n\nLe saluda *{asesor}* de Óptica Los Andes — *{tienda}*.\n\nLe escribo porque *valoramos mucho su opinión* y nos gustaría conocer cómo fue su experiencia con nosotros.\n\nNo le voy a enviar un mensaje automático ni a ofrecerle nada todavía: *solo queremos escucharle* con calma y entender qué ocurrió.\n\n🤝 ¿Tiene un momento para contarnos qué pasó? Su respuesta nos ayuda a mejorar de verdad."
+            },
+            "intermedio": {
+              "voz": "Gracias por contarme, {cliente}. Lo que usted me indica es muy importante para nosotros. Permítame confirmar que entendí bien: [resumir lo que dijo el cliente]. ¿Hay algo más que usted quiera que sepamos sobre su visita o sobre su {producto}? Quiero asegurarme de no dejar ningún detalle fuera.",
+              "whatsapp": "Gracias por contarnos, *{cliente}*. 🙏\n\nLo que usted nos indica es *muy importante* para nosotros y lo estamos tomando en serio.\n\nPermítame confirmar que entendí bien:\n\n📝 *[Resumir aquí lo que el cliente expresó]*\n\n👓 *Producto:* {producto}\n🧾 *Factura:* {factura}\n\n¿Hay *algo más* que desee que sepamos sobre su visita o su experiencia? Queremos asegurarnos de *no dejar ningún detalle fuera*.\n\nEstoy *atento/a* a su respuesta 💙"
+            },
+            "cierre": {
+              "voz": "Muchas gracias, {cliente}, por su tiempo y por su honestidad. 🙏 Su retroalimentación ya fue registrada y la compartiremos con el equipo de {tienda} para revisar qué podemos mejorar. Si en los próximos días necesitamos aclarar algún punto, ¿podemos contactarle a este número? Que tenga un excelente día.",
+              "whatsapp": "Muchas gracias, *{cliente}*, por su tiempo y por su *honestidad*. 🙏\n\n✅ Su retroalimentación fue *registrada* y la compartiremos con el equipo de *{tienda}* para revisar qué podemos mejorar.\n\nNuestro objetivo hoy fue *escucharle y entender su experiencia*, no dar excusas. Eso es lo que nos permite servirle mejor.\n\n📲 Si en los próximos días necesitamos aclarar algún punto, ¿podemos contactarle a este número?\n\nGracias por elegir Óptica Los Andes. Que tenga un excelente día 🌟"
+            }
+          }
+        },
+        {
+          "id": "seguimiento_posventa",
+          "titulo": "Seguimiento después de la llamada",
+          "descripcion": "Cerrar el ciclo tras conocer la experiencia del cliente. Agradecer, confirmar que se escaló el caso y ofrecer un canal abierto.",
+          "fases": {
+            "saludo": {
+              "voz": "Buenos días/tardes, {cliente}. Le habla nuevamente {asesor} de Óptica Los Andes, {tienda}. Le llamo para darle seguimiento a la conversación que tuvimos sobre su experiencia. Quería confirmarle que su caso ya fue compartido con el equipo responsable.",
+              "whatsapp": "Buenos días/tardes, *{cliente}*. 👋\n\nLe saluda nuevamente *{asesor}* de Óptica Los Andes — *{tienda}*.\n\nLe escribo para darle *seguimiento* a la conversación que tuvimos sobre su experiencia.\n\nQueríamos confirmarle que su caso *ya fue compartido* con el equipo responsable y está en revisión 📋"
+            },
+            "intermedio": {
+              "voz": "Le comento, {cliente}: estamos revisando los puntos que usted nos mencionó, especialmente [mencionar tema principal]. Si surge alguna actualización concreta, se la comunicaré de inmediato. Mientras tanto, ¿hay algo adicional que quiera agregar?",
+              "whatsapp": "Le comentamos, *{cliente}*:\n\n🔍 Estamos revisando los puntos que usted nos mencionó, especialmente:\n\n📝 *[Mencionar tema principal]*\n\nSi surge alguna *actualización concreta*, se la comunicaremos de inmediato — sin que usted tenga que volver a escribir.\n\n¿Hay *algo adicional* que desee agregar mientras revisamos su caso? 🤝"
+            },
+            "cierre": {
+              "voz": "Gracias nuevamente, {cliente}. Valoramos que nos haya dado la oportunidad de escucharle. Quedo como su contacto directo en {tienda}. Si necesita algo más, puede llamarme o escribirme con confianza. Que esté muy bien.",
+              "whatsapp": "Gracias nuevamente, *{cliente}*. 💙\n\nValoramos mucho que nos haya dado la *oportunidad de escucharle* y ayudarnos a mejorar.\n\n📲 Quedo como su contacto en *{tienda}*. Si necesita algo más, puede escribirme con confianza.\n\nÓptica Los Andes está *comprometida* con brindarle una mejor experiencia 🌟\n\nQue esté muy bien."
+            }
+          }
+        }
+      ]
     }
   ]
 }

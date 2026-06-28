@@ -167,5 +167,5 @@
 <script>
   window.TIENDAS_SCRIPTS = {{ tiendas_json | safe }};
 </script>
-<script src="/static/js/scripts.js"></script>
+<script src="/static/js/scripts.js?v={{ asset_version }}"></script>
 {% endblock %}

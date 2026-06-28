@@ -6,6 +6,7 @@ const inputVerificador = document.getElementById('verificador-ivr');
 let ciudadFiltro = '';
 let diaFiltro = window.DIA_HOY ? 'hoy' : '1';
 let estados = {};
+const borradores = {};
 
 const BTN_FILTRO = 'shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-medium glass-btn whitespace-nowrap text-slate-600';
 const BTN_FILTRO_ACTIVE = BTN_FILTRO + ' glass-btn-active';
@@ -80,17 +81,111 @@ function claseValBoton(funciona, esperado) {
     : 'glass-btn glass-val-no border hover:opacity-90';
 }
 
-function htmlSugerencias(tiendaId, comentarioActual) {
+function parseComentarioGuardado(comentario) {
+  if (!comentario) return { sugerencia: '', gestion: '' };
+  const exacta = SUGERENCIAS_IVR.find(s => normalizarTexto(s.texto) === normalizarTexto(comentario));
+  if (exacta) return { sugerencia: exacta.texto, gestion: '' };
+  for (const s of SUGERENCIAS_IVR) {
+    const prefijo = s.texto + ' — ';
+    if (comentario.startsWith(prefijo)) {
+      return { sugerencia: s.texto, gestion: comentario.slice(prefijo.length) };
+    }
+  }
+  return { sugerencia: '', gestion: comentario };
+}
+
+function getBorrador(tiendaId) {
+  if (borradores[tiendaId]) return borradores[tiendaId];
+  const e = estados[tiendaId] || {};
+  const parsed = parseComentarioGuardado(e.comentario || '');
+  borradores[tiendaId] = {
+    funciona: e.funciona ?? null,
+    sugerencia: parsed.sugerencia,
+    gestion: parsed.gestion,
+    auditoria: e.comentario_auditoria || '',
+    guardado: !!(e.verificado_at),
+  };
+  return borradores[tiendaId];
+}
+
+function syncBorradorFromInputs(tiendaId) {
+  const b = getBorrador(tiendaId);
+  b.gestion = document.getElementById(`gestion-${tiendaId}`)?.value.trim() || '';
+  b.auditoria = document.getElementById(`auditoria-${tiendaId}`)?.value.trim() || '';
+}
+
+function textoChecklist(b) {
+  const pasos = [];
+  if (b.funciona === true || b.funciona === false) {
+    pasos.push(`IVR Vale: ${b.funciona ? '1' : '0'}`);
+  } else {
+    pasos.push('Seleccione ✓ o ✗');
+  }
+  if (b.sugerencia) pasos.push('Sugerencia lista');
+  else pasos.push('Seleccione una sugerencia');
+  return pasos.join(' · ');
+}
+
+function htmlSugerencias(tiendaId, sugerenciaActual) {
   return SUGERENCIAS_IVR.map(s => {
     const textoJs = s.texto.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
     return `
-    <button type="button"
-      onclick="aplicarSugerencia('${tiendaId}', '${textoJs}', ${s.funciona})"
-      class="w-full text-left px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border transition ${claseSugerencia(comentarioActual, s)}">
+    <button type="button" data-sug-btn="${tiendaId}"
+      onclick="seleccionarSugerencia('${tiendaId}', '${textoJs}', ${s.funciona})"
+      class="w-full text-left px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border transition ${claseSugerencia(sugerenciaActual, s)}">
       ${escapeHtml(s.texto)}
     </button>`;
   }).join('');
 }
+
+function refrescarCardUI(tiendaId) {
+  const b = getBorrador(tiendaId);
+  const card = document.getElementById(`card-${tiendaId}`);
+  if (!card) return;
+
+  card.querySelectorAll('[data-val-btn]').forEach(btn => {
+    const ok = btn.dataset.val === '1';
+    btn.className = `w-10 h-10 rounded-xl font-semibold text-base transition ${claseValBoton(b.funciona, ok)}`;
+  });
+  card.querySelectorAll('[data-sug-btn]').forEach((btn, idx) => {
+    btn.className = `w-full text-left px-3 py-2.5 rounded-xl text-xs sm:text-sm font-semibold border transition ${claseSugerencia(b.sugerencia, SUGERENCIAS_IVR[idx])}`;
+  });
+
+  const checklist = document.getElementById(`checklist-${tiendaId}`);
+  if (checklist) checklist.textContent = textoChecklist(b);
+
+  const badgeVal = document.getElementById(`badge-val-${tiendaId}`);
+  if (badgeVal) {
+    if (b.funciona === true) {
+      badgeVal.className = 'glass-pill text-xs font-semibold px-2 py-0.5 rounded-full text-emerald-700';
+      badgeVal.textContent = 'Vale: 1';
+      badgeVal.classList.remove('hidden');
+    } else if (b.funciona === false) {
+      badgeVal.className = 'glass-pill text-xs font-semibold px-2 py-0.5 rounded-full text-red-600';
+      badgeVal.textContent = 'Vale: 0';
+      badgeVal.classList.remove('hidden');
+    } else {
+      badgeVal.classList.add('hidden');
+    }
+  }
+}
+
+function seleccionarVal(tiendaId, funciona) {
+  const b = getBorrador(tiendaId);
+  b.funciona = funciona;
+  refrescarCardUI(tiendaId);
+}
+window.seleccionarVal = seleccionarVal;
+
+function seleccionarSugerencia(tiendaId, texto, funcionaSug) {
+  const b = getBorrador(tiendaId);
+  b.sugerencia = texto;
+  if (b.funciona === null || b.funciona === undefined) {
+    b.funciona = funcionaSug;
+  }
+  refrescarCardUI(tiendaId);
+}
+window.seleccionarSugerencia = seleccionarSugerencia;
 
 function htmlSugerenciasEditar(comentarioActual) {
   return SUGERENCIAS_IVR.map((s, i) => `
@@ -101,7 +196,12 @@ function htmlSugerenciasEditar(comentarioActual) {
   `).join('');
 }
 
+function preservarBorradoresVisibles() {
+  Object.keys(borradores).forEach(syncBorradorFromInputs);
+}
+
 function setFiltroDiaActivo(btn) {
+  preservarBorradoresVisibles();
   document.querySelectorAll('.filtro-dia').forEach(b => {
     b.className = 'filtro-dia ' + BTN_FILTRO;
   });
@@ -116,6 +216,7 @@ document.querySelectorAll('.filtro-dia').forEach(btn => {
 
 document.querySelectorAll('.filtro-ciudad').forEach(btn => {
   btn.addEventListener('click', () => {
+    preservarBorradoresVisibles();
     document.querySelectorAll('.filtro-ciudad').forEach(b => {
       b.className = 'filtro-ciudad ' + BTN_FILTRO;
     });
@@ -150,14 +251,11 @@ function filtrarTiendas() {
 
 function cardTienda(tienda) {
   const e = estados[tienda.id] || {};
-  const funciona = e.funciona;
+  const b = getBorrador(tienda.id);
   const verificado = e.verificado_at
     ? new Date(e.verificado_at).toLocaleString('es-EC')
     : 'Sin verificar esta semana';
-  const comentario = e.comentario || '';
-  const auditoria = e.comentario_auditoria || '';
-  const esSugerencia = SUGERENCIAS_IVR.some(s => normalizarTexto(s.texto) === normalizarTexto(comentario));
-  const gestionExtra = comentario && !esSugerencia ? comentario : '';
+  const badgeHidden = b.funciona === null || b.funciona === undefined ? 'hidden' : '';
 
   return `
     <div class="glass-card p-4 sm:p-5 flex flex-col gap-3" id="card-${tienda.id}">
@@ -165,12 +263,13 @@ function cardTienda(tienda) {
         <div class="flex flex-wrap items-center gap-2 mb-1.5">
           <span class="glass-pill text-xs font-medium px-2 py-0.5 rounded-full text-slate-600">Día ${tienda.dia_ivr}</span>
           <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">${escapeHtml(tienda.ciudad)}</span>
-          ${funciona === true ? '<span class="glass-pill text-xs font-semibold px-2 py-0.5 rounded-full text-emerald-700">Vale: 1</span>' : ''}
-          ${funciona === false ? '<span class="glass-pill text-xs font-semibold px-2 py-0.5 rounded-full text-red-600">Vale: 0</span>' : ''}
+          <span id="badge-val-${tienda.id}" class="glass-pill text-xs font-semibold px-2 py-0.5 rounded-full ${badgeHidden} ${b.funciona === true ? 'text-emerald-700' : b.funciona === false ? 'text-red-600' : ''}">
+            ${b.funciona === true ? 'Vale: 1' : b.funciona === false ? 'Vale: 0' : ''}
+          </span>
+          ${e.verificado_at ? '<span class="glass-pill text-xs text-emerald-600 px-2 py-0.5 rounded-full">Guardado</span>' : ''}
         </div>
         <h4 class="font-semibold text-slate-800 leading-snug">${escapeHtml(tienda.nombre)}</h4>
         <p class="text-xs text-slate-400 mt-1">${verificado}</p>
-        ${comentario && esSugerencia ? `<p class="text-xs text-slate-600 mt-2 glass-card-inner px-2.5 py-1.5">${escapeHtml(comentario)}</p>` : ''}
       </div>
       <div class="glass-card-inner p-3">
         <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Script</p>
@@ -179,32 +278,37 @@ function cardTienda(tienda) {
       <div class="flex items-center justify-between gap-3 glass-card-inner p-3">
         <div>
           <p class="text-xs font-medium text-slate-600 uppercase tracking-wide">IVR Vale</p>
-          <p class="text-xs text-slate-400">✓ → 1 · ✗ → 0</p>
+          <p class="text-xs text-slate-400">Paso 1 · ✓ = 1 · ✗ = 0</p>
         </div>
         <div class="flex gap-2 shrink-0">
-          <button type="button" onclick="marcarValIvr('${tienda.id}', true)"
-            class="w-10 h-10 rounded-xl font-semibold text-base transition ${claseValBoton(funciona, true)}" title="Guardar 1">✓</button>
-          <button type="button" onclick="marcarValIvr('${tienda.id}', false)"
-            class="w-10 h-10 rounded-xl font-semibold text-base transition ${claseValBoton(funciona, false)}" title="Guardar 0">✗</button>
+          <button type="button" data-val-btn="${tienda.id}" data-val="1" onclick="seleccionarVal('${tienda.id}', true)"
+            class="w-10 h-10 rounded-xl font-semibold text-base transition ${claseValBoton(b.funciona, true)}" title="Marcar 1">✓</button>
+          <button type="button" data-val-btn="${tienda.id}" data-val="0" onclick="seleccionarVal('${tienda.id}', false)"
+            class="w-10 h-10 rounded-xl font-semibold text-base transition ${claseValBoton(b.funciona, false)}" title="Marcar 0">✗</button>
         </div>
       </div>
       <div>
-        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Sugerencias</p>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          ${htmlSugerencias(tienda.id, comentario)}
+        <p class="text-xs font-medium text-slate-500 uppercase tracking-wide mb-2">Sugerencias · Paso 2</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2" id="sug-grid-${tienda.id}">
+          ${htmlSugerencias(tienda.id, b.sugerencia)}
         </div>
       </div>
       <div>
-        <label class="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Detalle gestión</label>
-        <textarea id="gestion-${tienda.id}" rows="2" placeholder="Nota operativa..."
-          class="glass-textarea w-full px-3 py-2 text-sm">${escapeHtml(gestionExtra)}</textarea>
+        <label class="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Detalle gestión · Paso 3</label>
+        <textarea id="gestion-${tienda.id}" rows="2" placeholder="Nota operativa adicional..."
+          class="glass-textarea w-full px-3 py-2 text-sm">${escapeHtml(b.gestion)}</textarea>
       </div>
       <div class="glass-card-inner p-3">
-        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Auditoría</label>
+        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1">Auditoría · Paso 4</label>
         <p class="text-xs text-slate-500 mb-2">Comentario de control de calidad.</p>
         <textarea id="auditoria-${tienda.id}" rows="3" placeholder="Observaciones del auditor..."
-          class="glass-textarea w-full px-3 py-2 text-sm">${escapeHtml(auditoria)}</textarea>
+          class="glass-textarea w-full px-3 py-2 text-sm">${escapeHtml(b.auditoria)}</textarea>
       </div>
+      <p id="checklist-${tienda.id}" class="text-xs text-slate-500 glass-card-inner px-3 py-2">${textoChecklist(b)}</p>
+      <button type="button" onclick="guardarVerificacion('${tienda.id}')"
+        class="w-full glass-btn glass-btn-active font-medium py-3 rounded-xl text-sm transition">
+        Guardar verificación (un solo registro)
+      </button>
       <p id="status-${tienda.id}" class="text-xs text-slate-400 min-h-[1rem]"></p>
     </div>
   `;
@@ -227,28 +331,48 @@ function renderGrid() {
     return;
   }
   grid.innerHTML = lista.map(cardTienda).join('');
+  lista.forEach(t => {
+    const g = document.getElementById(`gestion-${t.id}`);
+    const a = document.getElementById(`auditoria-${t.id}`);
+    g?.addEventListener('input', () => syncBorradorFromInputs(t.id));
+    a?.addEventListener('input', () => syncBorradorFromInputs(t.id));
+  });
 }
 
-function payloadDesdeCard(tiendaId, funciona, comentarioForzado = null) {
-  const gestion = document.getElementById(`gestion-${tiendaId}`)?.value.trim() || '';
-  const auditoria = document.getElementById(`auditoria-${tiendaId}`)?.value.trim() || '';
+function construirPayload(tiendaId) {
+  syncBorradorFromInputs(tiendaId);
+  const b = getBorrador(tiendaId);
   let comentario = '';
-  if (comentarioForzado) {
-    comentario = gestion ? `${comentarioForzado} — ${gestion}` : comentarioForzado;
+  if (b.sugerencia) {
+    comentario = b.gestion ? `${b.sugerencia} — ${b.gestion}` : b.sugerencia;
   } else {
-    comentario = gestion;
+    comentario = b.gestion;
   }
   return {
     tienda_id: tiendaId,
-    funciona,
+    funciona: b.funciona,
     comentario,
-    comentario_auditoria: auditoria,
+    comentario_auditoria: b.auditoria,
     verificado_por: document.getElementById('verificador-ivr')?.value.trim() || 'Equipo de Tienda',
   };
 }
 
-async function marcarIvr(tiendaId, funciona, comentarioForzado = null) {
+async function guardarVerificacion(tiendaId) {
+  const b = getBorrador(tiendaId);
+  syncBorradorFromInputs(tiendaId);
   const status = document.getElementById(`status-${tiendaId}`);
+
+  if (b.funciona !== true && b.funciona !== false) {
+    status.textContent = '⚠️ Seleccione ✓ o ✗ antes de guardar';
+    status.className = 'text-xs text-amber-600 font-medium';
+    return;
+  }
+  if (!b.sugerencia) {
+    status.textContent = '⚠️ Seleccione una sugerencia antes de guardar';
+    status.className = 'text-xs text-amber-600 font-medium';
+    return;
+  }
+
   status.textContent = 'Guardando...';
   status.className = 'text-xs text-slate-500';
 
@@ -256,14 +380,15 @@ async function marcarIvr(tiendaId, funciona, comentarioForzado = null) {
     const res = await fetch('/api/ivr/registrar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payloadDesdeCard(tiendaId, funciona, comentarioForzado)),
+      body: JSON.stringify(construirPayload(tiendaId)),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail);
 
+    delete borradores[tiendaId];
     const hora = new Date(data.created_at).toLocaleString('es-EC');
-    let msg = `✅ Guardado ${hora} · IVR Vale: ${data.ivr_vale}`;
-    if (data.google_sheets_ok) msg += ' · Google Sheets ✓';
+    let msg = `✅ Un registro guardado ${hora} · IVR Vale: ${data.ivr_vale}`;
+    if (data.google_sheets_ok) msg += ' · Sheets ✓';
     else if (data.google_sheets_mensaje) msg += ` · ${data.google_sheets_mensaje}`;
     status.textContent = msg;
     status.className = 'text-xs text-emerald-600 font-medium';
@@ -275,16 +400,7 @@ async function marcarIvr(tiendaId, funciona, comentarioForzado = null) {
     status.className = 'text-xs text-red-600';
   }
 }
-
-async function marcarValIvr(tiendaId, funciona) {
-  await marcarIvr(tiendaId, funciona, null);
-}
-async function aplicarSugerencia(tiendaId, texto, funciona) {
-  await marcarIvr(tiendaId, funciona, texto);
-}
-window.aplicarSugerencia = aplicarSugerencia;
-window.marcarValIvr = marcarValIvr;
-window.marcarIvr = marcarIvr;
+window.guardarVerificacion = guardarVerificacion;
 
 let editarFunciona = true;
 let editarSugerenciaTexto = '';
@@ -303,7 +419,9 @@ function actualizarBotonesValEditar() {
 }
 
 function seleccionarSugerenciaEditar(sugerencia) {
-  editarFunciona = sugerencia.funciona;
+  if (editarFunciona !== true && editarFunciona !== false) {
+    editarFunciona = sugerencia.funciona;
+  }
   editarSugerenciaTexto = sugerencia.texto;
   editarSugerencias.innerHTML = htmlSugerenciasEditar(sugerencia.texto);
   editarSugerencias.querySelectorAll('.sug-editar').forEach((btn, idx) => {
