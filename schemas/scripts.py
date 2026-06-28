@@ -67,3 +67,27 @@ class GenerarRespuestaResponse(BaseModel):
     mensaje_whatsapp: str
     wa_link: str
     generado_por: str
+
+
+class DialogoLinea(BaseModel):
+    actor: str
+    texto: str
+
+
+class GenerarDialogoRequest(BaseModel):
+    escenario_id: str = Field(..., min_length=1)
+    grupo_id: str = ""
+    asesor: str = ""
+    ficha: FichaCliente = Field(default_factory=FichaCliente)
+    canal: str = "voz"
+    fase: str = "saludo"
+    contexto_adicional: str = ""
+
+
+class GenerarDialogoResponse(BaseModel):
+    dialogo: list[DialogoLinea]
+    mensaje_voz: str
+    mensaje_whatsapp: str
+    wa_link: str = ""
+    generado_por: str
+    nota_asesor: str = ""

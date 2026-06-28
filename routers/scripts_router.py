@@ -11,6 +11,8 @@ from schemas.scripts import (
     ArmarWhatsAppResponse,
     BuscarFuentesResponse,
     FichaCliente,
+    GenerarDialogoRequest,
+    GenerarDialogoResponse,
     GenerarRespuestaRequest,
     GenerarRespuestaResponse,
 )
@@ -84,6 +86,32 @@ async def armar_whatsapp(payload: ArmarWhatsAppRequest):
         )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Error al armar WhatsApp: {exc}") from exc
+
+
+@router.get("/api/scripts/ia-disponible")
+async def ia_disponible():
+    from config import settings
+    return {"disponible": bool(settings.anthropic_api_key), "modelo": settings.anthropic_model}
+
+
+@router.post("/api/scripts/generar-dialogo", response_model=GenerarDialogoResponse)
+async def generar_dialogo(payload: GenerarDialogoRequest):
+    try:
+        ficha = payload.ficha.model_dump()
+        resultado = await ScriptsAiService.generar_dialogo(
+            escenario_id=payload.escenario_id,
+            grupo_id=payload.grupo_id,
+            ficha=ficha,
+            asesor=payload.asesor,
+            canal=payload.canal,
+            fase=payload.fase,
+            contexto_adicional=payload.contexto_adicional,
+        )
+        return GenerarDialogoResponse(**resultado)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Error al generar diálogo: {exc}") from exc
 
 
 @router.post("/api/scripts/generar-respuesta", response_model=GenerarRespuestaResponse)

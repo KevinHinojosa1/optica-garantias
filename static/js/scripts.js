@@ -316,6 +316,97 @@ function renderCxGuide(esc) {
   `;
 }
 
+function renderDialogoLineas(dialogo) {
+  return (dialogo || []).map(l => {
+    const esAsesor = l.actor === 'asesor';
+    return `
+      <div class="flex gap-2 py-1.5 border-b border-slate-100 last:border-0">
+        <span class="text-xs font-bold uppercase shrink-0 w-14 ${esAsesor ? 'text-optica-600' : 'text-slate-500'}">
+          ${esAsesor ? 'Asesor' : 'Cliente'}
+        </span>
+        <p class="text-sm text-slate-700">${escapeHtml(l.texto)}</p>
+      </div>
+    `;
+  }).join('');
+}
+
+async function generarDialogoClaude(cardId, btn) {
+  const card = document.getElementById(cardId);
+  if (!card) return;
+  const { faseActiva, canalActivo } = estadoCard(card);
+  const panel = card.querySelector('.dialogo-panel');
+  const contenido = card.querySelector('.dialogo-contenido');
+  const status = card.querySelector('.dialogo-status');
+  const nota = card.querySelector('.dialogo-nota');
+
+  btn.disabled = true;
+  const origBtn = btn.textContent;
+  btn.textContent = '⏳ Generando con Claude...';
+  if (status) {
+    status.textContent = 'Consultando API de Claude...';
+    status.className = 'dialogo-status text-xs text-slate-500';
+  }
+  panel?.classList.remove('hidden');
+
+  try {
+    const res = await fetch('/api/scripts/generar-dialogo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        escenario_id: card.dataset.escenarioId,
+        grupo_id: card.dataset.grupoId || '',
+        asesor: val('var-asesor'),
+        ficha: construirFichaDesdeFormulario(),
+        canal: canalActivo,
+        fase: faseActiva,
+        contexto_adicional: card.querySelector('.dialogo-contexto')?.value.trim() || '',
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Error al generar diálogo');
+
+    if (contenido) {
+      contenido.innerHTML = renderDialogoLineas(data.dialogo);
+    }
+    if (nota) {
+      nota.textContent = data.nota_asesor || '';
+      nota.classList.toggle('hidden', !data.nota_asesor);
+    }
+    const textoEl = card.querySelector('.script-texto');
+    if (textoEl) {
+      textoEl.textContent = canalActivo === 'whatsapp'
+        ? (data.mensaje_whatsapp || data.mensaje_voz)
+        : (data.mensaje_voz || '');
+    }
+    const link = card.querySelector('.link-wa');
+    if (link && canalActivo === 'whatsapp') {
+      if (data.wa_link) {
+        link.href = data.wa_link;
+        link.classList.remove('pointer-events-none', 'opacity-50');
+      } else {
+        link.href = '#';
+        link.classList.add('pointer-events-none', 'opacity-50');
+      }
+    }
+    card.dataset.ultimoDialogo = JSON.stringify(data.dialogo || []);
+    card.dataset.ultimoMensaje = canalActivo === 'whatsapp' ? data.mensaje_whatsapp : data.mensaje_voz;
+
+    const por = data.generado_por === 'claude' ? 'Claude AI' : 'plantilla (sin API key)';
+    if (status) {
+      status.textContent = `✅ Diálogo generado (${por})`;
+      status.className = 'dialogo-status text-xs text-emerald-600 font-medium';
+    }
+  } catch (err) {
+    if (status) {
+      status.textContent = '❌ ' + err.message;
+      status.className = 'dialogo-status text-xs text-red-600';
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origBtn;
+  }
+}
+
 function cardEscenario(grupo, esc) {
   const cardId = `card-${esc.id}`;
   const faseInicial = 'saludo';
@@ -335,7 +426,8 @@ function cardEscenario(grupo, esc) {
 
   return `
     <div class="bg-white rounded-2xl shadow-sm border p-5 flex flex-col gap-4" id="${cardId}"
-      data-escenario-id="${escapeHtml(esc.id)}">
+      data-escenario-id="${escapeHtml(esc.id)}"
+      data-grupo-id="${escapeHtml(grupo.id)}">
       <div>
         <p class="text-xs font-semibold text-optica-600 uppercase">${escapeHtml(grupo.titulo)}</p>
         <h4 class="font-bold text-slate-800 text-lg">${escapeHtml(esc.titulo)}</h4>
@@ -362,6 +454,25 @@ function cardEscenario(grupo, esc) {
           class="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white text-center transition link-wa">
           💬 Abrir WhatsApp
         </a>
+      </div>
+      <div class="border border-violet-200 bg-violet-50/50 rounded-xl p-3 space-y-2">
+        <p class="text-xs font-bold text-violet-800">✨ Generar diálogo con Claude</p>
+        <input type="text" class="dialogo-contexto w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-violet-400"
+          placeholder="Contexto opcional: ej. cliente muy molesto, segunda llamada...">
+        <button type="button" data-card="${cardId}" class="btn-generar-dialogo w-full py-2.5 rounded-xl text-sm font-semibold bg-violet-600 hover:bg-violet-700 text-white transition">
+          ✨ Generar diálogo con Claude
+        </button>
+        <p class="dialogo-status text-xs text-slate-500"></p>
+      </div>
+      <div class="dialogo-panel hidden space-y-2">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-bold text-slate-600 uppercase">Diálogo generado</p>
+          <button type="button" data-card="${cardId}" class="btn-copiar-dialogo text-xs font-semibold text-optica-600 hover:underline">
+            📋 Copiar diálogo
+          </button>
+        </div>
+        <div class="dialogo-contenido bg-white border rounded-xl p-4 max-h-64 overflow-y-auto"></div>
+        <p class="dialogo-nota hidden text-xs text-slate-500 italic bg-amber-50 border border-amber-100 rounded-lg p-2"></p>
       </div>
       ${tieneCx ? `
         <button type="button" data-card="${cardId}" class="btn-toggle-cx w-full py-2.5 rounded-xl text-sm font-semibold border-2 border-optica-200 text-optica-700 hover:bg-optica-50 transition">
@@ -501,6 +612,32 @@ function renderGrid() {
       });
       btn.className = 'tab-canal flex-1 py-2 rounded-xl text-sm font-bold transition bg-optica-600 text-white';
       actualizarCard(card);
+    });
+  });
+
+  document.querySelectorAll('.btn-generar-dialogo').forEach(btn => {
+    btn.addEventListener('click', () => generarDialogoClaude(btn.dataset.card, btn));
+  });
+
+  document.querySelectorAll('.btn-copiar-dialogo').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const card = document.getElementById(btn.dataset.card);
+      let texto = '';
+      try {
+        const dialogo = JSON.parse(card?.dataset.ultimoDialogo || '[]');
+        texto = dialogo.map(l =>
+          `${l.actor === 'asesor' ? 'Asesor' : 'Cliente'}: ${l.texto}`
+        ).join('\n\n');
+      } catch { /* fallback abajo */ }
+      if (!texto) {
+        const bloques = card?.querySelectorAll('.dialogo-contenido > div') || [];
+        texto = [...bloques].map(div => {
+          const actor = div.querySelector('span')?.textContent?.trim() || '';
+          const linea = div.querySelector('p')?.textContent?.trim() || '';
+          return `${actor}: ${linea}`;
+        }).join('\n\n');
+      }
+      if (texto) copiarTexto(texto, btn);
     });
   });
 
@@ -815,6 +952,22 @@ function initTiendas() {
   });
 }
 
+async function cargarIaStatus() {
+  try {
+    const res = await fetch('/api/scripts/ia-disponible');
+    const data = await res.json();
+    const el = document.getElementById('ia-status-badge');
+    if (el) {
+      el.textContent = data.disponible
+        ? `🤖 Claude activo (${data.modelo})`
+        : '⚠️ Claude no configurado — se usará plantilla CX';
+      el.className = data.disponible
+        ? 'text-xs text-emerald-600 font-semibold'
+        : 'text-xs text-amber-600 font-semibold';
+    }
+  } catch { /* ignore */ }
+}
+
 async function cargarScripts() {
   const res = await fetch('/api/scripts');
   datos = await res.json();
@@ -822,6 +975,7 @@ async function cargarScripts() {
   if (badge && datos.marco) {
     badge.textContent = `${datos.marco} · ${datos.grupos.reduce((n, g) => n + g.escenarios.length, 0)} scripts`;
   }
+  await cargarIaStatus();
   renderFiltros();
   actualizarModoPosventa();
   renderGrid();
