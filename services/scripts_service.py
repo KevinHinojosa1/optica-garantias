@@ -249,32 +249,53 @@ class ScriptsService:
     @classmethod
     def exportar_excel(cls) -> bytes:
         data = cls.cargar()
-        filas = []
+        filas_guiones = []
+        filas_cx = []
         for grupo in data.get("grupos", []):
             for esc in grupo.get("escenarios", []):
+                cx = esc.get("cx") or {}
+                niveles = esc.get("niveles") or {}
+                filas_cx.append(
+                    {
+                        "Grupo": grupo.get("titulo", ""),
+                        "Escenario": esc.get("titulo", ""),
+                        "Objetivo": esc.get("objetivo", esc.get("descripcion", "")),
+                        "Perfil emocional": ", ".join(esc.get("perfil_emocional", [])),
+                        "Empatía": niveles.get("empatia", ""),
+                        "Control": niveles.get("control", ""),
+                        "Fidelización": niveles.get("fidelizacion", ""),
+                        "Descubrimiento": cx.get("descubrimiento", ""),
+                        "Solución": cx.get("solucion", ""),
+                        "Cierre": cx.get("cierre", ""),
+                        "Seguimiento": cx.get("seguimiento", ""),
+                        "Consejos asesor": " | ".join(cx.get("consejos_asesor", [])),
+                        "Errores comunes": " | ".join(cx.get("errores_comunes", [])),
+                    }
+                )
                 for fase, textos in esc.get("fases", {}).items():
-                    filas.append(
+                    filas_guiones.append(
                         {
                             "Grupo": grupo.get("titulo", ""),
                             "Escenario": esc.get("titulo", ""),
                             "Fase": fase.capitalize(),
                             "Canal": "Voz",
                             "Texto": textos.get("voz", ""),
-                            "Tip": esc.get("descripcion", ""),
+                            "Objetivo": esc.get("objetivo", ""),
                         }
                     )
-                    filas.append(
+                    filas_guiones.append(
                         {
                             "Grupo": grupo.get("titulo", ""),
                             "Escenario": esc.get("titulo", ""),
                             "Fase": fase.capitalize(),
                             "Canal": "WhatsApp",
                             "Texto": textos.get("whatsapp", ""),
-                            "Tip": esc.get("descripcion", ""),
+                            "Objetivo": esc.get("objetivo", ""),
                         }
                     )
         buffer = io.BytesIO()
         with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-            pd.DataFrame(filas).to_excel(writer, index=False, sheet_name="Scripts")
+            pd.DataFrame(filas_guiones).to_excel(writer, index=False, sheet_name="Guiones")
+            pd.DataFrame(filas_cx).to_excel(writer, index=False, sheet_name="Guia CX")
         buffer.seek(0)
         return buffer.getvalue()

@@ -173,10 +173,154 @@ function buscarEscenario(escId) {
   return null;
 }
 
+function nivelBadge(valor, label, color) {
+  return `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold ${color}">
+    ${label}: ${valor}/10
+  </span>`;
+}
+
+function chipsLista(items, clase = 'bg-slate-100 text-slate-700') {
+  return (items || []).map(t => `
+    <button type="button" class="chip-copiar ${clase} text-xs rounded-lg px-2.5 py-1 hover:opacity-80 transition">
+      ${escapeHtml(personalizar(t))}
+    </button>
+  `).join('');
+}
+
+function renderCxGuide(esc) {
+  const cx = esc.cx;
+  if (!cx) return '';
+
+  const niveles = esc.niveles || {};
+  const perfiles = (esc.perfil_emocional || []).map(p =>
+    `<span class="text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-lg font-medium">${escapeHtml(p)}</span>`
+  ).join(' ');
+
+  const evitar = (cx.evitar || []).map(e => `
+    <tr class="border-b border-slate-100">
+      <td class="py-2 pr-3 text-red-600 text-sm align-top">✗ ${escapeHtml(e.frase)}</td>
+      <td class="py-2 text-emerald-700 text-sm align-top">→ ${escapeHtml(e.alternativa)}</td>
+    </tr>
+  `).join('');
+
+  const guion = (cx.guion || []).map(l => {
+    const esAsesor = l.actor === 'asesor';
+    return `
+      <div class="flex gap-2 ${esAsesor ? '' : 'opacity-90'}">
+        <span class="text-xs font-bold uppercase shrink-0 w-14 ${esAsesor ? 'text-optica-600' : 'text-slate-500'}">
+          ${esAsesor ? 'Asesor' : 'Cliente'}
+        </span>
+        <p class="text-sm text-slate-700">${escapeHtml(personalizar(l.texto))}</p>
+      </div>
+    `;
+  }).join('');
+
+  const objeciones = (cx.objeciones || []).map(o => `
+    <div class="bg-white border rounded-xl p-3">
+      <p class="text-xs font-bold text-amber-800 mb-1">${escapeHtml(o.situacion)}</p>
+      <p class="text-sm text-slate-700">${escapeHtml(personalizar(o.respuesta))}</p>
+    </div>
+  `).join('');
+
+  const variantes = cx.variantes || {};
+  const tabsVar = Object.keys(variantes).map((k, i) => `
+    <button type="button" data-variante="${k}"
+      class="tab-variante px-2 py-1 rounded-lg text-xs font-semibold ${i === 0 ? 'bg-optica-600 text-white' : 'bg-slate-100 text-slate-600'}">
+      ${escapeHtml(k.charAt(0).toUpperCase() + k.slice(1))}
+    </button>
+  `).join('');
+
+  const primeraVar = Object.keys(variantes)[0] || '';
+
+  return `
+    <div class="cx-guide space-y-4 border-t border-slate-200 pt-4 mt-2">
+      <div class="grid sm:grid-cols-2 gap-3 text-sm">
+        <div class="bg-blue-50 border border-blue-100 rounded-xl p-3">
+          <p class="text-xs font-bold text-blue-800 uppercase mb-1">Objetivo</p>
+          <p class="text-slate-700">${escapeHtml(esc.objetivo || esc.descripcion)}</p>
+        </div>
+        <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-3">
+          <p class="text-xs font-bold text-indigo-800 uppercase mb-1">Perfil emocional</p>
+          <div class="flex flex-wrap gap-1">${perfiles}</div>
+          <div class="flex flex-wrap gap-1 mt-2">
+            ${nivelBadge(niveles.empatia || 0, 'Empatía', 'bg-violet-100 text-violet-800')}
+            ${nivelBadge(niveles.control || 0, 'Control', 'bg-sky-100 text-sky-800')}
+            ${nivelBadge(niveles.fidelizacion || 0, 'Fidelización', 'bg-emerald-100 text-emerald-800')}
+          </div>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-3 text-sm">
+        <div><p class="text-xs font-bold text-slate-500 uppercase mb-1">Descubrimiento</p>
+          <p class="text-slate-700 bg-slate-50 rounded-xl p-3">${escapeHtml(personalizar(cx.descubrimiento))}</p></div>
+        <div><p class="text-xs font-bold text-slate-500 uppercase mb-1">Investigación</p>
+          <p class="text-slate-700 bg-slate-50 rounded-xl p-3">${escapeHtml(personalizar(cx.investigacion))}</p></div>
+      </div>
+
+      <div><p class="text-xs font-bold text-slate-500 uppercase mb-2">Escucha activa</p>
+        <div class="flex flex-wrap gap-1.5">${chipsLista(cx.escucha_activa, 'bg-teal-50 text-teal-800 border border-teal-100')}</div></div>
+
+      <div><p class="text-xs font-bold text-slate-500 uppercase mb-2">Validación emocional</p>
+        <div class="flex flex-wrap gap-1.5">${chipsLista(cx.validacion_emocional, 'bg-violet-50 text-violet-800')}</div></div>
+
+      <div><p class="text-xs font-bold text-slate-500 uppercase mb-1">Solución</p>
+        <p class="text-slate-700 bg-emerald-50 border border-emerald-100 rounded-xl p-3">${escapeHtml(personalizar(cx.solucion))}</p></div>
+
+      <div class="grid md:grid-cols-2 gap-3">
+        <div><p class="text-xs font-bold text-slate-500 uppercase mb-2">Técnicas para disminuir tensión</p>
+          <ul class="text-sm text-slate-600 space-y-1 list-disc pl-4">${(cx.tecnicas_tension || []).map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul></div>
+        <div><p class="text-xs font-bold text-slate-500 uppercase mb-2">Técnicas psicológicas</p>
+          <div class="flex flex-wrap gap-1">${(cx.tecnicas_psicologicas || []).map(t =>
+            `<span class="text-xs bg-slate-100 px-2 py-0.5 rounded-lg">${escapeHtml(t)}</span>`
+          ).join('')}</div></div>
+      </div>
+
+      <div><p class="text-xs font-bold text-slate-500 uppercase mb-2">Palabras de tranquilidad</p>
+        <div class="flex flex-wrap gap-1.5">${chipsLista(cx.palabras_tranquilidad, 'bg-sky-50 text-sky-800')}</div></div>
+
+      <div><p class="text-xs font-bold text-slate-500 uppercase mb-2">Qué NO decir → Alternativa</p>
+        <table class="w-full text-left"><tbody>${evitar}</tbody></table></div>
+
+      <div><p class="text-xs font-bold text-slate-500 uppercase mb-2">Guion principal</p>
+        <div class="bg-slate-50 border rounded-xl p-4 space-y-3">${guion}</div></div>
+
+      <div><p class="text-xs font-bold text-slate-500 uppercase mb-2">Manejo de objeciones</p>
+        <div class="grid sm:grid-cols-2 gap-2">${objeciones}</div></div>
+
+      <div><p class="text-xs font-bold text-slate-500 uppercase mb-2">Variantes de respuesta</p>
+        <div class="flex flex-wrap gap-1 mb-2">${tabsVar}</div>
+        <p class="variante-texto text-sm text-slate-700 bg-slate-50 rounded-xl p-3 whitespace-pre-wrap">${escapeHtml(personalizar(variantes[primeraVar] || ''))}</p></div>
+
+      <div><p class="text-xs font-bold text-slate-500 uppercase mb-2">Fidelización</p>
+        <div class="flex flex-wrap gap-1.5">${chipsLista(cx.fidelizacion, 'bg-emerald-50 text-emerald-800')}</div></div>
+
+      <div class="grid md:grid-cols-2 gap-3 text-sm">
+        <div><p class="text-xs font-bold text-slate-500 uppercase mb-1">Cierre perfecto</p>
+          <p class="text-slate-700 bg-slate-50 rounded-xl p-3">${escapeHtml(personalizar(cx.cierre))}</p></div>
+        <div><p class="text-xs font-bold text-slate-500 uppercase mb-1">Seguimiento</p>
+          <p class="text-slate-700 bg-slate-50 rounded-xl p-3">${escapeHtml(personalizar(cx.seguimiento))}</p></div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-3 text-sm">
+        <div><p class="text-xs font-bold text-emerald-700 uppercase mb-1">Consejos para el asesor</p>
+          <ul class="text-slate-600 space-y-1 list-disc pl-4">${(cx.consejos_asesor || []).map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul></div>
+        <div><p class="text-xs font-bold text-red-700 uppercase mb-1">Errores comunes</p>
+          <ul class="text-slate-600 space-y-1 list-disc pl-4">${(cx.errores_comunes || []).map(c => `<li>${escapeHtml(c)}</li>`).join('')}</ul></div>
+      </div>
+
+      <div><p class="text-xs font-bold text-slate-500 uppercase mb-1">Palabras clave</p>
+        <div class="flex flex-wrap gap-1">${(cx.palabras_clave || []).map(k =>
+          `<span class="text-xs font-semibold bg-optica-50 text-optica-700 px-2 py-0.5 rounded-lg">#${escapeHtml(k)}</span>`
+        ).join('')}</div></div>
+    </div>
+  `;
+}
+
 function cardEscenario(grupo, esc) {
   const cardId = `card-${esc.id}`;
   const faseInicial = 'saludo';
   const textoInicial = personalizar(esc.fases[faseInicial].voz);
+  const tieneCx = !!esc.cx;
 
   const tabsFase = FASES.map(f => `
     <button type="button" data-card="${cardId}" data-fase="${f.id}"
@@ -185,13 +329,18 @@ function cardEscenario(grupo, esc) {
     </button>
   `).join('');
 
+  const perfiles = (esc.perfil_emocional || []).slice(0, 3).map(p =>
+    `<span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">${escapeHtml(p)}</span>`
+  ).join('');
+
   return `
     <div class="bg-white rounded-2xl shadow-sm border p-5 flex flex-col gap-4" id="${cardId}"
       data-escenario-id="${escapeHtml(esc.id)}">
       <div>
         <p class="text-xs font-semibold text-optica-600 uppercase">${escapeHtml(grupo.titulo)}</p>
         <h4 class="font-bold text-slate-800 text-lg">${escapeHtml(esc.titulo)}</h4>
-        <p class="text-sm text-slate-500 mt-1">${escapeHtml(esc.descripcion)}</p>
+        <p class="text-sm text-slate-500 mt-1">${escapeHtml(esc.objetivo || esc.descripcion)}</p>
+        ${perfiles ? `<div class="flex flex-wrap gap-1 mt-2">${perfiles}</div>` : ''}
       </div>
       <div class="flex flex-wrap gap-2">${tabsFase}</div>
       <div class="flex gap-2">
@@ -200,20 +349,26 @@ function cardEscenario(grupo, esc) {
         <button type="button" data-card="${cardId}" data-canal="whatsapp"
           class="tab-canal flex-1 py-2 rounded-xl text-sm font-bold transition bg-slate-100 text-slate-600 hover:bg-slate-200">💬 WhatsApp</button>
       </div>
-      <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 min-h-[140px]">
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 min-h-[120px]">
         <p class="script-texto text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">${escapeHtml(textoInicial)}</p>
       </div>
       <p class="script-loading text-xs text-slate-400 hidden">Armando mensaje completo...</p>
       <div class="flex flex-wrap gap-2">
         <button type="button" onclick="copiarDesdeCard('${cardId}', this)"
           class="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
-          📋 Copiar
+          📋 Copiar guión
         </button>
         <a href="#" target="_blank" rel="noopener"
           class="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white text-center transition link-wa">
           💬 Abrir WhatsApp
         </a>
       </div>
+      ${tieneCx ? `
+        <button type="button" data-card="${cardId}" class="btn-toggle-cx w-full py-2.5 rounded-xl text-sm font-semibold border-2 border-optica-200 text-optica-700 hover:bg-optica-50 transition">
+          📖 Ver guía CX completa
+        </button>
+        <div class="cx-panel hidden">${renderCxGuide(esc)}</div>
+      ` : ''}
     </div>
   `;
 }
@@ -222,6 +377,35 @@ function estadoCard(card) {
   const faseActiva = card.querySelector('.tab-fase.bg-optica-600')?.dataset.fase || 'saludo';
   const canalActivo = card.querySelector('.tab-canal.bg-optica-600')?.dataset.canal || 'voz';
   return { faseActiva, canalActivo };
+}
+
+function enlazarChipsCopiar(contenedor) {
+  contenedor?.querySelectorAll('.chip-copiar').forEach(btn => {
+    btn.addEventListener('click', () => copiarTexto(btn.textContent.trim(), btn));
+  });
+}
+
+function enlazarVariantes(card, esc) {
+  const panel = card.querySelector('.cx-panel');
+  if (!panel || !esc.cx?.variantes) return;
+  panel.querySelectorAll('.tab-variante').forEach(btn => {
+    btn.addEventListener('click', () => {
+      panel.querySelectorAll('.tab-variante').forEach(b => {
+        b.className = 'tab-variante px-2 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600';
+      });
+      btn.className = 'tab-variante px-2 py-1 rounded-lg text-xs font-semibold bg-optica-600 text-white';
+      const texto = panel.querySelector('.variante-texto');
+      if (texto) texto.textContent = personalizar(esc.cx.variantes[btn.dataset.variante] || '');
+    });
+  });
+}
+
+function refrescarCxPanel(card, esc) {
+  const panel = card.querySelector('.cx-panel');
+  if (!panel || panel.classList.contains('hidden')) return;
+  panel.innerHTML = renderCxGuide(esc);
+  enlazarChipsCopiar(panel);
+  enlazarVariantes(card, esc);
 }
 
 async function actualizarCard(card) {
@@ -239,30 +423,30 @@ async function actualizarCard(card) {
       link.classList.add('pointer-events-none', 'opacity-50');
       link.href = '#';
     }
-    return;
-  }
-
-  loading?.classList.remove('hidden');
-  try {
-    const plantilla = esc.fases[faseActiva].whatsapp;
-    const data = await armarWhatsAppCompleto(plantilla);
-    textoEl.textContent = data.mensaje;
-    const aviso = document.getElementById('aviso-ficha-wa');
-    if (aviso) aviso.classList.toggle('hidden', !!data.incluye_ficha);
-    if (link) {
-      if (data.wa_link) {
-        link.href = data.wa_link;
-        link.classList.remove('pointer-events-none', 'opacity-50');
-      } else {
-        link.href = '#';
-        link.classList.add('pointer-events-none', 'opacity-50');
+  } else {
+    loading?.classList.remove('hidden');
+    try {
+      const plantilla = esc.fases[faseActiva].whatsapp;
+      const data = await armarWhatsAppCompleto(plantilla);
+      textoEl.textContent = data.mensaje;
+      const aviso = document.getElementById('aviso-ficha-wa');
+      if (aviso) aviso.classList.toggle('hidden', !!data.incluye_ficha);
+      if (link) {
+        if (data.wa_link) {
+          link.href = data.wa_link;
+          link.classList.remove('pointer-events-none', 'opacity-50');
+        } else {
+          link.href = '#';
+          link.classList.add('pointer-events-none', 'opacity-50');
+        }
       }
+    } catch (err) {
+      textoEl.textContent = '❌ ' + err.message;
+    } finally {
+      loading?.classList.add('hidden');
     }
-  } catch (err) {
-    textoEl.textContent = '❌ ' + err.message;
-  } finally {
-    loading?.classList.add('hidden');
   }
+  refrescarCxPanel(card, esc);
 }
 
 function copiarDesdeCard(cardId, btn) {
@@ -272,18 +456,30 @@ function copiarDesdeCard(cardId, btn) {
 }
 window.copiarDesdeCard = copiarDesdeCard;
 
-function renderGrid() {
+function escenariosVisibles() {
   const grupos = grupoFiltro
     ? datos.grupos.filter(g => g.id === grupoFiltro)
     : datos.grupos;
-
+  const q = val('buscar-script').toLowerCase();
   const cards = [];
   grupos.forEach(grupo => {
-    grupo.escenarios.forEach(esc => cards.push(cardEscenario(grupo, esc)));
+    grupo.escenarios.forEach(esc => {
+      if (q) {
+        const hay = [esc.titulo, esc.objetivo, esc.descripcion, grupo.titulo]
+          .join(' ').toLowerCase().includes(q);
+        if (!hay) return;
+      }
+      cards.push({ grupo, esc });
+    });
   });
+  return cards;
+}
 
-  grid.innerHTML = cards.length
-    ? cards.join('')
+function renderGrid() {
+  const items = escenariosVisibles();
+
+  grid.innerHTML = items.length
+    ? items.map(({ grupo, esc }) => cardEscenario(grupo, esc)).join('')
     : '<p class="text-slate-400 col-span-full text-center py-8">Sin scripts en este filtro</p>';
 
   document.querySelectorAll('.tab-fase').forEach(btn => {
@@ -307,19 +503,42 @@ function renderGrid() {
       actualizarCard(card);
     });
   });
+
+  document.querySelectorAll('.btn-toggle-cx').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const card = document.getElementById(btn.dataset.card);
+      const panel = card.querySelector('.cx-panel');
+      const abierto = !panel.classList.contains('hidden');
+      panel.classList.toggle('hidden');
+      btn.textContent = abierto ? '📖 Ver guía CX completa' : '📕 Ocultar guía CX';
+      if (!abierto) {
+        const found = buscarEscenario(card.dataset.escenarioId);
+        if (found) {
+          enlazarChipsCopiar(panel);
+          enlazarVariantes(card, found.esc);
+        }
+      }
+    });
+  });
+
+  items.forEach(({ esc }) => {
+    const card = document.getElementById(`card-${esc.id}`);
+    if (card) actualizarCard(card);
+  });
 }
 
 function renderFiltros() {
   const btns = datos.grupos.map(g => `
     <button type="button" data-grupo="${g.id}"
       class="filtro-grupo shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-white hover:bg-slate-50 whitespace-nowrap">
-      ${escapeHtml(g.titulo)}
+      ${escapeHtml(g.titulo)} <span class="text-slate-400 font-normal">(${g.escenarios.length})</span>
     </button>
   `).join('');
+  const total = datos.grupos.reduce((n, g) => n + g.escenarios.length, 0);
   filtroGrupos.innerHTML = btns + `
     <button type="button" data-grupo=""
       class="filtro-grupo shrink-0 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold border transition bg-optica-600 text-white whitespace-nowrap">
-      Todos
+      Todos (${total})
     </button>
   `;
 
@@ -426,7 +645,10 @@ function actualizarModoPosventa() {
 }
 
 function actualizarCamposFechas() {
-  const mostrar = grupoFiltro === 'situaciones_operativas' || grupoFiltro === '';
+  const grupo = grupoActivo();
+  const mostrar = grupoFiltro === 'situaciones_operativas'
+    || grupoFiltro === ''
+    || grupo?.escenarios?.some(e => e.requiere_fechas);
   ['campo-fecha-prometida', 'campo-nueva-fecha', 'campo-motivo'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.classList.toggle('hidden', !mostrar);
@@ -596,6 +818,10 @@ function initTiendas() {
 async function cargarScripts() {
   const res = await fetch('/api/scripts');
   datos = await res.json();
+  const badge = document.getElementById('cx-version-badge');
+  if (badge && datos.marco) {
+    badge.textContent = `${datos.marco} · ${datos.grupos.reduce((n, g) => n + g.escenarios.length, 0)} scripts`;
+  }
   renderFiltros();
   actualizarModoPosventa();
   renderGrid();
@@ -621,6 +847,7 @@ document.getElementById('btn-buscar-ficha')?.addEventListener('click', buscarFic
 document.getElementById('buscar-ficha')?.addEventListener('keydown', e => {
   if (e.key === 'Enter') buscarFichas();
 });
+document.getElementById('buscar-script')?.addEventListener('input', renderGrid);
 document.getElementById('btn-generar-respuesta')?.addEventListener('click', generarRespuesta);
 document.getElementById('btn-copiar-respuesta-wa')?.addEventListener('click', function () {
   if (ultimoWaMensaje) copiarTexto(ultimoWaMensaje, this);
