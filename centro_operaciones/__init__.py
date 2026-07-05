@@ -1,0 +1,1 @@
+"""Centro de Operaciones Óptica Los Andes — módulo Streamlit."""
