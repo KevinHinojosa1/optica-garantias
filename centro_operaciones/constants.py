@@ -22,6 +22,7 @@ COLUMNAS_EDITABLES = [
     "correos_disculpa",
     "dialogo_ia",
     "canal_dialogo",
+    "justificacion_ia",
 ]
 
 COLUMNAS_ORDEN = [
@@ -53,6 +54,7 @@ COLUMNAS_ORDEN = [
     "dialogo_ia",
     "canal_dialogo",
     "clasificado_por",
+    "justificacion_ia",
     # alias compatibilidad IA / filtros
     "telefono",
     "mensaje_telegram",
@@ -86,40 +88,44 @@ COLUMNAS_EXCEL_EXPORTE = [
     ("quien_llama", "quien llama"),
     ("clasificacion", "CLASIFICACION"),
     ("estado_gestion", "Estado gestión"),
+    ("justificacion_ia", "Justificación IA"),
     ("dialogo_ia", "Diálogo IA"),
 ]
 
 OPCIONES_LLAMADA = ["Pendiente", "Sí", "No", "si", "no"]
 OPCIONES_CONTESTO = ["Pendiente", "Sí", "No", "No contesta", "si", "no"]
 OPCIONES_ESTADO = ["Sin gestión", "En proceso", "Resuelto", "Pendiente llamada"]
-OPCIONES_CLASIFICACION = [
-    "Demora entrega",
-    "Garantía / OLA sin informar",
-    "Errores de medidas / calidad",
-    "Atención deficiente",
-    "Falta de explicación",
-    "Cobros extras",
-    "Asesoría / información",
-    "Control de calidad",
-    "Tiempo de entrega",
-    "Atención al cliente",
-    "Otro",
-    "Sin clasificar",
+# Categorías oficiales para clasificación IA
+CATEGORIAS_IA = [
+    "Garantía / OLA PLUS sin informar",
+    "Demora en entrega / no avisan cuando está listo",
+    "Errores de medidas / calidad de lunas / lentes mal hechos",
+    "Atención deficiente / falta de empatía / apuro / trato malo",
+    "Falta de explicación (producto, cuidado, garantía, uso)",
+    "Cobros extras / valores no solicitados / precio",
+    "Otros / Sin clasificar",
 ]
+
+OPCIONES_CLASIFICACION = CATEGORIAS_IA
 
 AREAS = ["Ventas", "Optometría", "Laboratorio", "Postventa", "Logística", "Administración", "Call Center"]
 
 REGLAS_CLASIFICACION: list[tuple[str, list[str]]] = [
-    ("Demora entrega", ["demora", "retraso", "tarde", "esperando", "plazo", "dos semanas", "demor"]),
-    ("Tiempo de entrega", ["tiempo de entrega", "entrega", "no lleg", "plazo entrega"]),
-    ("Garantía / OLA sin informar", ["garant", "ola plus", "ola sin", "sin informar garant", "devol"]),
-    ("Errores de medidas / calidad", ["medida", "gradu", "incorrect", "luna", "cambiadas", "error", "defecto", "rayad", "no ve", "progresiv"]),
-    ("Atención deficiente", ["mala atención", "groser", "pésima", "mal rato", "discut", "deficiente", "trato"]),
-    ("Falta de explicación", ["explic", "informacion incompleta", "no se otorg", "poca asesor", "pocas recomend"]),
-    ("Cobros extras", ["cobr", "precio", "factur", "extra", "devuelven el dinero", "nota de crédito"]),
-    ("Asesoría / información", ["asesor", "recomend", "consulta", "inform"]),
-    ("Control de calidad", ["calidad", "verific", "control"]),
-    ("Atención al cliente", ["atencion al cliente", "atención al cliente", "servicio"]),
+    ("Demora en entrega / no avisan cuando está listo", ["demora", "retraso", "tarde", "esperando", "plazo", "no avisan", "listo", "entrega"]),
+    ("Garantía / OLA PLUS sin informar", ["garant", "ola plus", "ola sin", "sin informar", "devol", "explicacion mas alla"]),
+    ("Errores de medidas / calidad de lunas / lentes mal hechos", ["medida", "gradu", "incorrect", "luna", "cambiadas", "defecto", "rayad", "no ve", "progresiv", "mal hecho"]),
+    ("Atención deficiente / falta de empatía / apuro / trato malo", ["mala atención", "groser", "pésima", "mal rato", "discut", "empatía", "apuro", "trato"]),
+    ("Falta de explicación (producto, cuidado, garantía, uso)", ["explic", "informacion incompleta", "no se otorg", "poca asesor", "recomend", "como aplicar"]),
+    ("Cobros extras / valores no solicitados / precio", ["cobr", "precio", "factur", "extra", "devuelven", "nota de crédito", "valor"]),
+]
+
+# Columnas visibles en st.data_editor (matriz operativa diaria)
+COLUMNAS_EDITOR = [
+    "n", "mes", "fecha_alerta", "local", "area", "optometra", "asesor",
+    "calificacion", "pregunta", "comentario", "cliente", "contacto",
+    "llamada_cliente", "contesto", "observacion_gestion", "solucion",
+    "clasificacion", "justificacion_ia", "estado_gestion", "quien_llama",
+    "dialogo_ia",
 ]
 
 MAPEO_EXCEL = {

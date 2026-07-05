@@ -302,7 +302,7 @@ class RespuestaIAService:
             "email": fila.get("email", ""),
             "local": fila.get("local") or fila.get("tienda", ""),
             "asesor": fila.get("asesor", ""),
-            "comentario_cliente": fila.get("mensaje_telegram") or fila.get("comentario") or "",
+            "comentario_cliente": fila.get("comentario") or fila.get("mensaje_telegram") or "",
             "historial": fila.get("historial", ""),
             "calificacion": str(fila.get("calificacion", "")),
             "problema": fila.get("problema", ""),

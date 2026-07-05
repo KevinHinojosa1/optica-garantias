@@ -57,13 +57,7 @@ def _derivar_estado(solucion: str, observacion: str, contesto: str) -> str:
     return "Sin gestión"
 
 
-def importar_excel_general(ruta: Path | None = None) -> pd.DataFrame:
-    """Lee la hoja GENERAL del Excel operativo."""
-    path = ruta or ALERTAS_EXCEL
-    if not path.exists():
-        raise FileNotFoundError(f"No se encontró el Excel de alertas: {path}")
-
-    raw = pd.read_excel(path, sheet_name=ALERTAS_EXCEL_HOJA)
+def _procesar_raw_excel(raw: pd.DataFrame) -> pd.DataFrame:
     out = pd.DataFrame()
 
     for excel_col, interno in MAPEO_EXCEL.items():
@@ -99,6 +93,7 @@ def importar_excel_general(ruta: Path | None = None) -> pd.DataFrame:
     out["dialogo_ia"] = ""
     out["canal_dialogo"] = ""
     out["clasificado_por"] = ""
+    out["justificacion_ia"] = ""
 
     # Alias compatibilidad
     out["telefono"] = out["contacto"]
@@ -107,6 +102,36 @@ def importar_excel_general(ruta: Path | None = None) -> pd.DataFrame:
     out["descripcion"] = out["comentario"]
 
     return _normalizar(out)
+
+
+def importar_excel_general(ruta: Path | None = None) -> pd.DataFrame:
+    """Lee la hoja GENERAL del Excel operativo desde archivo en disco."""
+    path = ruta or ALERTAS_EXCEL
+    if not path.exists():
+        raise FileNotFoundError(f"No se encontró el Excel de alertas: {path}")
+    raw = pd.read_excel(path, sheet_name=ALERTAS_EXCEL_HOJA)
+    return _procesar_raw_excel(raw)
+
+
+def importar_excel_bytes(content: bytes) -> pd.DataFrame:
+    """Lee la hoja GENERAL desde bytes (upload Streamlit/FastAPI)."""
+    import io
+
+    raw = pd.read_excel(io.BytesIO(content), sheet_name=ALERTAS_EXCEL_HOJA)
+    return _procesar_raw_excel(raw)
+
+
+def fusionar_incremental(nuevo: pd.DataFrame, existente: pd.DataFrame) -> pd.DataFrame:
+    """Agrega solo filas nuevas (por id/n) al dataset existente."""
+    if existente is None or existente.empty:
+        return _normalizar(nuevo)
+    base = _normalizar(existente)
+    inc = _normalizar(nuevo)
+    ids_vistos = set(base["id"].tolist())
+    nuevas = inc[~inc["id"].isin(ids_vistos)]
+    if nuevas.empty:
+        return base
+    return _normalizar(pd.concat([base, nuevas], ignore_index=True))
 
 
 def _fusionar_con_guardados(excel_df: pd.DataFrame, guardado: pd.DataFrame) -> pd.DataFrame:
