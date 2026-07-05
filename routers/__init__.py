@@ -5,6 +5,7 @@ from routers.mensajes_router import router as mensajes_router
 from routers.historial_router import router as historial_router
 from routers.ivr_router import router as ivr_router
 from routers.scripts_router import router as scripts_router
+from routers.respuesta_ia_router import router as respuesta_ia_router
 from routers.tiendas_router import router as tiendas_router
 
 __all__ = [
@@ -15,5 +16,6 @@ __all__ = [
     "historial_router",
     "ivr_router",
     "scripts_router",
+    "respuesta_ia_router",
     "tiendas_router",
 ]

@@ -14,6 +14,7 @@ from routers import (
     import_router,
     ivr_router,
     mensajes_router,
+    respuesta_ia_router,
     scripts_router,
     tiendas_router,
 )
@@ -81,6 +82,7 @@ app.include_router(mensajes_router)
 app.include_router(historial_router)
 app.include_router(ivr_router)
 app.include_router(scripts_router)
+app.include_router(respuesta_ia_router)
 app.include_router(tiendas_router)
 
 
