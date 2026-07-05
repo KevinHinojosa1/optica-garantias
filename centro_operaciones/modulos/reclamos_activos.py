@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 import pandas as pd
-import streamlit as st
 
-from centro_operaciones.components.respuesta_ia import render_panel_respuesta_ia
-from services.respuesta_ia_service import RespuestaIAService
+from centro_operaciones.components.modulo_base import ModuloMeta, render_modulo_estandar
+
+META = ModuloMeta(
+    id="reclamos_activos",
+    label="📋 Reclamos Activos",
+    descripcion="Casos abiertos de reclamos y seguimiento posventa.",
+)
 
 
-def _datos_ejemplo() -> pd.DataFrame:
+def _datos() -> pd.DataFrame:
     return pd.DataFrame([
         {"id": 1, "cliente": "María López", "telefono": "0991112233", "local": "Quito Centro",
          "problema": "Lentes con error de graduación", "estado": "Abierto", "dias_abierto": 5,
@@ -24,18 +28,23 @@ def _datos_ejemplo() -> pd.DataFrame:
 
 
 def render() -> None:
-    st.subheader("📋 Reclamos Activos")
-    df = _datos_ejemplo()
-    st.dataframe(df, use_container_width=True, hide_index=True)
-
-    sel = st.selectbox("Seleccionar caso para IA", df["id"].tolist(), format_func=lambda i: f"#{i} — {df.loc[df['id']==i,'cliente'].iloc[0]}")
-    fila = df[df["id"] == sel].iloc[0].to_dict()
-
-    ctx = RespuestaIAService.contexto_desde_fila(
-        {**fila, "descripcion": fila.get("comentario", ""), "estado_gestion": fila.get("estado", "")},
-        modulo="reclamos_activos",
+    df = _datos()
+    render_modulo_estandar(
+        meta=META,
+        df=df,
+        kpis=[
+            ("Abiertos", (df["estado"] == "Abierto").sum()),
+            ("En revisión", (df["estado"] == "En revisión").sum()),
+            ("Prom. días", f"{df['dias_abierto'].mean():.0f}"),
+        ],
+        columna_sel="id",
+        formato_sel=lambda i: f"#{i} — {df.loc[df['id']==i,'cliente'].iloc[0]}",
+        nombre_export="reclamos_activos.xlsx",
+        contexto_extra_fn=lambda f: {
+            **f,
+            "descripcion": f.get("comentario", ""),
+            "estado_gestion": f.get("estado", ""),
+            "historial": f"Días abierto: {f.get('dias_abierto', '')}",
+            "calificacion": f.get("calificacion", ""),
+        },
     )
-    ctx["historial"] = f"Días abierto: {fila.get('dias_abierto', '')}"
-    ctx["calificacion"] = fila.get("calificacion", "")
-
-    render_panel_respuesta_ia(ctx, titulo_modulo="Reclamos Activos", key_prefix="reclamos")

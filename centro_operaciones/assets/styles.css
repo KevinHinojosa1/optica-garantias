@@ -1,0 +1,20 @@
+/* Estilos adicionales — Centro de Operaciones Óptica Los Andes */
+
+.ola-modulo-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.ola-modulo-card h3 {
+  color: #1E3A5F;
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.ola-link-grid a {
+  color: #2563eb;
+  font-weight: 600;
+}

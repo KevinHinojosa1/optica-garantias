@@ -13,3 +13,5 @@ pydantic-settings>=2.6.0
 reportlab>=4.2.0
 gspread>=6.1.0
 google-auth>=2.35.0
+plotly>=5.24.0
+pyarrow>=18.0.0

@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from config import settings
 from database import SessionLocal, init_db
 from routers import (
+    alertas_router,
     analisis_router,
     clientes_router,
     historial_router,
@@ -66,7 +67,7 @@ from starlette.requests import Request as StarletteRequest
 class NoCacheMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: StarletteRequest, call_next):
         response = await call_next(request)
-        if request.url.path.startswith("/static/") or request.url.path in ("/ivr", "/"):
+        if request.url.path.startswith("/static/") or request.url.path in ("/ivr", "/alertas", "/"):
             response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
             response.headers["Pragma"] = "no-cache"
         return response
@@ -75,6 +76,7 @@ class NoCacheMiddleware(BaseHTTPMiddleware):
 app.add_middleware(NoCacheMiddleware)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+app.include_router(alertas_router)
 app.include_router(import_router)
 app.include_router(clientes_router)
 app.include_router(analisis_router)

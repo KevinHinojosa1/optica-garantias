@@ -34,6 +34,41 @@ def _auto_ancho(ws, max_width: int = 45) -> None:
         ws.column_dimensions[letter].width = min(max(largo + 2, 10), max_width)
 
 
+def exportar_tabla_generica(
+    df: pd.DataFrame,
+    *,
+    titulo_hoja: str = "Datos",
+    subtitulo: str = "Centro de Operaciones — Óptica Los Andes",
+) -> bytes:
+    """Exportación Excel genérica con encabezado corporativo."""
+    buffer = io.BytesIO()
+    export = df.copy()
+    hoja = titulo_hoja[:31] or "Datos"
+
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+        export.to_excel(writer, index=False, sheet_name=hoja)
+
+    buffer.seek(0)
+    wb = load_workbook(buffer)
+    ws = wb[hoja]
+    _estilo_encabezado(ws)
+    ws.freeze_panes = "A2"
+    for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
+        for cell in row:
+            cell.alignment = Alignment(vertical="top", wrap_text=True)
+    _auto_ancho(ws)
+
+    meta = wb.create_sheet("_Meta", 0)
+    meta["A1"] = subtitulo
+    meta["A2"] = f"Exportado: {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+    meta["A3"] = f"Total registros: {len(export)}"
+
+    out = io.BytesIO()
+    wb.save(out)
+    out.seek(0)
+    return out.getvalue()
+
+
 def exportar_matriz_seguimiento(df: pd.DataFrame) -> bytes:
     buffer = io.BytesIO()
     export = df.copy()

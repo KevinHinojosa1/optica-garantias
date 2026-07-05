@@ -1,0 +1,48 @@
+/* Alertas Telegram — estilos del módulo */
+
+.alertas-ag-grid {
+  width: 100%;
+  height: 480px;
+  --ag-font-family: 'Inter', system-ui, sans-serif;
+  --ag-font-size: 13px;
+  --ag-header-background-color: #1e3a5f;
+  --ag-header-foreground-color: #ffffff;
+  --ag-odd-row-background-color: rgba(239, 246, 255, 0.45);
+  --ag-row-hover-color: rgba(219, 234, 254, 0.65);
+  --ag-selected-row-background-color: rgba(37, 99, 235, 0.15);
+  --ag-border-color: rgba(226, 232, 240, 0.9);
+  border-radius: 0.875rem;
+  overflow: hidden;
+}
+
+.alertas-ag-grid .ag-root-wrapper {
+  border-radius: 0.875rem;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+}
+
+.kpi-alertas {
+  transition: transform 0.15s ease;
+}
+
+.chart-alertas {
+  min-height: 300px;
+}
+
+.chart-alertas-tall {
+  min-height: 380px;
+}
+
+#toast-alertas.toast-ok {
+  border-left: 4px solid #16a34a;
+  color: #166534;
+}
+
+#toast-alertas.toast-error {
+  border-left: 4px solid #dc2626;
+  color: #991b1b;
+}
+
+#toast-alertas.toast-info {
+  border-left: 4px solid #2563eb;
+  color: #1e40af;
+}
