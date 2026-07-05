@@ -56,18 +56,26 @@ def _filtros_desde_query(
 
 @router.get("/alertas", response_class=HTMLResponse)
 async def pagina_alertas(request: Request):
-    meta = AlertasService.metadata()
-    ia = RespuestaIAService.ia_disponible()
-    return templates.TemplateResponse(
-        request,
-        "alertas.html",
-        {
-            "active": "alertas",
-            "meta": meta,
-            "ia_disponible": ia["disponible"],
-            "ia_modelo": ia["modelo"],
-        },
-    )
+    try:
+        meta = AlertasService.metadata()
+        ia = RespuestaIAService.ia_disponible()
+        return templates.TemplateResponse(
+            request,
+            "alertas.html",
+            {
+                "active": "alertas",
+                "meta": meta,
+                "ia_disponible": ia["disponible"],
+                "ia_modelo": ia["modelo"],
+            },
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error al cargar módulo Alertas: {exc}",
+        ) from exc
 
 
 @router.get("/api/alertas", response_model=AlertasListResponse)
