@@ -48,3 +48,11 @@ class AlertasGraficosResponse(BaseModel):
     heatmap: dict[str, Any]
     heatmap_mes_local: dict[str, Any]
     donut: dict[str, Any]
+
+
+class AlertasSubirExcelResponse(BaseModel):
+    ok: bool
+    total: int
+    nuevas: int
+    pendientes: int
+    ids_pendientes_ia: list[int] = Field(default_factory=list)

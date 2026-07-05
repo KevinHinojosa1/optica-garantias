@@ -14,6 +14,7 @@ from schemas.alertas import (
     AlertasGraficosResponse,
     AlertasKpisResponse,
     AlertasListResponse,
+    AlertasSubirExcelResponse,
 )
 from services.alertas_service import AlertasService
 from services.respuesta_ia_service import RespuestaIAService
@@ -230,6 +231,25 @@ async def api_recargar_excel():
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post("/api/alertas/subir-excel", response_model=AlertasSubirExcelResponse)
+async def api_subir_excel_alertas(
+    archivo: UploadFile = File(...),
+    modo: str = Query("reemplazar", pattern="^(reemplazar|incremental)$"),
+):
+    nombre = (archivo.filename or "").lower()
+    if not nombre.endswith((".xlsx", ".xls")):
+        raise HTTPException(status_code=400, detail="Suba un archivo Excel (.xlsx) con hoja GENERAL.")
+    try:
+        content = await archivo.read()
+        if not content:
+            raise HTTPException(status_code=400, detail="El archivo está vacío.")
+        return AlertasSubirExcelResponse(**AlertasService.subir_excel(content, modo=modo))
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Error al procesar Excel: {exc}") from exc
 
 
 @router.post("/api/alertas/importar")

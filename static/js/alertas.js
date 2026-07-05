@@ -42,6 +42,7 @@ const COLUMNAS_GRID = [
   { field: 'solucion', headerName: 'SOLUCIÓN', width: 200, editable: true, wrapText: true, autoHeight: true },
   { field: 'clasificacion', headerName: 'CLASIFICACION', width: 170, editable: true,
     cellEditor: 'agSelectCellEditor', cellEditorParams: { values: OPCIONES.clasificacion } },
+  { field: 'justificacion_ia', headerName: 'Justificación IA', width: 220, wrapText: true, autoHeight: true },
   { field: 'estado_gestion', headerName: 'Estado', width: 120, editable: true,
     cellEditor: 'agSelectCellEditor', cellEditorParams: { values: OPCIONES.estado } },
   { field: 'quien_llama', headerName: 'Quien llama', width: 110, editable: true },
@@ -192,16 +193,85 @@ async function guardarCambios() {
   await refrescarTodo();
 }
 
-async function clasificar(endpoint) {
+const LOTE_IA = 8;
+
+async function clasificar(endpoint, ids = null) {
+  const payload = { ids: ids ?? idsSeleccionados() };
   const res = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ids: idsSeleccionados() }),
+    body: JSON.stringify(payload),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || 'Error en clasificación');
-  toast(`Clasificadas ${data.clasificadas} fila(s)`, 'ok');
-  await refrescarTodo();
+  return data;
+}
+
+async function clasificarLotes(ids, onProgress) {
+  let total = 0;
+  for (let i = 0; i < ids.length; i += LOTE_IA) {
+    const lote = ids.slice(i, i + LOTE_IA);
+    const data = await clasificar('/api/alertas/clasificar-ia', lote);
+    total += data.clasificadas || lote.length;
+    if (onProgress) onProgress(Math.min(i + lote.length, ids.length), ids.length);
+  }
+  return total;
+}
+
+function mostrarProgresoUpload(done, total) {
+  const panel = document.getElementById('upload-progreso');
+  const bar = document.getElementById('upload-progreso-bar');
+  const txt = document.getElementById('upload-progreso-texto');
+  if (!panel || !bar || !txt) return;
+  panel.classList.remove('hidden');
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  bar.style.width = `${pct}%`;
+  txt.textContent = `Clasificando con IA: ${done} / ${total} (${pct}%)`;
+}
+
+function ocultarProgresoUpload() {
+  document.getElementById('upload-progreso')?.classList.add('hidden');
+}
+
+async function procesarExcel() {
+  const input = document.getElementById('input-excel');
+  const file = input?.files?.[0];
+  if (!file) { toast('Seleccione un archivo Excel', 'info'); return; }
+
+  const modo = document.getElementById('upload-modo')?.value || 'reemplazar';
+  const autoIa = document.getElementById('upload-auto-ia')?.checked;
+  const estado = document.getElementById('upload-estado');
+  const btn = document.getElementById('btn-procesar-excel');
+
+  const fd = new FormData();
+  fd.append('archivo', file);
+  if (estado) estado.textContent = 'Leyendo Excel...';
+  if (btn) btn.disabled = true;
+
+  try {
+    const res = await fetch(`/api/alertas/subir-excel?modo=${modo}`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Error al subir Excel');
+
+    toast(`✅ ${data.total} registros · ${data.nuevas} fila(s) procesada(s)`, 'ok');
+    if (estado) estado.textContent = `${data.total} registros cargados`;
+
+    await refrescarTodo();
+
+    const ids = data.ids_pendientes_ia || [];
+    if (autoIa && ids.length) {
+      if (estado) estado.textContent = 'Clasificando con IA...';
+      const total = await clasificarLotes(ids, mostrarProgresoUpload);
+      toast(`🤖 Clasificación IA completada · ${total} fila(s)`, 'ok');
+      await refrescarTodo();
+    }
+  } finally {
+    ocultarProgresoUpload();
+    if (btn) btn.disabled = false;
+    if (estado && estado.textContent.startsWith('Clasificando')) {
+      estado.textContent = 'Listo';
+    }
+  }
 }
 
 function contextoIa(fila) {
@@ -316,8 +386,26 @@ function limpiarFiltros() {
 function bindEventos() {
   document.getElementById('btn-limpiar-filtros')?.addEventListener('click', limpiarFiltros);
   document.getElementById('btn-guardar')?.addEventListener('click', () => guardarCambios().catch(e => toast(e.message, 'error')));
-  document.getElementById('btn-clasificar-reglas')?.addEventListener('click', () => clasificar('/api/alertas/clasificar-reglas').catch(e => toast(e.message, 'error')));
-  document.getElementById('btn-clasificar-ia')?.addEventListener('click', () => clasificar('/api/alertas/clasificar-ia').catch(e => toast(e.message, 'error')));
+  document.getElementById('btn-clasificar-reglas')?.addEventListener('click', () =>
+    clasificar('/api/alertas/clasificar-reglas').then(d => {
+      toast(`Clasificadas ${d.clasificadas} fila(s)`, 'ok');
+      return refrescarTodo();
+    }).catch(e => toast(e.message, 'error')));
+  document.getElementById('btn-clasificar-ia')?.addEventListener('click', async () => {
+    try {
+      const ids = idsSeleccionados();
+      const total = ids.length
+        ? (await clasificar('/api/alertas/clasificar-ia', ids)).clasificadas
+        : await clasificarLotes(
+          (await (await fetch('/api/alertas')).json()).filas.map(r => Number(r.id)),
+          null,
+        );
+      toast(`Clasificadas ${total} fila(s) con IA`, 'ok');
+      await refrescarTodo();
+    } catch (e) { toast(e.message, 'error'); }
+  });
+  document.getElementById('btn-procesar-excel')?.addEventListener('click', () =>
+    procesarExcel().catch(e => toast(e.message, 'error')));
   document.getElementById('btn-generar-dialogo')?.addEventListener('click', () => generarRespuestaIa().catch(e => toast(e.message, 'error')));
   document.getElementById('btn-sugerir-respuesta')?.addEventListener('click', () => generarRespuestaIa().catch(e => toast(e.message, 'error')));
   document.getElementById('btn-claude-fila')?.addEventListener('click', () => generarRespuestaIa().catch(e => toast(e.message, 'error')));

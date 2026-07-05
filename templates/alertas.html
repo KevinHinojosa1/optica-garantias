@@ -13,8 +13,8 @@
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
         <p class="text-xs font-medium text-optica-600 uppercase tracking-wide mb-1">Centro de Operaciones</p>
-        <h2 class="text-xl sm:text-2xl font-semibold glass-title">📡 Alertas Telegram — Matriz de Seguimiento</h2>
-        <p class="glass-subtle text-sm mt-1">{{ meta.fuente }} · {{ meta.total_casos }} registros</p>
+        <h2 class="text-xl sm:text-2xl font-semibold glass-title">📡 Alertas Telegram — Matriz IA-first</h2>
+        <p class="glass-subtle text-sm mt-1">{{ meta.fuente }} · {{ meta.total_casos }} registros · v{{ asset_version }}</p>
       </div>
       <div class="flex flex-wrap gap-2">
         {% if ia_disponible %}
@@ -24,6 +24,44 @@
         {% endif %}
         <span class="glass-pill text-xs font-medium text-amber-800 px-3 py-2 rounded-xl" id="badge-pendientes">⏳ Pendientes: {{ meta.pendientes }}</span>
       </div>
+    </div>
+  </div>
+
+  <div class="glass-card p-4 sm:p-5 border-2 border-dashed border-optica-200/80 bg-optica-50/30" id="panel-subir-excel">
+    <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
+      <div>
+        <h3 class="font-semibold text-slate-800">📤 Subir Excel — hoja GENERAL</h3>
+        <p class="text-sm text-slate-500 mt-1">Carga diaria de ALERTAS TELEGRAM 2026.xlsx. La IA clasifica Pregunta + Comentario; usted solo revisa y ajusta.</p>
+      </div>
+      <span class="glass-pill text-xs font-medium text-optica-700 px-3 py-2 rounded-xl" id="upload-estado">Listo para cargar</span>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
+      <div class="lg:col-span-2">
+        <label class="block text-xs font-medium text-slate-500 mb-1">Archivo .xlsx</label>
+        <input type="file" id="input-excel" accept=".xlsx,.xls" class="glass-input w-full px-3 py-2 text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-optica-600 file:text-white file:text-xs file:font-semibold">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-500 mb-1">Modo de carga</label>
+        <select id="upload-modo" class="glass-input w-full px-3 py-2 text-sm">
+          <option value="reemplazar">Reemplazar todo</option>
+          <option value="incremental">Solo filas nuevas</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex flex-wrap items-center gap-4 mt-4">
+      <label class="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+        <input type="checkbox" id="upload-auto-ia" checked class="rounded border-optica-300 text-optica-600">
+        🤖 Clasificar con IA al cargar (por lotes)
+      </label>
+      <button type="button" id="btn-procesar-excel" class="bg-optica-600 hover:bg-optica-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition shadow-sm">
+        Procesar archivo
+      </button>
+    </div>
+    <div id="upload-progreso" class="hidden mt-4">
+      <div class="h-2 rounded-full bg-slate-200 overflow-hidden">
+        <div id="upload-progreso-bar" class="h-full bg-optica-600 transition-all duration-300" style="width:0%"></div>
+      </div>
+      <p class="text-xs text-slate-600 mt-2" id="upload-progreso-texto">Clasificando con IA...</p>
     </div>
   </div>
 

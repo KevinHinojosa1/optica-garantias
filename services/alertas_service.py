@@ -17,15 +17,15 @@ from centro_operaciones.constants import (
     OPCIONES_ESTADO,
     OPCIONES_LLAMADA,
 )
-from centro_operaciones.services.clasificacion import (
-    clasificar_dataframe_ia_sync,
-    clasificar_dataframe_reglas,
-)
+from centro_operaciones.services.clasificacion import clasificar_dataframe_reglas
+from centro_operaciones.services.clasificacion_ia_alertas import clasificar_dataframe_completo
 from centro_operaciones.services.datastore import (
     cargar_alertas,
     contar_pendientes,
     filtrar_df,
+    fusionar_incremental,
     guardar_alertas,
+    importar_excel_bytes,
     recargar_desde_excel,
 )
 from centro_operaciones.services.exportacion import exportar_matriz_seguimiento
@@ -178,10 +178,39 @@ class AlertasService:
         indices = df.index[df["id"].isin(ids)].tolist() if ids else df.index.tolist()
         if not indices:
             return {"ok": True, "clasificadas": 0, "filas": []}
-        df = clasificar_dataframe_ia_sync(df, indices)
+        df = clasificar_dataframe_completo(df, indices)
         guardar_alertas(df)
-        ids_out = ids or df["id"].tolist()
+        ids_out = ids if ids else [int(df.at[i, "id"]) for i in indices]
         return {"ok": True, "clasificadas": len(indices), "filas": _df_a_filas(df[df["id"].isin(ids_out)])}
+
+    @classmethod
+    def subir_excel(
+        cls,
+        content: bytes,
+        *,
+        modo: str = "reemplazar",
+    ) -> dict[str, Any]:
+        nuevo = importar_excel_bytes(content)
+        if modo == "incremental":
+            existente = cargar_alertas()
+            ids_antes = set(int(i) for i in existente["id"].tolist())
+            df = fusionar_incremental(nuevo, existente)
+            ids_nuevos = [int(i) for i in df["id"].tolist() if int(i) not in ids_antes]
+            ids_clasificar = ids_nuevos
+        else:
+            df = nuevo
+            ids_nuevos = [int(i) for i in df["id"].tolist()]
+            ids_clasificar = ids_nuevos
+
+        guardar_alertas(df)
+
+        return {
+            "ok": True,
+            "total": len(df),
+            "nuevas": len(ids_nuevos),
+            "pendientes": contar_pendientes(df),
+            "ids_pendientes_ia": ids_clasificar,
+        }
 
     @classmethod
     def exportar_excel(cls, filtros: dict | None = None) -> bytes:
