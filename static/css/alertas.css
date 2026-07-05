@@ -2,7 +2,7 @@
 
 .alertas-ag-grid {
   width: 100%;
-  height: 480px;
+  height: 560px;
   --ag-font-family: 'Inter', system-ui, sans-serif;
   --ag-font-size: 13px;
   --ag-header-background-color: #1e3a5f;

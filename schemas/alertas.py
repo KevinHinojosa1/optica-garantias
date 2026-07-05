@@ -46,4 +46,5 @@ class AlertasGraficosResponse(BaseModel):
     tendencia: dict[str, Any]
     top_problemas: dict[str, Any]
     heatmap: dict[str, Any]
+    heatmap_mes_local: dict[str, Any]
     donut: dict[str, Any]

@@ -1,20 +1,66 @@
 /**
- * Alertas Telegram — módulo FastAPI
- * Matriz editable, filtros, gráficos Plotly, clasificación e IA.
+ * Alertas Telegram — Matriz GENERAL operativa
+ * Óptica Los Andes · Centro de Operaciones
  */
 
 const META = window.ALERTAS_META || {};
 let gridApi = null;
-let filasActuales = [];
 let filaSeleccionada = null;
 let debounceTimer = null;
 
 const OPCIONES = {
-  llamada: META.opciones_llamada || ['Pendiente', 'Sí', 'No'],
-  contesto: META.opciones_contesto || ['Pendiente', 'Sí', 'No', 'No contesta'],
-  estado: META.opciones_estado || ['Sin gestión', 'En proceso', 'Resuelto'],
+  llamada: META.opciones_llamada || ['Pendiente', 'Sí', 'No', 'si', 'no'],
+  contesto: META.opciones_contesto || ['Pendiente', 'Sí', 'No', 'si', 'no'],
+  estado: META.opciones_estado || ['Sin gestión', 'En proceso', 'Resuelto', 'Pendiente llamada'],
   clasificacion: META.opciones_clasificacion || [],
 };
+
+const EDITABLES = new Set(META.columnas_editables || [
+  'llamada_cliente', 'contesto', 'observacion_gestion', 'solucion',
+  'clasificacion', 'estado_gestion', 'asesor', 'quien_llama', 'correos_disculpa',
+]);
+
+const COLUMNAS_GRID = [
+  { field: 'n', headerName: 'n', width: 60, pinned: 'left', checkboxSelection: true, headerCheckboxSelection: true },
+  { field: 'mes', headerName: 'Mes', width: 80, pinned: 'left' },
+  { field: 'fecha_alerta', headerName: 'Fecha', width: 100, pinned: 'left' },
+  { field: 'local', headerName: 'Local', width: 140 },
+  { field: 'area', headerName: 'Área', width: 100 },
+  { field: 'optometra', headerName: 'Optómetra', width: 130 },
+  { field: 'asesor', headerName: 'Asesor', width: 130, editable: true },
+  { field: 'calificacion', headerName: 'Calif.', width: 70 },
+  { field: 'pregunta', headerName: 'Pregunta', width: 180, wrapText: true, autoHeight: true },
+  { field: 'responde', headerName: 'Responde', width: 80 },
+  { field: 'comentario', headerName: 'Comentario', width: 220, wrapText: true, autoHeight: true },
+  { field: 'cliente', headerName: 'CLIENTE', width: 120 },
+  { field: 'contacto', headerName: 'CONTACTO', width: 110 },
+  { field: 'llamada_cliente', headerName: 'Llamada', width: 100, editable: true,
+    cellEditor: 'agSelectCellEditor', cellEditorParams: { values: OPCIONES.llamada } },
+  { field: 'contesto', headerName: 'Contestó', width: 100, editable: true,
+    cellEditor: 'agSelectCellEditor', cellEditorParams: { values: OPCIONES.contesto } },
+  { field: 'observacion_gestion', headerName: 'Observación / Gestión', width: 240, editable: true, wrapText: true, autoHeight: true },
+  { field: 'solucion', headerName: 'SOLUCIÓN', width: 200, editable: true, wrapText: true, autoHeight: true },
+  { field: 'clasificacion', headerName: 'CLASIFICACION', width: 170, editable: true,
+    cellEditor: 'agSelectCellEditor', cellEditorParams: { values: OPCIONES.clasificacion } },
+  { field: 'estado_gestion', headerName: 'Estado', width: 120, editable: true,
+    cellEditor: 'agSelectCellEditor', cellEditorParams: { values: OPCIONES.estado } },
+  { field: 'quien_llama', headerName: 'Quien llama', width: 110, editable: true },
+  { field: 'correos_disculpa', headerName: 'Correos disculpa', width: 110, editable: true },
+  { field: 'dialogo_ia', headerName: 'Diálogo IA', width: 180, wrapText: true, autoHeight: true },
+  { field: 'clasificado_por', headerName: 'Clasif. por', width: 90 },
+];
+
+const CAMPOS_MODAL = [
+  { field: 'llamada_cliente', label: 'Llamada cliente', type: 'select', options: OPCIONES.llamada },
+  { field: 'contesto', label: 'Contestó', type: 'select', options: OPCIONES.contesto },
+  { field: 'observacion_gestion', label: 'Observación / Gestión de llamadas', type: 'textarea' },
+  { field: 'solucion', label: 'Solución', type: 'textarea' },
+  { field: 'clasificacion', label: 'Clasificación', type: 'select', options: OPCIONES.clasificacion },
+  { field: 'estado_gestion', label: 'Estado gestión', type: 'select', options: OPCIONES.estado },
+  { field: 'asesor', label: 'Asesor', type: 'text' },
+  { field: 'quien_llama', label: 'Quien llama', type: 'text' },
+  { field: 'correos_disculpa', label: 'Correos disculpa', type: 'text' },
+];
 
 function escapeHtml(t) {
   const d = document.createElement('div');
@@ -29,40 +75,29 @@ function toast(msg, tipo = 'info') {
   el.className = `fixed bottom-4 right-4 z-50 glass-card px-4 py-3 text-sm font-medium shadow-lg toast-${tipo}`;
   el.classList.remove('hidden');
   clearTimeout(el._timer);
-  el._timer = setTimeout(() => el.classList.add('hidden'), 3500);
+  el._timer = setTimeout(() => el.classList.add('hidden'), 4000);
 }
 
 function valoresMultiselect(id) {
   const sel = document.getElementById(id);
-  if (!sel) return [];
-  return Array.from(sel.selectedOptions).map(o => o.value);
+  return sel ? Array.from(sel.selectedOptions).map(o => o.value) : [];
 }
 
 function filtrosQuery() {
-  const params = new URLSearchParams();
-  const desde = document.getElementById('filtro-desde')?.value;
-  const hasta = document.getElementById('filtro-hasta')?.value;
-  const texto = document.getElementById('filtro-texto')?.value?.trim() || '';
-  const soloPend = document.getElementById('filtro-solo-pendientes')?.checked;
-
-  if (desde) params.set('fecha_desde', desde);
-  if (hasta) params.set('fecha_hasta', hasta);
-  if (texto) params.set('texto', texto);
-  if (soloPend) params.set('solo_pendientes', 'true');
-
-  const locales = valoresMultiselect('filtro-locales');
-  const areas = valoresMultiselect('filtro-areas');
-  const clasif = valoresMultiselect('filtro-clasificacion');
-  const estados = valoresMultiselect('filtro-estados');
-  const contesto = valoresMultiselect('filtro-contesto');
-
-  if (locales.length) params.set('locales', locales.join(','));
-  if (areas.length) params.set('areas', areas.join(','));
-  if (clasif.length) params.set('clasificaciones', clasif.join(','));
-  if (estados.length) params.set('estados', estados.join(','));
-  if (contesto.length) params.set('contesto', contesto.join(','));
-
-  return params;
+  const p = new URLSearchParams();
+  const set = (k, v) => { if (v) p.set(k, v); };
+  set('fecha_desde', document.getElementById('filtro-desde')?.value);
+  set('fecha_hasta', document.getElementById('filtro-hasta')?.value);
+  set('texto', document.getElementById('filtro-texto')?.value?.trim());
+  if (document.getElementById('filtro-solo-pendientes')?.checked) p.set('solo_pendientes', 'true');
+  const join = (id, key) => { const v = valoresMultiselect(id); if (v.length) p.set(key, v.join(',')); };
+  join('filtro-meses', 'meses');
+  join('filtro-locales', 'locales');
+  join('filtro-areas', 'areas');
+  join('filtro-clasificacion', 'clasificaciones');
+  join('filtro-estados', 'estados');
+  join('filtro-contesto', 'contesto');
+  return p;
 }
 
 function urlConFiltros(base) {
@@ -74,13 +109,10 @@ async function cargarDatos() {
   const res = await fetch(urlConFiltros('/api/alertas'));
   if (!res.ok) throw new Error('Error al cargar alertas');
   const data = await res.json();
-  filasActuales = data.filas || [];
   document.getElementById('filtro-resumen').textContent =
-    `Mostrando ${data.filtrado} de ${data.total} casos · Pendientes: ${data.pendientes}`;
+    `Mostrando ${data.filtrado} de ${data.total} casos · Pendientes sin gestión: ${data.pendientes}`;
   document.getElementById('badge-pendientes').textContent = `⏳ Pendientes: ${data.pendientes}`;
-  if (gridApi) {
-    gridApi.setGridOption('rowData', filasActuales);
-  }
+  if (gridApi) gridApi.setGridOption('rowData', data.filas || []);
   return data;
 }
 
@@ -102,106 +134,53 @@ async function cargarGraficos() {
   Plotly.newPlot('chart-tendencia', g.tendencia.data, g.tendencia.layout, cfg);
   Plotly.newPlot('chart-problemas', g.top_problemas.data, g.top_problemas.layout, cfg);
   Plotly.newPlot('chart-heatmap', g.heatmap.data, g.heatmap.layout, cfg);
+  if (g.heatmap_mes_local) Plotly.newPlot('chart-heatmap-mes', g.heatmap_mes_local.data, g.heatmap_mes_local.layout, cfg);
   Plotly.newPlot('chart-donut', g.donut.data, g.donut.layout, cfg);
 }
 
 async function refrescarTodo() {
-  try {
-    await Promise.all([cargarDatos(), cargarKpis(), cargarGraficos()]);
-    document.getElementById('btn-exportar').href = urlConFiltros('/api/alertas/exportar');
-  } catch (err) {
-    toast(err.message || 'Error al actualizar', 'error');
-  }
-}
-
-function columnDefs() {
-  return [
-    { field: 'id', headerName: 'ID', width: 70, pinned: 'left', checkboxSelection: true, headerCheckboxSelection: true },
-    { field: 'fecha_alerta', headerName: 'Fecha', width: 130 },
-    { field: 'local', headerName: 'Local', width: 130 },
-    { field: 'area', headerName: 'Área', width: 120 },
-    { field: 'problema', headerName: 'Problema', width: 180, wrapText: true, autoHeight: true },
-    { field: 'cliente', headerName: 'Cliente', width: 120 },
-    { field: 'telefono', headerName: 'Teléfono', width: 110 },
-    { field: 'mensaje_telegram', headerName: 'Telegram', width: 200, wrapText: true, autoHeight: true },
-    {
-      field: 'llamada_cliente', headerName: 'Llamada', width: 110, editable: true,
-      cellEditor: 'agSelectCellEditor',
-      cellEditorParams: { values: OPCIONES.llamada },
-    },
-    {
-      field: 'contesto', headerName: 'Contestó', width: 110, editable: true,
-      cellEditor: 'agSelectCellEditor',
-      cellEditorParams: { values: OPCIONES.contesto },
-    },
-    {
-      field: 'clasificacion', headerName: 'Clasificación', width: 160, editable: true,
-      cellEditor: 'agSelectCellEditor',
-      cellEditorParams: { values: OPCIONES.clasificacion },
-    },
-    {
-      field: 'estado_gestion', headerName: 'Estado', width: 120, editable: true,
-      cellEditor: 'agSelectCellEditor',
-      cellEditorParams: { values: OPCIONES.estado },
-    },
-    { field: 'solucion', headerName: 'Solución', width: 200, editable: true, wrapText: true, autoHeight: true },
-    { field: 'asesor', headerName: 'Asesor', width: 110, editable: true },
-    { field: 'dialogo_ia', headerName: 'Diálogo IA', width: 220, wrapText: true, autoHeight: true },
-    { field: 'clasificado_por', headerName: 'Clasif. por', width: 100 },
-  ];
+  await Promise.all([cargarDatos(), cargarKpis(), cargarGraficos()]);
+  document.getElementById('btn-exportar').href = urlConFiltros('/api/alertas/exportar');
 }
 
 function initGrid() {
   const el = document.getElementById('alertas-grid');
   if (!el || typeof agGrid === 'undefined') return;
-
-  const gridOptions = {
-    columnDefs: columnDefs(),
+  gridApi = agGrid.createGrid(el, {
+    columnDefs: COLUMNAS_GRID,
     rowData: [],
-    defaultColDef: {
-      sortable: true,
-      filter: true,
-      resizable: true,
-    },
+    defaultColDef: { sortable: true, filter: true, resizable: true },
     rowSelection: 'multiple',
     suppressRowClickSelection: false,
     animateRows: true,
     onSelectionChanged() {
       const rows = gridApi.getSelectedRows();
       filaSeleccionada = rows[0] || null;
-      document.getElementById('grid-resumen').textContent =
-        `Filas seleccionadas: ${rows.length}`;
+      document.getElementById('grid-resumen').textContent = `Filas seleccionadas: ${rows.length}`;
       const label = document.getElementById('ia-caso-label');
-      if (filaSeleccionada) {
-        label.textContent = `Caso #${filaSeleccionada.id} — ${filaSeleccionada.cliente || 'Sin nombre'}`;
-      } else {
-        label.textContent = 'Seleccione una fila en la tabla para generar diálogo.';
-      }
+      label.textContent = filaSeleccionada
+        ? `Caso #${filaSeleccionada.n} — ${filaSeleccionada.cliente || 'Sin nombre'} · ${filaSeleccionada.local || ''}`
+        : 'Seleccione una fila para generar mensaje WhatsApp o correo.';
     },
-    onCellValueChanged() {
-      // cambios locales hasta guardar
+    onRowDoubleClicked(ev) {
+      filaSeleccionada = ev.data;
+      abrirModalEdicion();
     },
-  };
-
-  gridApi = agGrid.createGrid(el, gridOptions);
-}
-
-function idsSeleccionados() {
-  if (!gridApi) return [];
-  return gridApi.getSelectedRows().map(r => Number(r.id));
-}
-
-function todasLasFilasGrid() {
-  if (!gridApi) return [];
-  const rows = [];
-  gridApi.forEachNode(node => {
-    if (node.data) rows.push({ ...node.data });
   });
+}
+
+function todasLasFilas() {
+  const rows = [];
+  gridApi?.forEachNode(n => { if (n.data) rows.push({ ...n.data }); });
   return rows;
 }
 
+function idsSeleccionados() {
+  return (gridApi?.getSelectedRows() || []).map(r => Number(r.id));
+}
+
 async function guardarCambios() {
-  const filas = todasLasFilasGrid();
+  const filas = todasLasFilas();
   const res = await fetch('/api/alertas/guardar', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -209,17 +188,15 @@ async function guardarCambios() {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || 'Error al guardar');
-  toast(`Guardado · ${data.actualizados} fila(s) actualizada(s)`, 'ok');
+  toast(`✅ Guardado · ${data.actualizados} fila(s) actualizada(s)`, 'ok');
   await refrescarTodo();
 }
 
 async function clasificar(endpoint) {
-  const ids = idsSeleccionados();
-  const body = { ids };
   const res = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ ids: idsSeleccionados() }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || 'Error en clasificación');
@@ -227,104 +204,103 @@ async function clasificar(endpoint) {
   await refrescarTodo();
 }
 
-function contextoIaDesdeFila(fila) {
+function contextoIa(fila) {
   return {
     modulo: 'alertas_telegram',
-    caso_id: String(fila.id || ''),
+    caso_id: String(fila.id || fila.n || ''),
     cliente_nombre: fila.cliente || '{cliente}',
-    telefono: fila.telefono || '{telefono}',
+    telefono: fila.contacto || fila.telefono || '{telefono}',
     local: fila.local || '',
     asesor: fila.asesor || '',
-    comentario_cliente: fila.mensaje_telegram || '',
-    problema: fila.problema || '',
-    descripcion: fila.descripcion || '',
+    comentario_cliente: fila.comentario || '',
+    problema: fila.pregunta || '',
+    descripcion: fila.comentario || '',
     clasificacion: fila.clasificacion || '',
     estado: fila.estado_gestion || '',
     solucion_actual: fila.solucion || '',
+    historial: fila.observacion_gestion || '',
+    calificacion: String(fila.calificacion || ''),
     canal: document.getElementById('ia-canal')?.value || 'whatsapp',
     contexto_extra: document.getElementById('ia-contexto-extra')?.value?.trim() || '',
   };
 }
 
 function mostrarResultadoIa(resultado) {
-  const panel = document.getElementById('ia-resultado');
-  panel.classList.remove('hidden');
-
-  const por = resultado.generado_por === 'claude' ? 'Claude AI' : 'Plantilla CX';
-  document.getElementById('ia-generado-por').textContent = `Generado con ${por}`;
-
-  const dialogoEl = document.getElementById('ia-dialogo');
+  document.getElementById('ia-resultado').classList.remove('hidden');
+  document.getElementById('ia-generado-por').textContent =
+    `Generado con ${resultado.generado_por === 'claude' ? 'Claude AI' : 'Plantilla CX'}`;
+  const dlg = document.getElementById('ia-dialogo');
   if (resultado.dialogo?.length) {
-    dialogoEl.classList.remove('hidden');
-    dialogoEl.innerHTML = resultado.dialogo.map(linea => {
-      const actor = linea.actor === 'asesor' ? '🧑‍💼 Asesor' : '👤 Cliente';
-      return `<p><strong>${actor}:</strong> ${escapeHtml(linea.texto)}</p>`;
+    dlg.classList.remove('hidden');
+    dlg.innerHTML = resultado.dialogo.map(l => {
+      const a = l.actor === 'asesor' ? '🧑‍💼 Asesor' : '👤 Cliente';
+      return `<p><strong>${a}:</strong> ${escapeHtml(l.texto)}</p>`;
     }).join('');
-  } else {
-    dialogoEl.classList.add('hidden');
-  }
-
+  } else dlg.classList.add('hidden');
   document.getElementById('ia-whatsapp').value = resultado.mensaje_whatsapp || '';
   document.getElementById('ia-asunto').value = resultado.asunto_correo || '';
   document.getElementById('ia-correo').value = resultado.mensaje_correo || '';
   document.getElementById('ia-voz').value = resultado.mensaje_voz || '';
-  document.getElementById('ia-nota').textContent = resultado.nota_asesor
-    ? `💡 ${resultado.nota_asesor}` : '';
-
-  const waLink = document.getElementById('btn-wa-link');
-  if (resultado.wa_link) {
-    waLink.href = resultado.wa_link;
-    waLink.classList.remove('hidden');
-  } else {
-    waLink.classList.add('hidden');
-  }
-
+  document.getElementById('ia-nota').textContent = resultado.nota_asesor ? `💡 ${resultado.nota_asesor}` : '';
+  const wa = document.getElementById('btn-wa-link');
+  if (resultado.wa_link) { wa.href = resultado.wa_link; wa.classList.remove('hidden'); }
+  else wa.classList.add('hidden');
   if (filaSeleccionada && gridApi) {
-    filaSeleccionada.dialogo_ia = (resultado.dialogo || [])
-      .map(l => `${l.actor === 'asesor' ? 'Asesor' : 'Cliente'}: ${l.texto}`)
-      .join('\n');
-    filaSeleccionada.canal_dialogo = document.getElementById('ia-canal')?.value || 'whatsapp';
+    filaSeleccionada.dialogo_ia = (resultado.dialogo || []).map(l =>
+      `${l.actor === 'asesor' ? 'Asesor' : 'Cliente'}: ${l.texto}`).join('\n');
     gridApi.applyTransaction({ update: [filaSeleccionada] });
   }
 }
 
 async function generarRespuestaIa() {
-  if (!filaSeleccionada) {
-    toast('Seleccione una fila en la matriz', 'info');
-    return;
-  }
-  const btn = document.getElementById('btn-generar-dialogo');
-  const btn2 = document.getElementById('btn-sugerir-respuesta');
-  btn.disabled = true;
-  btn2.disabled = true;
-  try {
-    const res = await fetch('/api/ia/generar-respuesta', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contexto: contextoIaDesdeFila(filaSeleccionada),
-        titulo_modulo: 'Alertas Telegram',
-      }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Error IA');
-    mostrarResultadoIa(data);
-    toast('Respuesta generada', 'ok');
-  } catch (err) {
-    toast(err.message, 'error');
-  } finally {
-    btn.disabled = false;
-    btn2.disabled = false;
-  }
+  if (!filaSeleccionada) { toast('Seleccione una fila en la matriz', 'info'); return; }
+  const res = await fetch('/api/ia/generar-respuesta', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contexto: contextoIa(filaSeleccionada), titulo_modulo: 'Alertas Telegram' }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || 'Error IA');
+  mostrarResultadoIa(data);
+  toast('Sugerencia generada con Claude', 'ok');
 }
 
-function copiarTexto(texto) {
-  navigator.clipboard.writeText(texto).then(() => toast('Copiado al portapapeles', 'ok'));
+function abrirModalEdicion() {
+  if (!filaSeleccionada) { toast('Seleccione una fila', 'info'); return; }
+  const f = filaSeleccionada;
+  document.getElementById('modal-subtitulo').textContent =
+    `#${f.n} · ${f.cliente || 'Sin cliente'} · ${f.local || ''} — ${(f.comentario || '').slice(0, 120)}`;
+  const cont = document.getElementById('modal-campos');
+  cont.innerHTML = CAMPOS_MODAL.map(c => {
+    const val = escapeHtml(f[c.field] ?? '');
+    if (c.type === 'textarea') {
+      return `<div class="sm:col-span-2"><label class="block text-xs font-medium text-slate-500 mb-1">${c.label}</label>
+        <textarea data-field="${c.field}" rows="3" class="glass-textarea w-full px-3 py-2 text-sm">${val}</textarea></div>`;
+    }
+    if (c.type === 'select') {
+      const opts = c.options.map(o =>
+        `<option value="${escapeHtml(o)}" ${o === f[c.field] ? 'selected' : ''}>${escapeHtml(o)}</option>`).join('');
+      return `<div><label class="block text-xs font-medium text-slate-500 mb-1">${c.label}</label>
+        <select data-field="${c.field}" class="glass-input w-full px-3 py-2 text-sm">${opts}</select></div>`;
+    }
+    return `<div><label class="block text-xs font-medium text-slate-500 mb-1">${c.label}</label>
+      <input data-field="${c.field}" value="${val}" class="glass-input w-full px-3 py-2 text-sm"></div>`;
+  }).join('');
+  document.getElementById('modal-editar').classList.remove('hidden');
 }
 
-function programarRefresco() {
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => refrescarTodo(), 400);
+function cerrarModal() {
+  document.getElementById('modal-editar').classList.add('hidden');
+}
+
+function guardarModalEnGrid() {
+  if (!filaSeleccionada || !gridApi) return;
+  document.querySelectorAll('#modal-campos [data-field]').forEach(el => {
+    filaSeleccionada[el.dataset.field] = el.value;
+  });
+  gridApi.applyTransaction({ update: [filaSeleccionada] });
+  cerrarModal();
+  toast('Cambios aplicados en la matriz — pulse Guardar para persistir', 'info');
 }
 
 function limpiarFiltros() {
@@ -332,56 +308,51 @@ function limpiarFiltros() {
   document.getElementById('filtro-hasta').value = META.fecha_max || '';
   document.getElementById('filtro-texto').value = '';
   document.getElementById('filtro-solo-pendientes').checked = false;
-  ['filtro-locales', 'filtro-areas', 'filtro-clasificacion', 'filtro-estados', 'filtro-contesto']
-    .forEach(id => {
-      const sel = document.getElementById(id);
-      if (sel) Array.from(sel.options).forEach(o => { o.selected = false; });
-    });
+  ['filtro-meses', 'filtro-locales', 'filtro-areas', 'filtro-clasificacion', 'filtro-estados', 'filtro-contesto']
+    .forEach(id => { const s = document.getElementById(id); if (s) Array.from(s.options).forEach(o => { o.selected = false; }); });
   refrescarTodo();
 }
 
 function bindEventos() {
   document.getElementById('btn-limpiar-filtros')?.addEventListener('click', limpiarFiltros);
   document.getElementById('btn-guardar')?.addEventListener('click', () => guardarCambios().catch(e => toast(e.message, 'error')));
-  document.getElementById('btn-clasificar-reglas')?.addEventListener('click', () =>
-    clasificar('/api/alertas/clasificar-reglas').catch(e => toast(e.message, 'error')));
-  document.getElementById('btn-clasificar-ia')?.addEventListener('click', () =>
-    clasificar('/api/alertas/clasificar-ia').catch(e => toast(e.message, 'error')));
-  document.getElementById('btn-generar-dialogo')?.addEventListener('click', generarRespuestaIa);
-  document.getElementById('btn-sugerir-respuesta')?.addEventListener('click', generarRespuestaIa);
+  document.getElementById('btn-clasificar-reglas')?.addEventListener('click', () => clasificar('/api/alertas/clasificar-reglas').catch(e => toast(e.message, 'error')));
+  document.getElementById('btn-clasificar-ia')?.addEventListener('click', () => clasificar('/api/alertas/clasificar-ia').catch(e => toast(e.message, 'error')));
+  document.getElementById('btn-generar-dialogo')?.addEventListener('click', () => generarRespuestaIa().catch(e => toast(e.message, 'error')));
+  document.getElementById('btn-sugerir-respuesta')?.addEventListener('click', () => generarRespuestaIa().catch(e => toast(e.message, 'error')));
+  document.getElementById('btn-claude-fila')?.addEventListener('click', () => generarRespuestaIa().catch(e => toast(e.message, 'error')));
+  document.getElementById('btn-editar-fila')?.addEventListener('click', abrirModalEdicion);
   document.getElementById('btn-copiar-wa')?.addEventListener('click', () => {
-    copiarTexto(document.getElementById('ia-whatsapp')?.value || '');
+    navigator.clipboard.writeText(document.getElementById('ia-whatsapp')?.value || '');
+    toast('Copiado', 'ok');
   });
-
-  const filtros = [
-    'filtro-desde', 'filtro-hasta', 'filtro-texto', 'filtro-solo-pendientes',
-    'filtro-locales', 'filtro-areas', 'filtro-clasificacion', 'filtro-estados', 'filtro-contesto',
-  ];
-  filtros.forEach(id => {
-    document.getElementById(id)?.addEventListener('change', programarRefresco);
-    document.getElementById(id)?.addEventListener('input', programarRefresco);
+  document.getElementById('modal-cerrar')?.addEventListener('click', cerrarModal);
+  document.getElementById('modal-guardar')?.addEventListener('click', guardarModalEnGrid);
+  document.getElementById('modal-claude')?.addEventListener('click', () => generarRespuestaIa().catch(e => toast(e.message, 'error')));
+  document.getElementById('btn-recargar-excel')?.addEventListener('click', async () => {
+    if (!confirm('¿Recargar datos desde Excel? Se conservan las ediciones guardadas por ID.')) return;
+    const res = await fetch('/api/alertas/recargar-excel', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Error');
+    toast(`Excel recargado · ${data.total} registros`, 'ok');
+    await refrescarTodo();
   });
-
-  document.getElementById('input-importar')?.addEventListener('change', async (ev) => {
-    const file = ev.target.files?.[0];
-    if (!file) return;
-    const fd = new FormData();
-    fd.append('archivo', file);
-    try {
-      const res = await fetch('/api/alertas/importar', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Error al importar');
-      toast(`Importados ${data.importados} registros`, 'ok');
-      await refrescarTodo();
-    } catch (err) {
-      toast(err.message, 'error');
-    }
-    ev.target.value = '';
-  });
+  ['filtro-desde', 'filtro-hasta', 'filtro-texto', 'filtro-solo-pendientes',
+    'filtro-meses', 'filtro-locales', 'filtro-areas', 'filtro-clasificacion', 'filtro-estados', 'filtro-contesto']
+    .forEach(id => {
+      document.getElementById(id)?.addEventListener('change', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => refrescarTodo().catch(e => toast(e.message, 'error')), 350);
+      });
+      document.getElementById(id)?.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => refrescarTodo().catch(e => toast(e.message, 'error')), 350);
+      });
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   initGrid();
   bindEventos();
-  refrescarTodo();
+  refrescarTodo().catch(e => toast(e.message, 'error'));
 });

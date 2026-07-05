@@ -10,6 +10,8 @@ from openpyxl import load_workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
+from centro_operaciones.constants import COLUMNAS_EXCEL_EXPORTE
+
 
 def _estilo_encabezado(ws, fila: int = 1) -> None:
     fill = PatternFill("solid", fgColor="1E3A5F")
@@ -69,35 +71,51 @@ def exportar_tabla_generica(
     return out.getvalue()
 
 
-def exportar_matriz_seguimiento(df: pd.DataFrame) -> bytes:
-    buffer = io.BytesIO()
+def _df_para_exporte_general(df: pd.DataFrame) -> pd.DataFrame:
     export = df.copy()
     if "fecha_alerta" in export.columns:
-        export["fecha_alerta"] = pd.to_datetime(export["fecha_alerta"], errors="coerce").dt.strftime("%d/%m/%Y %H:%M")
+        export["fecha_alerta"] = pd.to_datetime(export["fecha_alerta"], errors="coerce").dt.strftime("%d/%m/%Y")
+    columnas = [c for c, _ in COLUMNAS_EXCEL_EXPORTE if c in export.columns]
+    out = export[columnas].copy()
+    out.columns = [label for c, label in COLUMNAS_EXCEL_EXPORTE if c in export.columns]
+    return out
+
+
+def exportar_matriz_seguimiento(df: pd.DataFrame) -> bytes:
+    buffer = io.BytesIO()
+    export = _df_para_exporte_general(df)
 
     resumen = (
-        export.groupby(["local", "clasificacion"], dropna=False)
+        df.groupby(["local", "clasificacion"], dropna=False)
         .size()
         .reset_index(name="casos")
         .sort_values("casos", ascending=False)
     )
-    pendientes = export[export["estado_gestion"] == "Sin gestión"]
+    pendientes = df[
+        (df["estado_gestion"].isin(["Sin gestión", "Pendiente llamada", ""]))
+        | (
+            df["solucion"].fillna("").astype(str).str.strip() == ""
+        )
+    ]
 
     with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-        export.to_excel(writer, index=False, sheet_name="Matriz Seguimiento")
+        export.to_excel(writer, index=False, sheet_name="GENERAL")
         resumen.to_excel(writer, index=False, sheet_name="Resumen Local")
-        pendientes.to_excel(writer, index=False, sheet_name="Pendientes")
+        pendientes_pipe = _df_para_exporte_general(pendientes)
+        pendientes_pipe.to_excel(writer, index=False, sheet_name="Pendientes")
 
     buffer.seek(0)
     wb = load_workbook(buffer)
-    ws = wb["Matriz Seguimiento"]
+    ws = wb["GENERAL"]
     _estilo_encabezado(ws)
     ws.freeze_panes = "A2"
     fill_pend = PatternFill("solid", fgColor="FFF3CD")
     fill_res = PatternFill("solid", fgColor="D1E7DD")
+    headers = [cell.value for cell in ws[1]]
+    idx_estado = headers.index("Estado gestión") if "Estado gestión" in headers else -1
     for row in ws.iter_rows(min_row=2, max_row=ws.max_row):
-        estado = str(row[13].value or "") if len(row) > 13 else ""
-        if estado == "Sin gestión":
+        estado = str(row[idx_estado].value or "") if idx_estado >= 0 else ""
+        if estado in ("Sin gestión", "Pendiente llamada", ""):
             for cell in row:
                 cell.fill = fill_pend
         elif estado == "Resuelto":

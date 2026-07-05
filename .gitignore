@@ -19,8 +19,10 @@ data/consultas/*
 !data/consultas/.gitkeep
 *.xlsx
 !data/base_datos/pacientes.xlsx
+!centro_operaciones/data/ALERTAS_TELEGRAM_2026.xlsx
 *.csv
 !data/ejemplo_clientes.csv
+!centro_operaciones/data/alertas_telegram.csv
 *.db
 optica_garantias.db
 data/consultas/*.jpg

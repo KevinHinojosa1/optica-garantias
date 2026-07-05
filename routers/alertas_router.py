@@ -33,6 +33,7 @@ def _filtros_desde_query(
     contesto: Optional[str] = None,
     texto: str = "",
     solo_pendientes: bool = False,
+    meses: Optional[str] = None,
 ) -> dict:
     def split_csv(val: Optional[str]) -> list[str]:
         if not val:
@@ -49,6 +50,7 @@ def _filtros_desde_query(
         "contesto": split_csv(contesto),
         "texto": texto,
         "solo_pendientes": solo_pendientes,
+        "meses": split_csv(meses),
     }
 
 
@@ -79,6 +81,7 @@ async def api_listar_alertas(
     contesto: Optional[str] = None,
     texto: str = "",
     solo_pendientes: bool = False,
+    meses: Optional[str] = None,
 ):
     filtros = _filtros_desde_query(
         fecha_desde=fecha_desde,
@@ -90,6 +93,7 @@ async def api_listar_alertas(
         contesto=contesto,
         texto=texto,
         solo_pendientes=solo_pendientes,
+        meses=meses,
     )
     return AlertasListResponse(**AlertasService.listar(filtros))
 
@@ -105,6 +109,7 @@ async def api_kpis_alertas(
     contesto: Optional[str] = None,
     texto: str = "",
     solo_pendientes: bool = False,
+    meses: Optional[str] = None,
 ):
     filtros = _filtros_desde_query(
         fecha_desde=fecha_desde,
@@ -116,6 +121,7 @@ async def api_kpis_alertas(
         contesto=contesto,
         texto=texto,
         solo_pendientes=solo_pendientes,
+        meses=meses,
     )
     return AlertasKpisResponse(**AlertasService.kpis(filtros))
 
@@ -131,6 +137,7 @@ async def api_graficos_alertas(
     contesto: Optional[str] = None,
     texto: str = "",
     solo_pendientes: bool = False,
+    meses: Optional[str] = None,
 ):
     filtros = _filtros_desde_query(
         fecha_desde=fecha_desde,
@@ -142,6 +149,7 @@ async def api_graficos_alertas(
         contesto=contesto,
         texto=texto,
         solo_pendientes=solo_pendientes,
+        meses=meses,
     )
     return AlertasGraficosResponse(**AlertasService.graficos(filtros))
 
@@ -183,6 +191,7 @@ async def api_exportar_alertas(
     contesto: Optional[str] = None,
     texto: str = "",
     solo_pendientes: bool = False,
+    meses: Optional[str] = None,
 ):
     filtros = _filtros_desde_query(
         fecha_desde=fecha_desde,
@@ -194,6 +203,7 @@ async def api_exportar_alertas(
         contesto=contesto,
         texto=texto,
         solo_pendientes=solo_pendientes,
+        meses=meses,
     )
     data = AlertasService.exportar_excel(filtros)
     stamp = datetime.now().strftime("%Y%m%d_%H%M")
@@ -202,6 +212,16 @@ async def api_exportar_alertas(
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f'attachment; filename="matriz_seguimiento_alertas_{stamp}.xlsx"'},
     )
+
+
+@router.post("/api/alertas/recargar-excel")
+async def api_recargar_excel():
+    try:
+        return AlertasService.recargar_excel()
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 @router.post("/api/alertas/importar")
