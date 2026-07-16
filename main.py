@@ -1,4 +1,6 @@
+import asyncio
 import subprocess
+import sys
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -22,23 +24,23 @@ from routers import (
 )
 
 
-def _bootstrap_datos():
-    """Carga inicial de BD y Excel de prueba (no bloquea si falla)."""
-    try:
-        init_db()
-        for sub in ("data/consultas", "data/base_datos", "data/google", "data/conocimiento"):
-            (settings.base_dir / sub).mkdir(parents=True, exist_ok=True)
+def _preparar_directorios() -> None:
+    for sub in ("data", "data/consultas", "data/base_datos", "data/google", "data/conocimiento", "static/img"):
+        (settings.base_dir / sub).mkdir(parents=True, exist_ok=True)
 
+
+def _bootstrap_datos():
+    """Carga inicial de BD y Excel — en segundo plano para no bloquear health check."""
+    try:
         from models.cliente import Cliente
+        from services.conocimiento_service import ConocimientoService
         from services.import_service import ImportService
 
         ruta = ImportService.ruta_archivo_base()
         if not ruta.exists():
             script = settings.base_dir / "scripts" / "generar_base_datos.py"
             if script.exists():
-                subprocess.run(["python", str(script)], check=False)
-
-        from services.conocimiento_service import ConocimientoService
+                subprocess.run([sys.executable, str(script)], check=False, timeout=120)
 
         db = SessionLocal()
         try:
@@ -48,12 +50,17 @@ def _bootstrap_datos():
         finally:
             db.close()
     except Exception as exc:
-        print(f"Bootstrap (no crítico): {exc}")
+        print(f"Bootstrap (no crítico): {exc}", flush=True)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    _bootstrap_datos()
+    _preparar_directorios()
+    try:
+        init_db()
+    except Exception as exc:
+        print(f"init_db (no crítico): {exc}", flush=True)
+    asyncio.create_task(asyncio.to_thread(_bootstrap_datos))
     yield
 
 
@@ -100,7 +107,9 @@ async def root():
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "app": settings.app_name}
+    from templates_shared import ASSET_VERSION
+
+    return {"status": "ok", "app": settings.app_name, "version": ASSET_VERSION}
 
 
 @app.exception_handler(404)

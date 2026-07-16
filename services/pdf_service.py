@@ -9,8 +9,7 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
 from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-from config import settings
-from templates_shared import LOGO_OFICIAL_PATH
+from config import LOGO_OFICIAL_PATH, settings
 from models.cliente import Cliente
 from models.historial import HistorialConsulta
 from services.descuento_service import DescuentoService

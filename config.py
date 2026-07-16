@@ -4,6 +4,7 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent
+LOGO_OFICIAL_PATH = "static/img/logo-optica-los-andes.png"
 
 
 class Settings(BaseSettings):

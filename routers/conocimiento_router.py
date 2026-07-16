@@ -6,9 +6,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from fastapi.responses import FileResponse, HTMLResponse
 from sqlalchemy.orm import Session
 
-from config import settings
 from database import get_db
-from models.conocimiento import ConocimientoItem
 from schemas.conocimiento import ConocimientoCreate, ConocimientoListResponse, ConocimientoResponse, ConocimientoUpdate
 from services.conocimiento_service import ConocimientoService
 from services.respuesta_ia_service import RespuestaIAService

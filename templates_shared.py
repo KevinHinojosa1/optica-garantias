@@ -1,9 +1,8 @@
 from fastapi.templating import Jinja2Templates
 
-from config import settings
+from config import LOGO_OFICIAL_PATH, settings
 
-ASSET_VERSION = "2.4.0"
-LOGO_OFICIAL_PATH = "static/img/logo-optica-los-andes.png"
+ASSET_VERSION = "2.4.1"
 
 templates = Jinja2Templates(directory="templates")
 templates.env.globals["asset_version"] = ASSET_VERSION
