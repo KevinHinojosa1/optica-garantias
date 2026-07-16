@@ -3,6 +3,7 @@ let searchTimeout = null;
 let tiendaActiva = '';
 let ciudadActiva = '';
 const TIENDAS = window.TIENDAS_DATA || [];
+let CONTEO_TIENDAS = {};
 
 const filtroCiudad = document.getElementById('filtro-ciudad');
 const filtroTienda = document.getElementById('filtro-tienda');
@@ -16,6 +17,35 @@ const paginacion = document.getElementById('paginacion');
 const regTienda = document.getElementById('reg-tienda');
 const btnRegistrar = document.getElementById('btn-registrar');
 const busquedaInfo = document.getElementById('busqueda-info');
+const resumenCiudad = document.getElementById('resumen-ciudad');
+
+function conteoTienda(nombre) {
+  return CONTEO_TIENDAS[nombre] || 0;
+}
+
+function etiquetaTienda(nombre) {
+  const n = conteoTienda(nombre);
+  if (n > 0) return `🟢 ${nombre} — ${n} paciente${n === 1 ? '' : 's'}`;
+  return `⚪ ${nombre} — Sin registros`;
+}
+
+function actualizarResumenCiudad(ciudad) {
+  if (!resumenCiudad) return;
+  if (!ciudad) {
+    resumenCiudad.classList.add('hidden');
+    return;
+  }
+  const locales = TIENDAS.filter(t => t.ciudad === ciudad);
+  const conRegistros = locales.filter(t => conteoTienda(t.nombre) > 0).length;
+  const sinRegistros = locales.length - conRegistros;
+  const totalPacientes = locales.reduce((sum, t) => sum + conteoTienda(t.nombre), 0);
+  resumenCiudad.classList.remove('hidden');
+  resumenCiudad.innerHTML =
+    `📊 <strong>${ciudad}</strong>: ${locales.length} locales · ` +
+    `<span class="text-emerald-700">${conRegistros} con registros</span> · ` +
+    `<span class="text-slate-500">${sinRegistros} sin registros</span>` +
+    (totalPacientes ? ` · <strong>${totalPacientes}</strong> paciente(s) en total` : '');
+}
 
 function rebuildTiendaSelect(ciudad) {
   filtroTienda.innerHTML = '';
@@ -23,20 +53,43 @@ function rebuildTiendaSelect(ciudad) {
     filtroTienda.disabled = true;
     filtroTienda.classList.add('bg-slate-50');
     filtroTienda.innerHTML = '<option value="">— Primero seleccione ciudad —</option>';
+    actualizarResumenCiudad('');
     return;
   }
 
-  const locales = TIENDAS.filter(t => t.ciudad === ciudad);
+  const locales = TIENDAS.filter(t => t.ciudad === ciudad)
+    .sort((a, b) => {
+      const ca = conteoTienda(a.nombre);
+      const cb = conteoTienda(b.nombre);
+      if (ca > 0 && cb === 0) return -1;
+      if (ca === 0 && cb > 0) return 1;
+      return a.nombre.localeCompare(b.nombre, 'es');
+    });
+
   filtroTienda.disabled = false;
   filtroTienda.classList.remove('bg-slate-50');
   filtroTienda.innerHTML = `<option value="">— Seleccione local de ${ciudad} (${locales.length}) —</option>`;
 
   locales.forEach(t => {
     const opt = document.createElement('option');
+    const n = conteoTienda(t.nombre);
     opt.value = t.nombre;
-    opt.textContent = t.nombre;
+    opt.textContent = etiquetaTienda(t.nombre);
+    opt.dataset.conRegistros = n > 0 ? '1' : '0';
+    opt.dataset.total = String(n);
     filtroTienda.appendChild(opt);
   });
+  actualizarResumenCiudad(ciudad);
+}
+
+async function cargarConteoTiendas() {
+  try {
+    const res = await fetch('/api/clientes/conteo-por-tienda');
+    if (!res.ok) return;
+    CONTEO_TIENDAS = await res.json();
+    if (ciudadActiva) rebuildTiendaSelect(ciudadActiva);
+    if (tiendaActiva) onTiendaChange();
+  } catch { /* conteo opcional */ }
 }
 
 function actualizarInfoBusqueda() {
@@ -50,7 +103,11 @@ function actualizarInfoBusqueda() {
   if (q) {
     busquedaInfo.innerHTML = `🔎 Buscando <strong>"${escapeHtml(q)}"</strong> en <strong>${escapeHtml(tiendaActiva)}</strong>`;
   } else {
-    busquedaInfo.innerHTML = `🏪 Pacientes registrados en <strong>${escapeHtml(tiendaActiva)}</strong> — ${escapeHtml(ciudadActiva)}`;
+    const n = conteoTienda(tiendaActiva);
+    const badge = n > 0
+      ? `<span class="text-emerald-700">🟢 ${n} paciente${n === 1 ? '' : 's'}</span>`
+      : '<span class="text-slate-500">⚪ Sin registros</span>';
+    busquedaInfo.innerHTML = `🏪 <strong>${escapeHtml(tiendaActiva)}</strong> — ${escapeHtml(ciudadActiva)} · ${badge}`;
   }
 }
 
@@ -76,7 +133,7 @@ filtroCiudad.addEventListener('change', () => {
     panelAtencion.classList.remove('hidden');
     activarTab('registrar');
     tiendaSeleccionada.classList.remove('hidden');
-    tiendaSeleccionada.innerHTML = `📍 <strong>${ciudadActiva}</strong> — seleccione el local (${TIENDAS.filter(t => t.ciudad === ciudadActiva).length} disponibles)`;
+    tiendaSeleccionada.innerHTML = `📍 <strong>${ciudadActiva}</strong> — seleccione el local`;
   } else {
     panelAtencion.classList.add('hidden');
     tiendaSeleccionada.classList.add('hidden');
@@ -92,7 +149,11 @@ function onTiendaChange() {
   if (tiendaActiva) {
     regTienda.value = tiendaActiva;
     btnRegistrar.disabled = false;
-    tiendaSeleccionada.innerHTML = `✅ Atendiendo en: <strong>${tiendaActiva}</strong> — ${ciudadActiva}`;
+    const n = conteoTienda(tiendaActiva);
+    const estadoReg = n > 0
+      ? `<span class="text-emerald-700">🟢 ${n} paciente${n === 1 ? '' : 's'} registrado${n === 1 ? '' : 's'}</span>`
+      : '<span class="text-slate-500">⚪ Sin registros aún — puede registrar el primero</span>';
+    tiendaSeleccionada.innerHTML = `✅ Atendiendo en: <strong>${escapeHtml(tiendaActiva)}</strong> — ${escapeHtml(ciudadActiva)}<br>${estadoReg}`;
     currentPage = 1;
     if (!panelBuscar.classList.contains('hidden')) {
       cargarClientes();
@@ -181,6 +242,13 @@ async function cargarClientes() {
       return;
     }
 
+    if (!buscador.value.trim() && tiendaActiva) {
+      CONTEO_TIENDAS[tiendaActiva] = data.total;
+      actualizarInfoBusqueda();
+      if (tiendaSeleccionada && !tiendaSeleccionada.classList.contains('hidden')) {
+        onTiendaChange();
+      }
+    }
     lista.innerHTML = data.items.map(c => cardCliente(c)).join('');
     renderPaginacion(data.page, data.pages, data.total);
   } catch (err) {
@@ -222,7 +290,8 @@ async function eliminarCliente(id, nombre) {
     const res = await fetch(`/api/clientes/${id}`, { method: 'DELETE' });
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail);
-    cargarClientes();
+    await cargarConteoTiendas();
+    await cargarClientes();
   } catch (err) {
     alert('Error al eliminar: ' + err.message);
   }
@@ -302,3 +371,5 @@ document.getElementById('form-registrar').addEventListener('submit', async (e) =
     btnRegistrar.textContent = 'Registrar paciente y continuar atención →';
   }
 });
+
+cargarConteoTiendas();

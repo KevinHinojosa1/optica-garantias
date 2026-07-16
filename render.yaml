@@ -19,7 +19,7 @@ services:
       - key: ANTHROPIC_API_KEY
         sync: false
       - key: DEFAULT_ASESOR
-        value: Asesor Virtual
+        value: Kevin Hinojosa
       - key: GOOGLE_SPREADSHEET_ID
         sync: false
       - key: GOOGLE_SHEET_IVR_NAME

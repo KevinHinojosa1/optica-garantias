@@ -10,6 +10,7 @@ from reportlab.lib.units import cm
 from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from config import settings
+from templates_shared import LOGO_OFICIAL_PATH
 from models.cliente import Cliente
 from models.historial import HistorialConsulta
 from services.descuento_service import DescuentoService
@@ -62,8 +63,18 @@ class PdfService:
 
         elementos = []
 
-        # Encabezado
-        elementos.append(Paragraph("👓 ÓPTICA LOS ANDES", titulo))
+        # Encabezado con logo oficial (coloque logo-optica-los-andes.png en static/img/)
+        logo_path = settings.base_dir / LOGO_OFICIAL_PATH
+        if logo_path.exists():
+            try:
+                logo = Image(str(logo_path), width=5.5 * cm, height=2.2 * cm, kind="proportional")
+                logo.hAlign = "CENTER"
+                elementos.append(logo)
+                elementos.append(Spacer(1, 0.25 * cm))
+            except Exception:
+                elementos.append(Paragraph("ÓPTICA LOS ANDES", titulo))
+        else:
+            elementos.append(Paragraph("ÓPTICA LOS ANDES", titulo))
         elementos.append(Paragraph("Informe de Consulta de Garantía", subtitulo))
         elementos.append(Spacer(1, 0.4 * cm))
 
@@ -89,7 +100,7 @@ class PdfService:
         elementos.append(Spacer(1, 0.5 * cm))
 
         # Veredicto destacado
-        elementos.append(Paragraph(f"VEREDICTO IA: {historial.veredicto}", veredicto_style))
+        elementos.append(Paragraph(f"VEREDICTO: {historial.veredicto}", veredicto_style))
         if historial.confianza:
             elementos.append(Paragraph(f"Confianza: {historial.confianza}%", subtitulo))
 

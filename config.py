@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     app_host: str = "0.0.0.0"
     app_port: int = int(os.getenv("PORT", "8000"))
     debug: bool = False
-    default_asesor: str = "Asesor Virtual"
+    default_asesor: str = "Kevin Hinojosa"
     base_datos_dir: str = "data/base_datos"
     base_datos_archivo: str = "pacientes.xlsx"
     consultas_imagenes_dir: str = "data/consultas"

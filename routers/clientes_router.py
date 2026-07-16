@@ -4,6 +4,7 @@ import math
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
 from templates_shared import templates
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -87,6 +88,20 @@ async def pagina_cliente_detalle(cliente_id: int, request: Request, db: Session 
             "es_duplicado": es_dup,
         },
     )
+
+
+@router.get("/api/clientes/conteo-por-tienda")
+async def conteo_clientes_por_tienda(db: Session = Depends(get_db)):
+    """Cantidad de pacientes registrados por local (para el selector de atención)."""
+    try:
+        filas = (
+            db.query(Cliente.tienda, func.count(Cliente.id))
+            .group_by(Cliente.tienda)
+            .all()
+        )
+        return {nombre: int(total) for nombre, total in filas if nombre}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Error al contar pacientes: {exc}") from exc
 
 
 @router.get("/api/clientes", response_model=ClienteListResponse)

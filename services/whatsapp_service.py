@@ -139,7 +139,7 @@ class WhatsAppService:
         if confianza and veredicto != "IMAGEN NO CLARA":
             msg = msg.replace(
                 "━━━━━━━━━━━━━━━━━━━━\n🕐",
-                f"🤖 *Confianza IA:* {confianza}%\n━━━━━━━━━━━━━━━━━━━━\n🕐",
+                f"📊 *Confianza:* {confianza}%\n━━━━━━━━━━━━━━━━━━━━\n🕐",
                 1,
             )
         return msg
@@ -148,7 +148,7 @@ class WhatsAppService:
     def agregar_enlace_pdf(cls, mensaje: str, pdf_url: str, consulta_id: int) -> str:
         bloque = (
             f"\n\n📄 *INFORME PDF — Consulta #{consulta_id}*\n"
-            f"Descargar informe completo con foto y veredicto IA:\n"
+            f"Descargar informe completo con foto y veredicto:\n"
             f"{pdf_url}\n"
             f"_Abra el enlace, descargue el PDF y compártalo en el grupo si lo necesita._"
         )

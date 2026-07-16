@@ -59,8 +59,8 @@ formAnalisis.addEventListener('submit', async (e) => {
 
   const formData = new FormData();
   formData.append('imagen', imagenInput.files[0]);
-  const asesor = document.getElementById('asesor').value;
-  if (asesor) formData.append('asesor', asesor);
+  const asesor = document.getElementById('asesor').value.trim() || window.DEFAULT_ASESOR || '';
+  formData.append('asesor', asesor);
   const codigo = document.getElementById('codigo-descuento')?.value;
   const pct = document.getElementById('porcentaje-descuento')?.value;
   if (codigo) formData.append('codigo_descuento', codigo);
@@ -131,7 +131,7 @@ function actualizarBadgeVeredicto(veredicto) {
   };
   const estilo = estilos[veredicto] || 'bg-slate-100 text-slate-700 border-slate-300';
   veredictoReporte.className = `inline-flex items-center gap-1 text-sm font-bold px-3 py-1.5 rounded-full border ${estilo}`;
-  veredictoReporte.innerHTML = `🤖 Veredicto IA: ${veredicto}`;
+  veredictoReporte.innerHTML = `Veredicto: ${veredicto}`;
   veredictoReporte.classList.remove('hidden');
 }
 
@@ -158,7 +158,7 @@ function aplicarReporte(mensaje, waLink, grupoNombre, veredicto) {
 }
 
 async function generarMensajeDesdeAnalisis(analisis, mostrarErrores = true) {
-  const asesor = document.getElementById('asesor')?.value || '';
+  const asesor = document.getElementById('asesor')?.value.trim() || window.DEFAULT_ASESOR || '';
   const payload = {
     cliente_id: window.CLIENTE_DATA.id,
     analisis,

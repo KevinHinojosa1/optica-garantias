@@ -27,8 +27,13 @@
         <select id="filtro-tienda" class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none bg-slate-50" required disabled>
           <option value="">— Primero seleccione ciudad —</option>
         </select>
+        <p class="text-xs text-slate-500 mt-2 flex flex-wrap gap-3">
+          <span><span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1"></span>Con registros</span>
+          <span><span class="inline-block w-2 h-2 rounded-full bg-slate-300 mr-1"></span>Sin registros</span>
+        </p>
       </div>
     </div>
+    <p id="resumen-ciudad" class="hidden mt-3 text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2"></p>
     <p id="tienda-seleccionada" class="hidden mt-3 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-2"></p>
   </div>
 
@@ -155,6 +160,7 @@
 {% block scripts %}
 <script>
   window.TIENDAS_DATA = {{ tiendas_json | safe }};
+  window.DEFAULT_ASESOR = {{ default_asesor | tojson }};
 </script>
 <script src="/static/js/clientes.js"></script>
 {% endblock %}
