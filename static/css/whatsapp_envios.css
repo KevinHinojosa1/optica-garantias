@@ -1,0 +1,71 @@
+.wa-kpi {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 0.875rem;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.wa-kpi strong {
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.wa-tabla-wrap {
+  max-height: 480px;
+  overflow: auto;
+  border-radius: 0.875rem;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.wa-tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.wa-tabla th {
+  position: sticky;
+  top: 0;
+  background: #166534;
+  color: #fff;
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  font-weight: 600;
+}
+
+.wa-tabla td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: top;
+}
+
+.wa-tabla tr:nth-child(even) td {
+  background: rgba(240, 253, 244, 0.5);
+}
+
+.wa-tabla tr.enviado td {
+  background: rgba(219, 234, 254, 0.55);
+}
+
+.wa-tabla tr.invalido td {
+  background: rgba(254, 226, 226, 0.4);
+  color: #991b1b;
+}
+
+.wa-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 9999px;
+}
+
+.wa-badge-pendiente { background: #fef3c7; color: #92400e; }
+.wa-badge-enviado { background: #dbeafe; color: #1e40af; }
+.wa-badge-error { background: #fee2e2; color: #991b1b; }
+
+#toast-wa.toast-ok { border-left: 4px solid #16a34a; color: #166534; }
+#toast-wa.toast-error { border-left: 4px solid #dc2626; color: #991b1b; }

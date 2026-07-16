@@ -21,6 +21,7 @@ from routers import (
     scripts_router,
     tiendas_router,
     conocimiento_router,
+    whatsapp_envios_router,
 )
 
 
@@ -78,7 +79,7 @@ from starlette.requests import Request as StarletteRequest
 class NoCacheMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: StarletteRequest, call_next):
         response = await call_next(request)
-        if request.url.path.startswith("/static/") or request.url.path in ("/ivr", "/alertas", "/conocimiento", "/"):
+        if request.url.path.startswith("/static/") or request.url.path in ("/ivr", "/alertas", "/conocimiento", "/envios-whatsapp", "/"):
             response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
             response.headers["Pragma"] = "no-cache"
         return response
@@ -98,6 +99,7 @@ app.include_router(scripts_router)
 app.include_router(respuesta_ia_router)
 app.include_router(tiendas_router)
 app.include_router(conocimiento_router)
+app.include_router(whatsapp_envios_router)
 
 
 @app.get("/")
