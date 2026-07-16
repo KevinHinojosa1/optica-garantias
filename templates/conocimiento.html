@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Base de Conocimiento{% endblock %}
+
+{% block content %}
+<div class="space-y-6" id="kb-app">
+  <div class="glass-card p-5 sm:p-6">
+    <div class="flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <p class="text-xs font-medium text-optica-600 uppercase tracking-wide mb-1">Inteligencia de garantías</p>
+        <h2 class="text-xl sm:text-2xl font-semibold glass-title">📚 Base de Conocimiento Oficial</h2>
+        <p class="glass-subtle text-sm mt-1">
+          Nutra políticas, casos e imágenes de referencia. Claude usa esta información para fundamentar cada veredicto.
+        </p>
+      </div>
+      <div class="flex flex-wrap gap-2">
+        {% if ia_disponible %}
+        <span class="glass-pill text-xs font-medium text-emerald-700 px-3 py-2 rounded-xl">🤖 Veredicto potenciado por Claude · {{ ia_modelo }}</span>
+        {% else %}
+        <span class="glass-pill text-xs font-medium text-amber-700 px-3 py-2 rounded-xl">⚠️ Configure ANTHROPIC_API_KEY</span>
+        {% endif %}
+        <span class="glass-pill text-xs font-medium text-optica-700 px-3 py-2 rounded-xl" id="kb-contador">{{ meta.activos }} activos / {{ meta.total }} total</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-5 gap-6">
+    <div class="lg:col-span-2 glass-card p-5">
+      <h3 class="font-semibold text-slate-800 mb-1" id="form-titulo">➕ Nueva entrada</h3>
+      <p class="text-sm text-slate-500 mb-4">Texto oficial, casos reales o imagen guía (ej. craquelado vs defecto AR).</p>
+      <form id="form-kb" class="space-y-3">
+        <input type="hidden" id="kb-id" value="">
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Título *</label>
+          <input type="text" id="kb-titulo" required placeholder="Ej: Política desprendimiento AR"
+            class="glass-input w-full px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Categoría</label>
+          <select id="kb-categoria" class="glass-input w-full px-3 py-2 text-sm">
+            {% for c in meta.categorias %}
+            <option value="{{ c.id }}">{{ c.icon }} {{ c.label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Contenido oficial *</label>
+          <textarea id="kb-contenido" rows="6" required placeholder="Redacte la política, criterio o explicación que Claude debe seguir..."
+            class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Tags (separados por coma)</label>
+          <input type="text" id="kb-tags" placeholder="aplica,AR,lente,craquelado,garantia"
+            class="glass-input w-full px-3 py-2 text-sm">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Prioridad (1-100)</label>
+            <input type="number" id="kb-prioridad" min="1" max="100" value="50"
+              class="glass-input w-full px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Fuente</label>
+            <input type="text" id="kb-fuente" value="Óptica Los Andes"
+              class="glass-input w-full px-3 py-2 text-sm">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Imagen de referencia (opcional)</label>
+          <input type="file" id="kb-imagen" accept="image/*"
+            class="glass-input w-full px-3 py-2 text-sm file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:bg-optica-600 file:text-white file:text-xs">
+          <p class="text-xs text-slate-400 mt-1">Claude comparará el daño del cliente con esta imagen guía.</p>
+          <div id="kb-preview" class="hidden mt-2">
+            <img id="kb-preview-img" src="" alt="Vista previa" class="max-h-32 rounded-lg border">
+            <label class="flex items-center gap-2 text-xs text-red-600 mt-2 cursor-pointer">
+              <input type="checkbox" id="kb-quitar-imagen"> Quitar imagen al guardar
+            </label>
+          </div>
+        </div>
+        <label class="flex items-center gap-2 text-sm text-slate-700">
+          <input type="checkbox" id="kb-activo" checked class="rounded text-optica-600">
+          Activo (usar en veredictos)
+        </label>
+        <div class="flex gap-2 pt-2">
+          <button type="submit" id="btn-guardar-kb" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold">
+            💾 Guardar entrada
+          </button>
+          <button type="button" id="btn-cancelar-kb" class="hidden glass-btn px-4 py-2.5 rounded-xl text-sm">Cancelar</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="lg:col-span-3 glass-card p-5">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h3 class="font-semibold text-slate-800">Entradas registradas</h3>
+        <input type="search" id="kb-buscar" placeholder="Buscar por título, tag o contenido..."
+          class="glass-input px-3 py-2 text-sm w-full sm:w-64">
+      </div>
+      <div id="kb-lista" class="space-y-3 max-h-[720px] overflow-y-auto">
+        <p class="text-slate-400 text-sm">Cargando...</p>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="toast-kb" class="hidden fixed bottom-4 right-4 z-50 glass-card px-4 py-3 text-sm font-medium shadow-lg"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>window.KB_CATEGORIAS = {{ meta.categorias | tojson }};</script>
+<script src="/static/js/conocimiento.js?v={{ asset_version }}"></script>
+{% endblock %}

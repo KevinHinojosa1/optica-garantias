@@ -1,10 +1,15 @@
 import base64
 import json
+import mimetypes
 import re
+from typing import TYPE_CHECKING
 
 import httpx
 
 from config import settings
+
+if TYPE_CHECKING:
+    from models.conocimiento import ConocimientoItem
 
 POLITICAS_PROMPT = """
 Eres un experto en garantías de Óptica Los Andes Ecuador. Analiza la imagen del producto óptico dañado.
@@ -45,6 +50,9 @@ Responde ÚNICAMENTE en JSON válido con este formato:
   "tipo_dano": "clasificación del daño"
 }
 Si confianza < 70, usa veredicto "IMAGEN NO CLARA".
+
+El veredicto debe fundamentarse en la BASE DE CONOCIMIENTO OFICIAL cuando se proporcione.
+En el campo "fundamento" cita el título del documento de conocimiento usado.
 """
 
 
@@ -129,38 +137,65 @@ class VisionService:
         return None
 
     @classmethod
+    def _bloques_imagen_referencia(cls, items: list[ConocimientoItem]) -> list[dict]:
+        from services.conocimiento_service import ConocimientoService
+
+        bloques: list[dict] = []
+        for item in ConocimientoService.items_con_imagen(items, max_imagenes=2):
+            ruta = ConocimientoService.ruta_imagen_abs(item)
+            if not ruta:
+                continue
+            mime = mimetypes.guess_type(str(ruta))[0] or "image/jpeg"
+            b64 = base64.b64encode(ruta.read_bytes()).decode("utf-8")
+            bloques.append({
+                "type": "image",
+                "source": {"type": "base64", "media_type": mime, "data": b64},
+            })
+            bloques.append({
+                "type": "text",
+                "text": f"Imagen de referencia oficial — {item.titulo}: úsela como guía visual para comparar el daño.",
+            })
+        return bloques
+
+    @classmethod
+    def _system_con_conocimiento(cls, bloque_kb: str) -> str:
+        if not bloque_kb.strip():
+            return POLITICAS_PROMPT
+        return f"{POLITICAS_PROMPT}\n\n{bloque_kb}"
+
+    @classmethod
     async def _analizar_claude(
         cls,
         image_bytes: bytes,
         mime_type: str,
         contexto_cliente: dict,
+        conocimiento: list[ConocimientoItem] | None = None,
+        bloque_kb: str = "",
     ) -> dict:
+        from services.conocimiento_service import ConocimientoService
+
         b64 = base64.b64encode(image_bytes).decode("utf-8")
         media_type = cls._normalizar_mime(mime_type)
+        items = conocimiento or []
+        if not bloque_kb and items:
+            bloque_kb = ConocimientoService.construir_bloque_prompt(items)
+
+        contenido: list[dict] = []
+        contenido.extend(cls._bloques_imagen_referencia(items))
+        contenido.append({
+            "type": "image",
+            "source": {"type": "base64", "media_type": media_type, "data": b64},
+        })
+        contenido.append({
+            "type": "text",
+            "text": cls._contexto_texto(contexto_cliente) + "\n\nAnalice la foto del cliente y emita el veredicto.",
+        })
 
         payload = {
             "model": settings.anthropic_model,
             "max_tokens": 1024,
-            "system": POLITICAS_PROMPT,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "image",
-                            "source": {
-                                "type": "base64",
-                                "media_type": media_type,
-                                "data": b64,
-                            },
-                        },
-                        {
-                            "type": "text",
-                            "text": cls._contexto_texto(contexto_cliente),
-                        },
-                    ],
-                }
-            ],
+            "system": cls._system_con_conocimiento(bloque_kb),
+            "messages": [{"role": "user", "content": contenido}],
         }
 
         headers = {
@@ -183,6 +218,10 @@ class VisionService:
         content = data["content"][0]["text"]
         result = cls._extract_json(content)
         result["proveedor"] = "claude"
+        result["modelo"] = settings.anthropic_model
+        result["potenciado_por"] = "Claude"
+        if items:
+            result["fuentes_conocimiento"] = ConocimientoService.fuentes_resumen(items)
         return cls._post_procesar(result)
 
     @classmethod
@@ -191,18 +230,28 @@ class VisionService:
         image_bytes: bytes,
         mime_type: str,
         contexto_cliente: dict,
+        conocimiento: list[ConocimientoItem] | None = None,
+        bloque_kb: str = "",
     ) -> dict:
+        from services.conocimiento_service import ConocimientoService
+
         b64 = base64.b64encode(image_bytes).decode("utf-8")
         data_url = f"data:{mime_type};base64,{b64}"
+        items = conocimiento or []
+        if not bloque_kb and items:
+            bloque_kb = ConocimientoService.construir_bloque_prompt(items)
+        texto = cls._contexto_texto(contexto_cliente)
+        if bloque_kb:
+            texto = f"{bloque_kb}\n\n{texto}"
 
         payload = {
             "model": settings.xai_vision_model,
             "messages": [
-                {"role": "system", "content": POLITICAS_PROMPT},
+                {"role": "system", "content": cls._system_con_conocimiento("")},
                 {
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": cls._contexto_texto(contexto_cliente)},
+                        {"type": "text", "text": texto},
                         {"type": "image_url", "image_url": {"url": data_url, "detail": "high"}},
                     ],
                 },
@@ -229,6 +278,9 @@ class VisionService:
         content = data["choices"][0]["message"]["content"]
         result = cls._extract_json(content)
         result["proveedor"] = "xai"
+        result["potenciado_por"] = "xAI"
+        if items:
+            result["fuentes_conocimiento"] = ConocimientoService.fuentes_resumen(items)
         return cls._post_procesar(result)
 
     @classmethod
@@ -237,11 +289,18 @@ class VisionService:
         image_bytes: bytes,
         mime_type: str,
         contexto_cliente: dict,
+        conocimiento: list[ConocimientoItem] | None = None,
     ) -> dict:
         proveedor = cls._resolver_proveedor()
         if not proveedor:
-            return cls._analisis_demo(contexto_cliente)
+            demo = cls._analisis_demo(contexto_cliente)
+            demo["potenciado_por"] = "modo demo"
+            return demo
 
         if proveedor == "claude":
-            return await cls._analizar_claude(image_bytes, mime_type, contexto_cliente)
-        return await cls._analizar_xai(image_bytes, mime_type, contexto_cliente)
+            return await cls._analizar_claude(
+                image_bytes, mime_type, contexto_cliente, conocimiento=conocimiento
+            )
+        return await cls._analizar_xai(
+            image_bytes, mime_type, contexto_cliente, conocimiento=conocimiento
+        )

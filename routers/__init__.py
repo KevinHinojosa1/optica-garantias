@@ -8,6 +8,7 @@ from routers.ivr_router import router as ivr_router
 from routers.scripts_router import router as scripts_router
 from routers.respuesta_ia_router import router as respuesta_ia_router
 from routers.tiendas_router import router as tiendas_router
+from routers.conocimiento_router import router as conocimiento_router
 
 __all__ = [
     "alertas_router",
@@ -20,4 +21,5 @@ __all__ = [
     "scripts_router",
     "respuesta_ia_router",
     "tiendas_router",
+    "conocimiento_router",
 ]

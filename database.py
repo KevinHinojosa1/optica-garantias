@@ -57,10 +57,11 @@ def migrate_db():
 
 
 def init_db():
-    from models import cliente, historial, ivr  # noqa: F401
+    from models import cliente, conocimiento, historial, ivr  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
     migrate_db()
 
     consultas_dir = settings.base_dir / settings.consultas_imagenes_dir
     consultas_dir.mkdir(parents=True, exist_ok=True)
+    (settings.base_dir / "data" / "conocimiento").mkdir(parents=True, exist_ok=True)

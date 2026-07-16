@@ -10,6 +10,7 @@ from routers.clientes_router import cliente_to_response
 from schemas.historial import HistorialCreate
 from services.descuento_service import DescuentoService
 from services.historial_service import HistorialService
+from services.conocimiento_service import ConocimientoService
 from services.vision_service import VisionService
 from services.whatsapp_service import WhatsAppService
 
@@ -68,10 +69,14 @@ async def analizar_dano(
         cliente_data = cliente_to_response(cliente).model_dump(mode="json")
         asesor_final = (asesor or "").strip() or settings.default_asesor
 
+        ConocimientoService.sembrar_inicial(db)
+        conocimiento = ConocimientoService.buscar_relevantes(db, cliente_data)
+
         analisis = await VisionService.analizar_imagen(
             image_bytes,
             imagen.content_type,
             cliente_data,
+            conocimiento=conocimiento,
         )
 
         mensaje = WhatsAppService.generar_desde_analisis(cliente_data, analisis, asesor_final)

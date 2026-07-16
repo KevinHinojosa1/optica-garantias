@@ -27,3 +27,5 @@ data/consultas/*
 optica_garantias.db
 data/consultas/*.jpg
 data/consultas/*.png
+data/conocimiento/*
+!data/conocimiento/.gitkeep

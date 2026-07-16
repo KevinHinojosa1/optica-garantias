@@ -18,6 +18,7 @@ from routers import (
     respuesta_ia_router,
     scripts_router,
     tiendas_router,
+    conocimiento_router,
 )
 
 
@@ -25,7 +26,7 @@ def _bootstrap_datos():
     """Carga inicial de BD y Excel de prueba (no bloquea si falla)."""
     try:
         init_db()
-        for sub in ("data/consultas", "data/base_datos", "data/google"):
+        for sub in ("data/consultas", "data/base_datos", "data/google", "data/conocimiento"):
             (settings.base_dir / sub).mkdir(parents=True, exist_ok=True)
 
         from models.cliente import Cliente
@@ -37,8 +38,11 @@ def _bootstrap_datos():
             if script.exists():
                 subprocess.run(["python", str(script)], check=False)
 
+        from services.conocimiento_service import ConocimientoService
+
         db = SessionLocal()
         try:
+            ConocimientoService.sembrar_inicial(db)
             if db.query(Cliente).count() == 0 and ruta.exists():
                 ImportService.importar_desde_carpeta(db, reemplazar=True)
         finally:
@@ -67,7 +71,7 @@ from starlette.requests import Request as StarletteRequest
 class NoCacheMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: StarletteRequest, call_next):
         response = await call_next(request)
-        if request.url.path.startswith("/static/") or request.url.path in ("/ivr", "/alertas", "/"):
+        if request.url.path.startswith("/static/") or request.url.path in ("/ivr", "/alertas", "/conocimiento", "/"):
             response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
             response.headers["Pragma"] = "no-cache"
         return response
@@ -86,6 +90,7 @@ app.include_router(ivr_router)
 app.include_router(scripts_router)
 app.include_router(respuesta_ia_router)
 app.include_router(tiendas_router)
+app.include_router(conocimiento_router)
 
 
 @app.get("/")
