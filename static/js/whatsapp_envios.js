@@ -1,5 +1,5 @@
 /**
- * Envíos masivos WhatsApp — plantilla + Excel + cola wa.me
+ * Reprogramaciones WhatsApp — plantilla + Excel + wa.me / Business API
  */
 
 let contactos = [];
@@ -7,6 +7,8 @@ let itemsEnvio = [];
 let colaEnvio = [];
 let indiceCola = 0;
 let autoTimer = null;
+let businessApiActiva = false;
+let enviandoBusiness = false;
 
 const PLANTILLA_EJ = window.WA_PLANTILLA_EJEMPLO || '';
 
@@ -25,11 +27,19 @@ function escapeHtml(t) {
   return d.innerHTML;
 }
 
+function modoEnvio() {
+  return document.getElementById('wa-modo-business')?.checked ? 'business' : 'wame';
+}
+
 function payloadBase() {
   return {
     plantilla: document.getElementById('wa-plantilla').value.trim(),
     asesor: document.getElementById('wa-asesor').value.trim() || window.DEFAULT_ASESOR || '',
     incluir_pie: document.getElementById('wa-incluir-pie').checked,
+    fecha_reprogramada: document.getElementById('wa-fecha-reprog')?.value.trim() || '',
+    fecha_anterior: document.getElementById('wa-fecha-anterior')?.value.trim() || '',
+    hora: document.getElementById('wa-hora')?.value.trim() || '',
+    motivo: document.getElementById('wa-motivo')?.value.trim() || '',
     contactos,
   };
 }
@@ -53,12 +63,71 @@ function actualizarKpis() {
   document.getElementById('kpi-pendientes').textContent = itemsEnvio.length ? Math.max(0, pendientes) : contactos.length;
 }
 
+function actualizarModoUI() {
+  const esBusiness = modoEnvio() === 'business';
+  const aviso = document.getElementById('wa-modo-aviso');
+  const desc = document.getElementById('wa-modo-desc');
+  const radioBusiness = document.getElementById('wa-modo-business');
+
+  if (!businessApiActiva) {
+    if (radioBusiness) radioBusiness.disabled = true;
+    document.getElementById('wa-modo-wame').checked = true;
+    aviso.classList.remove('hidden');
+    aviso.textContent = 'WhatsApp Business API no configurada. Usa wa.me o agrega WHATSAPP_BUSINESS_TOKEN en Render.';
+  } else {
+    if (radioBusiness) radioBusiness.disabled = false;
+    aviso.classList.add('hidden');
+  }
+
+  if (esBusiness && businessApiActiva) {
+    desc.innerHTML = 'Los mensajes se envían automáticamente desde tu cuenta WhatsApp Business.'
+      + ' <label class="inline-flex items-center gap-1.5 ml-2 cursor-pointer">'
+      + '<input type="checkbox" id="wa-auto-siguiente" class="rounded text-green-600" '
+      + (document.getElementById('wa-auto-siguiente')?.checked ? 'checked' : '') + '> '
+      + 'Pausa automática 5s entre contactos</label>';
+  } else {
+    desc.innerHTML = 'El envío abre WhatsApp Web/App con cada mensaje listo. Confirma el envío y pasa al siguiente contacto.'
+      + ' <label class="inline-flex items-center gap-1.5 ml-2 cursor-pointer">'
+      + '<input type="checkbox" id="wa-auto-siguiente" class="rounded text-green-600" '
+      + (document.getElementById('wa-auto-siguiente')?.checked ? 'checked' : '') + '> '
+      + 'Pausa automática 5s entre contactos</label>';
+  }
+}
+
+function actualizarBadgeApi(cfg) {
+  const badge = document.getElementById('wa-api-badge');
+  if (!badge) return;
+  if (cfg?.business_api_activa) {
+    badge.className = 'wa-api-badge wa-api-on';
+    badge.textContent = `✅ Business API conectada (${cfg.api_version})`;
+  } else {
+    badge.className = 'wa-api-badge wa-api-off';
+    badge.textContent = '⚠️ Business API no configurada — solo wa.me';
+  }
+}
+
+async function cargarConfigApi() {
+  try {
+    const res = await fetch('/api/envios-whatsapp/config');
+    const data = await res.json();
+    businessApiActiva = !!data.business_api_activa;
+    actualizarBadgeApi(data);
+    if (businessApiActiva) {
+      document.getElementById('wa-modo-business').checked = true;
+    }
+  } catch {
+    businessApiActiva = !!window.WA_BUSINESS_ACTIVA;
+    actualizarBadgeApi({ business_api_activa: businessApiActiva, api_version: 'v21.0' });
+  }
+  actualizarModoUI();
+}
+
 function renderTabla() {
   const cont = document.getElementById('wa-tabla');
   if (!itemsEnvio.length) {
     cont.className = 'wa-tabla-wrap text-sm text-slate-500 py-8 text-center';
     cont.innerHTML = contactos.length
-      ? `${contactos.length} contacto(s) listos — pulse <strong>Generar mensajes personalizados</strong>.`
+      ? `${contactos.length} contacto(s) listos — pulsa <strong>Generar mensajes</strong>.`
       : 'Cargue un Excel y genere los mensajes para ver la lista.';
     return;
   }
@@ -81,6 +150,9 @@ function renderTabla() {
           } else if (it._enviado) {
             estado = '<span class="wa-badge wa-badge-enviado">Enviado</span>';
             rowClass = 'enviado';
+          } else if (it._error_envio) {
+            estado = `<span class="wa-badge wa-badge-error">${escapeHtml(it._error_envio)}</span>`;
+            rowClass = 'invalido';
           }
           const prev = (it.mensaje || '').slice(0, 90) + ((it.mensaje || '').length > 90 ? '…' : '');
           const btn = it.valido && it.wa_link
@@ -129,7 +201,7 @@ async function cargarExcel() {
   actualizarBotones();
   actualizarKpis();
   renderTabla();
-  toast(`${data.total} números cargados del Excel`, 'ok');
+  toast(`${data.total} contactos cargados del Excel`, 'ok');
 }
 
 async function generarMensajes() {
@@ -142,12 +214,12 @@ async function generarMensajes() {
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || 'Error al generar');
 
-  itemsEnvio = (data.items || []).map(it => ({ ...it, _enviado: false }));
+  itemsEnvio = (data.items || []).map(it => ({ ...it, _enviado: false, _error_envio: null }));
   document.getElementById('wa-estado').textContent = `${data.validos} mensajes listos`;
   actualizarBotones();
   actualizarKpis();
   renderTabla();
-  toast(`✨ ${data.validos} mensajes personalizados generados`, 'ok');
+  toast(`✨ ${data.validos} mensajes de reprogramación generados`, 'ok');
 }
 
 async function exportarExcel() {
@@ -164,7 +236,7 @@ async function exportarExcel() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `envios_whatsapp_${Date.now()}.xlsx`;
+  a.download = `reprogramaciones_wa_${Date.now()}.xlsx`;
   a.click();
   URL.revokeObjectURL(url);
   toast('Excel exportado con enlaces wa.me', 'ok');
@@ -185,6 +257,27 @@ function abrirModalEnvio() {
 function cerrarModalEnvio() {
   document.getElementById('modal-envio').classList.add('hidden');
   clearTimeout(autoTimer);
+  enviandoBusiness = false;
+}
+
+function actualizarModalBotones() {
+  const esBusiness = modoEnvio() === 'business' && businessApiActiva;
+  const linkWa = document.getElementById('modal-abrir-wa');
+  const btnBusiness = document.getElementById('modal-enviar-business');
+  const btnEnviado = document.getElementById('modal-enviado');
+  const titulo = document.getElementById('modal-titulo');
+
+  if (esBusiness) {
+    titulo.textContent = '📱 Envío por WhatsApp Business';
+    linkWa.classList.add('hidden');
+    btnBusiness.classList.remove('hidden');
+    btnEnviado.textContent = '⏭️ Siguiente (ya enviado)';
+  } else {
+    titulo.textContent = '📤 Envío masivo wa.me';
+    linkWa.classList.remove('hidden');
+    btnBusiness.classList.add('hidden');
+    btnEnviado.textContent = '✅ Enviado — Siguiente';
+  }
 }
 
 function mostrarContactoCola() {
@@ -193,21 +286,85 @@ function mostrarContactoCola() {
     cerrarModalEnvio();
     return;
   }
+  actualizarModalBotones();
+
   const it = colaEnvio[indiceCola];
   const total = colaEnvio.length;
-  const pct = Math.round(((indiceCola) / total) * 100);
+  const pct = Math.round((indiceCola / total) * 100);
   document.getElementById('modal-progreso').textContent = `Contacto ${indiceCola + 1} de ${total}`;
   document.getElementById('modal-barra').style.width = `${pct}%`;
   document.getElementById('modal-nombre').textContent = it.nombre;
   document.getElementById('modal-telefono').textContent = it.telefono;
   document.getElementById('modal-preview').textContent = it.mensaje;
+
   const link = document.getElementById('modal-abrir-wa');
   link.href = it.wa_link;
-  window.open(it.wa_link, '_blank', 'noopener');
 
-  if (document.getElementById('wa-auto-siguiente').checked) {
-    clearTimeout(autoTimer);
-    autoTimer = setTimeout(() => marcarEnviadoYSiguiente(), 5000);
+  const esBusiness = modoEnvio() === 'business' && businessApiActiva;
+  if (!esBusiness) {
+    window.open(it.wa_link, '_blank', 'noopener');
+    if (document.getElementById('wa-auto-siguiente')?.checked) {
+      clearTimeout(autoTimer);
+      autoTimer = setTimeout(() => marcarEnviadoYSiguiente(), 5000);
+    }
+  } else if (document.getElementById('wa-auto-siguiente')?.checked && !enviandoBusiness) {
+    enviarPorBusiness(it).then(ok => {
+      if (ok) {
+        autoTimer = setTimeout(() => marcarEnviadoYSiguiente(), 2000);
+      }
+    });
+  }
+}
+
+async function enviarPorBusiness(it) {
+  if (enviandoBusiness) return false;
+  enviandoBusiness = true;
+  const btn = document.getElementById('modal-enviar-business');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Enviando…';
+  }
+
+  try {
+    const res = await fetch('/api/envios-whatsapp/enviar-business', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        item: {
+          indice: it.indice,
+          telefono_limpio: it.telefono_limpio,
+          mensaje: it.mensaje,
+        },
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Error al enviar');
+
+    const global = itemsEnvio.find(x => x.indice === it.indice);
+    if (data.ok) {
+      if (global) {
+        global._enviado = true;
+        global._error_envio = null;
+      }
+      toast(`✅ Enviado a ${it.nombre}`, 'ok');
+      actualizarKpis();
+      renderTabla();
+      return true;
+    }
+
+    if (global) global._error_envio = data.error || 'Error API';
+    toast(data.error || 'No se pudo enviar', 'error');
+    renderTabla();
+    return false;
+  } catch (e) {
+    toast(e.message, 'error');
+    return false;
+  } finally {
+    enviandoBusiness = false;
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '📱 Enviar por Business API';
+    }
   }
 }
 
@@ -243,6 +400,15 @@ document.getElementById('btn-plantilla-ejemplo')?.addEventListener('click', () =
 document.getElementById('modal-enviado')?.addEventListener('click', marcarEnviadoYSiguiente);
 document.getElementById('modal-saltar')?.addEventListener('click', saltarContacto);
 document.getElementById('modal-cerrar')?.addEventListener('click', cerrarModalEnvio);
+document.getElementById('modal-enviar-business')?.addEventListener('click', async () => {
+  const it = colaEnvio[indiceCola];
+  if (!it) return;
+  const ok = await enviarPorBusiness(it);
+  if (ok) marcarEnviadoYSiguiente();
+});
+document.getElementById('wa-modo-business')?.addEventListener('change', actualizarModoUI);
+document.getElementById('wa-modo-wame')?.addEventListener('change', actualizarModoUI);
 
 actualizarBotones();
 actualizarKpis();
+cargarConfigApi();

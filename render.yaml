@@ -28,3 +28,9 @@ services:
         value: IVR Verificaciones
       - key: GOOGLE_CREDENTIALS_JSON
         sync: false
+      - key: WHATSAPP_BUSINESS_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_API_VERSION
+        value: v21.0

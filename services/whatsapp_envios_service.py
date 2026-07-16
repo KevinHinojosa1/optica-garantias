@@ -1,9 +1,10 @@
-"""Envíos masivos WhatsApp — plantilla + Excel + enlaces wa.me personalizados."""
+"""Reprogramaciones WhatsApp — plantilla + Excel + wa.me / WhatsApp Business."""
 
 from __future__ import annotations
 
 import io
 import re
+from datetime import datetime
 from typing import Any
 
 import pandas as pd
@@ -13,20 +14,43 @@ from services.whatsapp_service import WhatsAppService
 
 MAPEO_COLUMNAS: dict[str, tuple[str, ...]] = {
     "nombre": ("nombre", "cliente", "name", "paciente", "contacto_nombre"),
-    "telefono": ("telefono", "teléfono", "telefono_cliente", "celular", "whatsapp", "phone", "movil", "móvil", "contacto", "numero", "número"),
+    "telefono": (
+        "telefono", "teléfono", "telefono_cliente", "celular", "whatsapp",
+        "phone", "movil", "móvil", "contacto", "numero", "número",
+    ),
     "local": ("local", "tienda", "sucursal", "tienda_compra"),
-    "producto": ("producto", "articulo", "artículo", "lente"),
+    "producto": ("producto", "articulo", "artículo", "lente", "pedido"),
     "cedula": ("cedula", "cédula", "id", "cedula_id", "documento"),
     "factura": ("factura", "numero_factura", "n_factura", "nº_factura", "no_factura"),
+    "fecha_reprogramada": (
+        "fecha_reprogramada", "nueva_fecha", "fecha_nueva", "fecha_cita",
+        "fecha_entrega", "fecha_prometida_nueva", "reprogramacion",
+    ),
+    "fecha_anterior": (
+        "fecha_anterior", "fecha_original", "fecha_previa", "fecha_prometida",
+        "fecha_cita_anterior", "cita_anterior",
+    ),
+    "hora": ("hora", "horario", "hora_cita", "hora_entrega", "time"),
+    "motivo": ("motivo", "razon", "razón", "causa", "detalle", "observacion", "observación"),
 }
+
+CAMPOS_MAPEADOS = frozenset(MAPEO_COLUMNAS.keys())
 
 PLANTILLA_EJEMPLO = """Hola *{nombre}* 👋
 
-Le saluda *Óptica Los Andes*. Le escribimos desde {local} para informarle sobre su pedido.
+Te escribimos desde *{local}* de *Óptica Los Andes* para avisarte de un cambio en tu cita 📅
 
-{producto}
+👓 *Tu pedido:* {producto}
 
-Ante cualquier consulta, con gusto le atendemos."""
+🗓️ *Fecha anterior:* {fecha_anterior}
+✅ *Nueva fecha:* {fecha_reprogramada}
+🕐 *Hora:* {hora}
+
+ℹ️ *Motivo:* {motivo}
+
+Si esta fecha no te funciona, cuéntanos y buscamos otra opción que te quede mejor 😊
+
+¡Gracias por tu comprensión! 💙"""
 
 
 def _normalizar_cols(df: pd.DataFrame) -> pd.DataFrame:
@@ -57,6 +81,16 @@ def _resolver_columna(columnas: list[str], claves: tuple[str, ...]) -> str | Non
         if norm in claves or col in claves:
             return col
     return None
+
+
+def _pie_reprogramacion(asesor: str) -> str:
+    fecha = datetime.now().strftime("%d/%m/%Y %H:%M")
+    pie = f"━━━━━━━━━━━━━━━━━━━━\n🕐 *Mensaje enviado:* {fecha}"
+    if asesor:
+        pie += f"\n👨‍💼 *Tu asesor:* {asesor}"
+    pie += "\n💙 *Gracias por confiar en Óptica Los Andes*"
+    pie += "\n_Si tienes dudas, escríbenos con confianza._"
+    return pie
 
 
 class WhatsAppEnviosService:
@@ -90,8 +124,11 @@ class WhatsAppEnviosService:
 
         mapeo = {campo: _resolver_columna(cols, aliases) for campo, aliases in MAPEO_COLUMNAS.items()}
         if not mapeo.get("nombre"):
-            advertencias.append("No se detectó columna 'nombre' — se usará 'Estimado/a cliente'.")
+            advertencias.append("No se detectó columna 'nombre' — se usará un saludo genérico.")
+        if not mapeo.get("fecha_reprogramada"):
+            advertencias.append("Sin columna de nueva fecha — puedes definirla en el formulario global.")
 
+        cols_mapeadas = {v for v in mapeo.values() if v}
         contactos: list[dict[str, Any]] = []
         vistos: set[str] = set()
 
@@ -108,18 +145,27 @@ class WhatsAppEnviosService:
             vistos.add(tel_key)
 
             nombre = _limpiar_celda(row.get(mapeo["nombre"], "")) if mapeo.get("nombre") else ""
-            contacto = {
-                "nombre": nombre or "Estimado/a cliente",
+            contacto: dict[str, Any] = {
+                "nombre": nombre or "amigo/a",
                 "telefono": tel,
                 "local": _limpiar_celda(row.get(mapeo["local"], "")) if mapeo.get("local") else "",
                 "producto": _limpiar_celda(row.get(mapeo["producto"], "")) if mapeo.get("producto") else "",
                 "cedula": _limpiar_celda(row.get(mapeo["cedula"], "")) if mapeo.get("cedula") else "",
                 "factura": _limpiar_celda(row.get(mapeo["factura"], "")) if mapeo.get("factura") else "",
+                "fecha_reprogramada": (
+                    _limpiar_celda(row.get(mapeo["fecha_reprogramada"], ""))
+                    if mapeo.get("fecha_reprogramada") else ""
+                ),
+                "fecha_anterior": (
+                    _limpiar_celda(row.get(mapeo["fecha_anterior"], ""))
+                    if mapeo.get("fecha_anterior") else ""
+                ),
+                "hora": _limpiar_celda(row.get(mapeo["hora"], "")) if mapeo.get("hora") else "",
+                "motivo": _limpiar_celda(row.get(mapeo["motivo"], "")) if mapeo.get("motivo") else "",
                 "extra": {},
             }
             for col in cols:
-                if col in (mapeo.get("telefono"), mapeo.get("nombre"), mapeo.get("local"),
-                           mapeo.get("producto"), mapeo.get("cedula"), mapeo.get("factura")):
+                if col in cols_mapeadas:
                     continue
                 val = _limpiar_celda(row.get(col))
                 if val:
@@ -137,19 +183,44 @@ class WhatsAppEnviosService:
         }
 
     @classmethod
-    def _variables_contacto(cls, contacto: dict, asesor: str, indice: int) -> dict[str, str]:
-        local = contacto.get("local") or contacto.get("tienda") or "su tienda Óptica Los Andes"
+    def _variables_contacto(
+        cls,
+        contacto: dict,
+        asesor: str,
+        indice: int,
+        *,
+        fecha_reprogramada: str = "",
+        fecha_anterior: str = "",
+        hora: str = "",
+        motivo: str = "",
+    ) -> dict[str, str]:
+        local = contacto.get("local") or contacto.get("tienda") or "tu tienda Óptica Los Andes"
         producto = contacto.get("producto") or ""
         vars_map = {
-            "nombre": contacto.get("nombre") or "Estimado/a cliente",
+            "nombre": contacto.get("nombre") or "amigo/a",
             "telefono": contacto.get("telefono") or "",
             "local": local,
             "tienda": local,
-            "producto": producto if producto else "su compra en Óptica Los Andes",
+            "producto": producto if producto else "tu pedido en Óptica Los Andes",
             "cedula": contacto.get("cedula") or "",
             "factura": contacto.get("factura") or "",
             "asesor": asesor or settings.default_asesor,
             "n": str(indice),
+            "fecha_reprogramada": (
+                contacto.get("fecha_reprogramada") or fecha_reprogramada or "te confirmamos pronto"
+            ),
+            "fecha_anterior": (
+                contacto.get("fecha_anterior") or fecha_anterior or "la fecha acordada"
+            ),
+            "nueva_fecha": (
+                contacto.get("fecha_reprogramada") or fecha_reprogramada or "te confirmamos pronto"
+            ),
+            "fecha_prometida": (
+                contacto.get("fecha_anterior") or fecha_anterior or "la fecha acordada"
+            ),
+            "hora": contacto.get("hora") or hora or "por confirmar",
+            "horario": contacto.get("hora") or hora or "por confirmar",
+            "motivo": contacto.get("motivo") or motivo or "ajuste operativo en tienda",
         }
         for k, v in (contacto.get("extra") or {}).items():
             key = re.sub(r"[^a-z0-9_]", "_", k.lower())
@@ -157,8 +228,15 @@ class WhatsAppEnviosService:
         return vars_map
 
     @classmethod
-    def personalizar_plantilla(cls, plantilla: str, contacto: dict, asesor: str, indice: int) -> str:
-        vars_map = cls._variables_contacto(contacto, asesor, indice)
+    def personalizar_plantilla(
+        cls,
+        plantilla: str,
+        contacto: dict,
+        asesor: str,
+        indice: int,
+        **globales: str,
+    ) -> str:
+        vars_map = cls._variables_contacto(contacto, asesor, indice, **globales)
         texto = plantilla
         for key, val in vars_map.items():
             texto = texto.replace("{" + key + "}", val)
@@ -166,12 +244,12 @@ class WhatsAppEnviosService:
 
     @classmethod
     def armar_mensaje_completo(cls, cuerpo: str, asesor: str, contacto: dict) -> str:
-        bloques = ["💬 *ÓPTICA LOS ANDES — MENSAJE AL CLIENTE*"]
+        bloques = ["📅 *ÓPTICA LOS ANDES — REPROGRAMACIÓN DE CITA*"]
         if contacto.get("local"):
             bloques.append(f"📍 *Tienda:* {contacto['local']}")
         bloques.append("━━━━━━━━━━━━━━━━━━━━")
         bloques.append(cuerpo)
-        bloques.append(WhatsAppService.pie_scripts(asesor))
+        bloques.append(_pie_reprogramacion(asesor))
         return "\n\n".join(bloques)
 
     @classmethod
@@ -182,8 +260,18 @@ class WhatsAppEnviosService:
         *,
         asesor: str = "",
         incluir_pie: bool = True,
+        fecha_reprogramada: str = "",
+        fecha_anterior: str = "",
+        hora: str = "",
+        motivo: str = "",
     ) -> dict[str, Any]:
         asesor_f = (asesor or "").strip() or settings.default_asesor
+        globales = {
+            "fecha_reprogramada": fecha_reprogramada.strip(),
+            "fecha_anterior": fecha_anterior.strip(),
+            "hora": hora.strip(),
+            "motivo": motivo.strip(),
+        }
         items: list[dict[str, Any]] = []
 
         for i, c in enumerate(contactos, start=1):
@@ -196,7 +284,7 @@ class WhatsAppEnviosService:
                 valido = False
                 error = "Teléfono inválido"
 
-            cuerpo = cls.personalizar_plantilla(plantilla, c, asesor_f, i)
+            cuerpo = cls.personalizar_plantilla(plantilla, c, asesor_f, i, **globales)
             mensaje = cls.armar_mensaje_completo(cuerpo, asesor_f, c) if incluir_pie else cuerpo
             wa_link = WhatsAppService.generar_enlace(tel_limpio, mensaje) if valido else ""
 
@@ -236,8 +324,8 @@ class WhatsAppEnviosService:
         df = pd.DataFrame(filas)
         buf = io.BytesIO()
         with pd.ExcelWriter(buf, engine="openpyxl") as writer:
-            df.to_excel(writer, index=False, sheet_name="Envios WhatsApp")
-            ws = writer.sheets["Envios WhatsApp"]
+            df.to_excel(writer, index=False, sheet_name="Reprogramaciones WA")
+            ws = writer.sheets["Reprogramaciones WA"]
             for col in ws.columns:
                 max_len = max(len(str(cell.value or "")) for cell in col)
                 ws.column_dimensions[col[0].column_letter].width = min(max_len + 2, 60)

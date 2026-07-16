@@ -69,3 +69,22 @@
 
 #toast-wa.toast-ok { border-left: 4px solid #16a34a; color: #166534; }
 #toast-wa.toast-error { border-left: 4px solid #dc2626; color: #991b1b; }
+
+.wa-api-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.35rem 0.65rem;
+  border-radius: 9999px;
+}
+
+.wa-api-on {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.wa-api-off {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}

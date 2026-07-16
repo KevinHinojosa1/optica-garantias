@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     google_credentials_json: str = ""
     google_spreadsheet_id: str = ""
     google_sheet_ivr_name: str = "IVR Verificaciones"
+    whatsapp_business_token: str = ""
+    whatsapp_phone_number_id: str = ""
+    whatsapp_api_version: str = "v21.0"
 
 
 settings = Settings()
