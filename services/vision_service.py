@@ -1,15 +1,14 @@
+from __future__ import annotations
+
 import base64
 import json
 import mimetypes
 import re
-from typing import TYPE_CHECKING
 
 import httpx
 
 from config import settings
-
-if TYPE_CHECKING:
-    from models.conocimiento import ConocimientoItem
+from models.conocimiento import ConocimientoItem
 
 POLITICAS_PROMPT = """
 Eres un experto en garantías de Óptica Los Andes Ecuador. Analiza la imagen del producto óptico dañado.
