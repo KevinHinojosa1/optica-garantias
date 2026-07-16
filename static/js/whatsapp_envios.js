@@ -1,5 +1,5 @@
 /**
- * Reprogramaciones WhatsApp — plantilla + Excel + wa.me / Business API
+ * Reprogramación de entregas — pedidos/órdenes + Excel + wa.me / Business API
  */
 
 let contactos = [];
@@ -219,7 +219,7 @@ async function generarMensajes() {
   actualizarBotones();
   actualizarKpis();
   renderTabla();
-  toast(`✨ ${data.validos} mensajes de reprogramación generados`, 'ok');
+  toast(`✨ ${data.validos} avisos de entrega generados`, 'ok');
 }
 
 async function exportarExcel() {
@@ -236,7 +236,7 @@ async function exportarExcel() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `reprogramaciones_wa_${Date.now()}.xlsx`;
+  a.download = `entregas_reprogramadas_${Date.now()}.xlsx`;
   a.click();
   URL.revokeObjectURL(url);
   toast('Excel exportado con enlaces wa.me', 'ok');

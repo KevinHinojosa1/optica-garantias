@@ -10,6 +10,7 @@ class ContactoEnvio(BaseModel):
     telefono: str
     local: str = ""
     producto: str = ""
+    orden: str = ""
     cedula: str = ""
     factura: str = ""
     fecha_reprogramada: str = ""

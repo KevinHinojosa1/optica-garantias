@@ -1,4 +1,4 @@
-"""Reprogramaciones WhatsApp — plantilla + Excel + wa.me / WhatsApp Business."""
+"""Reprogramación de entregas WhatsApp — pedidos/órdenes + Excel + wa.me / Business."""
 
 from __future__ import annotations
 
@@ -19,18 +19,19 @@ MAPEO_COLUMNAS: dict[str, tuple[str, ...]] = {
         "phone", "movil", "móvil", "contacto", "numero", "número",
     ),
     "local": ("local", "tienda", "sucursal", "tienda_compra"),
-    "producto": ("producto", "articulo", "artículo", "lente", "pedido"),
+    "producto": ("producto", "articulo", "artículo", "lente", "descripcion", "item"),
+    "orden": ("orden", "numero_orden", "n_orden", "no_orden", "pedido", "numero_pedido", "n_pedido"),
     "cedula": ("cedula", "cédula", "id", "cedula_id", "documento"),
     "factura": ("factura", "numero_factura", "n_factura", "nº_factura", "no_factura"),
     "fecha_reprogramada": (
-        "fecha_reprogramada", "nueva_fecha", "fecha_nueva", "fecha_cita",
-        "fecha_entrega", "fecha_prometida_nueva", "reprogramacion",
+        "fecha_reprogramada", "nueva_fecha", "fecha_nueva", "fecha_entrega_nueva",
+        "nueva_fecha_entrega", "fecha_entrega", "fecha_prometida_nueva", "reprogramacion",
     ),
     "fecha_anterior": (
         "fecha_anterior", "fecha_original", "fecha_previa", "fecha_prometida",
-        "fecha_cita_anterior", "cita_anterior",
+        "fecha_entrega_prometida", "fecha_prometida_entrega", "entrega_prometida",
     ),
-    "hora": ("hora", "horario", "hora_cita", "hora_entrega", "time"),
+    "hora": ("hora", "horario", "hora_entrega", "hora_retiro", "time"),
     "motivo": ("motivo", "razon", "razón", "causa", "detalle", "observacion", "observación"),
 }
 
@@ -38,19 +39,21 @@ CAMPOS_MAPEADOS = frozenset(MAPEO_COLUMNAS.keys())
 
 PLANTILLA_EJEMPLO = """Hola *{nombre}* 👋
 
-Te escribimos desde *{local}* de *Óptica Los Andes* para avisarte de un cambio en tu cita 📅
+Te escribimos desde *{local}* de *Óptica Los Andes* para contarte sobre tu pedido 📦
 
-👓 *Tu pedido:* {producto}
+👓 *Producto:* {producto}
+🧾 *Orden / factura:* {orden}
 
-🗓️ *Fecha anterior:* {fecha_anterior}
-✅ *Nueva fecha:* {fecha_reprogramada}
-🕐 *Hora:* {hora}
+Tu orden no estará lista en los días que te habíamos indicado. Lamentamos el cambio 🙏
+
+📅 *Fecha prometida:* {fecha_anterior}
+✅ *Nueva fecha de entrega:* {fecha_reprogramada}
 
 ℹ️ *Motivo:* {motivo}
 
-Si esta fecha no te funciona, cuéntanos y buscamos otra opción que te quede mejor 😊
+Te avisaremos en cuanto esté listo para retiro o entrega. Si necesitas otra fecha, cuéntanos y lo vemos juntos 😊
 
-¡Gracias por tu comprensión! 💙"""
+¡Gracias por tu paciencia! 💙"""
 
 
 def _normalizar_cols(df: pd.DataFrame) -> pd.DataFrame:
@@ -126,7 +129,9 @@ class WhatsAppEnviosService:
         if not mapeo.get("nombre"):
             advertencias.append("No se detectó columna 'nombre' — se usará un saludo genérico.")
         if not mapeo.get("fecha_reprogramada"):
-            advertencias.append("Sin columna de nueva fecha — puedes definirla en el formulario global.")
+            advertencias.append(
+                "Sin columna de nueva fecha de entrega — puedes definirla en el formulario global."
+            )
 
         cols_mapeadas = {v for v in mapeo.values() if v}
         contactos: list[dict[str, Any]] = []
@@ -150,6 +155,7 @@ class WhatsAppEnviosService:
                 "telefono": tel,
                 "local": _limpiar_celda(row.get(mapeo["local"], "")) if mapeo.get("local") else "",
                 "producto": _limpiar_celda(row.get(mapeo["producto"], "")) if mapeo.get("producto") else "",
+                "orden": _limpiar_celda(row.get(mapeo["orden"], "")) if mapeo.get("orden") else "",
                 "cedula": _limpiar_celda(row.get(mapeo["cedula"], "")) if mapeo.get("cedula") else "",
                 "factura": _limpiar_celda(row.get(mapeo["factura"], "")) if mapeo.get("factura") else "",
                 "fecha_reprogramada": (
@@ -196,31 +202,37 @@ class WhatsAppEnviosService:
     ) -> dict[str, str]:
         local = contacto.get("local") or contacto.get("tienda") or "tu tienda Óptica Los Andes"
         producto = contacto.get("producto") or ""
+        orden = contacto.get("orden") or contacto.get("factura") or ""
         vars_map = {
             "nombre": contacto.get("nombre") or "amigo/a",
             "telefono": contacto.get("telefono") or "",
             "local": local,
             "tienda": local,
             "producto": producto if producto else "tu pedido en Óptica Los Andes",
+            "orden": orden if orden else "tu orden",
+            "pedido": producto if producto else "tu pedido en Óptica Los Andes",
             "cedula": contacto.get("cedula") or "",
-            "factura": contacto.get("factura") or "",
+            "factura": contacto.get("factura") or orden,
             "asesor": asesor or settings.default_asesor,
             "n": str(indice),
             "fecha_reprogramada": (
                 contacto.get("fecha_reprogramada") or fecha_reprogramada or "te confirmamos pronto"
             ),
             "fecha_anterior": (
-                contacto.get("fecha_anterior") or fecha_anterior or "la fecha acordada"
+                contacto.get("fecha_anterior") or fecha_anterior or "la fecha que te habíamos prometido"
             ),
             "nueva_fecha": (
                 contacto.get("fecha_reprogramada") or fecha_reprogramada or "te confirmamos pronto"
             ),
-            "fecha_prometida": (
-                contacto.get("fecha_anterior") or fecha_anterior or "la fecha acordada"
+            "nueva_fecha_entrega": (
+                contacto.get("fecha_reprogramada") or fecha_reprogramada or "te confirmamos pronto"
             ),
-            "hora": contacto.get("hora") or hora or "por confirmar",
-            "horario": contacto.get("hora") or hora or "por confirmar",
-            "motivo": contacto.get("motivo") or motivo or "ajuste operativo en tienda",
+            "fecha_prometida": (
+                contacto.get("fecha_anterior") or fecha_anterior or "la fecha que te habíamos prometido"
+            ),
+            "hora": contacto.get("hora") or hora or "",
+            "horario": contacto.get("hora") or hora or "",
+            "motivo": contacto.get("motivo") or motivo or "retraso en la producción del laboratorio",
         }
         for k, v in (contacto.get("extra") or {}).items():
             key = re.sub(r"[^a-z0-9_]", "_", k.lower())
@@ -244,9 +256,14 @@ class WhatsAppEnviosService:
 
     @classmethod
     def armar_mensaje_completo(cls, cuerpo: str, asesor: str, contacto: dict) -> str:
-        bloques = ["📅 *ÓPTICA LOS ANDES — REPROGRAMACIÓN DE CITA*"]
+        bloques = ["📦 *ÓPTICA LOS ANDES — REPROGRAMACIÓN DE ENTREGA*"]
         if contacto.get("local"):
             bloques.append(f"📍 *Tienda:* {contacto['local']}")
+        if contacto.get("producto"):
+            bloques.append(f"👓 *Producto:* {contacto['producto']}")
+        orden = contacto.get("orden") or contacto.get("factura")
+        if orden:
+            bloques.append(f"🧾 *Orden:* {orden}")
         bloques.append("━━━━━━━━━━━━━━━━━━━━")
         bloques.append(cuerpo)
         bloques.append(_pie_reprogramacion(asesor))
@@ -324,8 +341,8 @@ class WhatsAppEnviosService:
         df = pd.DataFrame(filas)
         buf = io.BytesIO()
         with pd.ExcelWriter(buf, engine="openpyxl") as writer:
-            df.to_excel(writer, index=False, sheet_name="Reprogramaciones WA")
-            ws = writer.sheets["Reprogramaciones WA"]
+            df.to_excel(writer, index=False, sheet_name="Entregas reprogramadas")
+            ws = writer.sheets["Entregas reprogramadas"]
             for col in ws.columns:
                 max_len = max(len(str(cell.value or "")) for cell in col)
                 ws.column_dimensions[col[0].column_letter].width = min(max_len + 2, 60)

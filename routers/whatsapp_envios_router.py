@@ -1,4 +1,4 @@
-"""Router reprogramaciones WhatsApp — wa.me y WhatsApp Business API."""
+"""Router reprogramación de entregas — pedidos/órdenes por wa.me y Business API."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ from services.whatsapp_business_service import WhatsAppBusinessService
 from services.whatsapp_envios_service import PLANTILLA_EJEMPLO, WhatsAppEnviosService
 from templates_shared import templates
 
-router = APIRouter(tags=["Reprogramaciones WhatsApp"])
+router = APIRouter(tags=["Reprogramación de entregas"])
 
 
 def _kwargs_generar(payload: GenerarEnviosRequest) -> dict:
@@ -100,7 +100,7 @@ async def api_exportar_envios(payload: GenerarEnviosRequest):
         return Response(
             content=xlsx,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            headers={"Content-Disposition": f'attachment; filename="reprogramaciones_wa_{stamp}.xlsx"'},
+            headers={"Content-Disposition": f'attachment; filename="entregas_reprogramadas_{stamp}.xlsx"'},
         )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
