@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% block title %}{{ cliente.nombre }}{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="/static/css/cliente_detalle.css?v={{ asset_version }}">
+{% endblock %}
+
 {% block content %}
 <div class="grid lg:grid-cols-3 gap-6">
   <!-- Ficha del cliente -->
@@ -164,34 +168,72 @@
           class="w-full text-center bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center justify-center gap-2">
           📤 Enviar reporte (tienda)
         </a>
-        <div class="relative sm:col-span-2">
-          <button type="button" id="btn-enviar-pdf-wa"
-            class="hidden w-full text-center bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center justify-center gap-2">
-            📤 Enviar reporte + PDF ▾
-          </button>
-          <div id="panel-destino-pdf" class="hidden mt-2 p-3 rounded-xl border border-emerald-200 bg-emerald-50 shadow-sm space-y-2">
-            <p class="text-xs font-semibold text-emerald-900 mb-1">¿A quién enviar el reporte con PDF?</p>
-            <button type="button" id="btn-pdf-cliente"
-              class="w-full text-left bg-white hover:bg-emerald-100 border border-emerald-200 text-slate-800 font-semibold px-4 py-3 rounded-xl transition flex items-start gap-3">
-              <span class="text-xl leading-none">👤</span>
-              <span>
-                <span class="block">Al cliente</span>
-                <span class="block text-xs font-normal text-slate-500" id="label-destino-cliente">WhatsApp del cliente</span>
-              </span>
-            </button>
-            <button type="button" id="btn-pdf-tienda"
-              class="w-full text-left bg-white hover:bg-emerald-100 border border-emerald-200 text-slate-800 font-semibold px-4 py-3 rounded-xl transition flex items-start gap-3">
-              <span class="text-xl leading-none">🏬</span>
-              <span>
-                <span class="block">A la tienda</span>
-                <span class="block text-xs font-normal text-slate-500" id="label-destino-tienda">Grupo de apoyo de la tienda</span>
-              </span>
-            </button>
-            <button type="button" id="btn-pdf-cerrar" class="w-full text-xs text-slate-500 hover:text-slate-700 py-1">Cerrar</button>
+      </div>
+
+      <div class="pdf-send mt-3" id="wrap-enviar-pdf">
+        <button type="button" id="btn-enviar-pdf-wa" class="pdf-send-btn" aria-expanded="false" aria-controls="panel-destino-pdf">
+          <span class="pdf-send-btn__left">
+            <span class="pdf-send-btn__icon" aria-hidden="true">📄</span>
+            <span>
+              <span class="pdf-send-btn__title" id="btn-enviar-pdf-label">Enviar reporte + PDF</span>
+              <span class="pdf-send-btn__sub">Incluye enlace del informe · elija destinatario</span>
+            </span>
+          </span>
+          <span class="pdf-send-btn__chevron" aria-hidden="true">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
+          </span>
+        </button>
+
+        <div id="panel-destino-pdf" class="pdf-dest" role="region" aria-label="Destino del reporte con PDF">
+          <div class="pdf-dest__inner">
+            <div class="pdf-dest__card">
+              <div class="pdf-dest__header">
+                <div>
+                  <p class="pdf-dest__kicker">WhatsApp</p>
+                  <p class="pdf-dest__heading">¿A quién envía el informe?</p>
+                  <p class="pdf-dest__hint">Se abrirá el chat con el mensaje listo y el enlace del PDF.</p>
+                </div>
+                <button type="button" id="btn-pdf-cerrar" class="pdf-dest__close" aria-label="Cerrar">
+                  <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/></svg>
+                </button>
+              </div>
+
+              <div class="pdf-dest__grid">
+                <button type="button" id="btn-pdf-cliente" class="pdf-dest-option pdf-dest-option--cliente">
+                  <span class="pdf-dest-option__top">
+                    <span class="pdf-dest-option__badge" aria-hidden="true">👤</span>
+                    <span class="pdf-dest-option__arrow" aria-hidden="true">
+                      <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638l-3.96-3.96a.75.75 0 111.06-1.06l5.25 5.25a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 11-1.06-1.06l3.96-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd"/></svg>
+                    </span>
+                  </span>
+                  <span>
+                    <span class="pdf-dest-option__label">Al cliente</span>
+                    <span class="pdf-dest-option__meta" id="label-destino-cliente">WhatsApp del cliente</span>
+                    <span class="pdf-dest-option__tag">Chat personal</span>
+                  </span>
+                </button>
+
+                <button type="button" id="btn-pdf-tienda" class="pdf-dest-option pdf-dest-option--tienda">
+                  <span class="pdf-dest-option__top">
+                    <span class="pdf-dest-option__badge" aria-hidden="true">🏬</span>
+                    <span class="pdf-dest-option__arrow" aria-hidden="true">
+                      <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638l-3.96-3.96a.75.75 0 111.06-1.06l5.25 5.25a.75.75 0 010 1.06l-5.25 5.25a.75.75 0 11-1.06-1.06l3.96-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd"/></svg>
+                    </span>
+                  </span>
+                  <span>
+                    <span class="pdf-dest-option__label">A la tienda</span>
+                    <span class="pdf-dest-option__meta" id="label-destino-tienda">Grupo de apoyo</span>
+                    <span class="pdf-dest-option__tag">Grupo de apoyo</span>
+                  </span>
+                </button>
+              </div>
+
+              <p class="pdf-dest__footer">Logo oficial en el PDF · enlace de descarga incluido en el mensaje</p>
+            </div>
           </div>
         </div>
       </div>
-      <p class="text-xs text-slate-400 mt-2">El informe PDF muestra el logo oficial de Óptica Los Andes. En <strong>reporte + PDF</strong> elija enviar al cliente o al grupo de la tienda.</p>
+      <p class="text-xs text-slate-400 mt-2">El informe PDF muestra el logo oficial de Óptica Los Andes. Use <strong>Enviar reporte + PDF</strong> para elegir cliente o tienda.</p>
     </div>
   </div>
 

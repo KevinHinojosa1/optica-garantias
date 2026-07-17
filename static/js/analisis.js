@@ -287,7 +287,7 @@ function mostrarBotonPdf(url, historialId) {
     btn.title = `Informe consulta #${historialId}`;
   }
   if (btnEnviarPdfWa) {
-    btnEnviarPdfWa.classList.remove('hidden');
+    btnEnviarPdfWa.classList.add('is-visible');
     btnEnviarPdfWa.dataset.historialId = historialId;
   }
 }
@@ -315,7 +315,7 @@ function actualizarLabelsDestinoPdf() {
   const nombre = window.CLIENTE_DATA?.nombre || 'cliente';
   if (cli) {
     cli.textContent = tel
-      ? `WhatsApp de ${nombre} · ${tel}`
+      ? `${nombre} · ${tel}`
       : 'Sin teléfono en la ficha — complete el número del cliente';
   }
   if (ti) {
@@ -324,15 +324,20 @@ function actualizarLabelsDestinoPdf() {
   }
 }
 
+function panelDestinoAbierto() {
+  return document.getElementById('panel-destino-pdf')?.classList.contains('is-open');
+}
+
 function togglePanelDestinoPdf(mostrar) {
   const panel = document.getElementById('panel-destino-pdf');
-  if (!panel) return;
-  if (mostrar === undefined) {
-    panel.classList.toggle('hidden');
-  } else {
-    panel.classList.toggle('hidden', !mostrar);
-  }
-  if (!panel.classList.contains('hidden')) actualizarLabelsDestinoPdf();
+  const btn = btnEnviarPdfWa;
+  if (!panel || !btn) return;
+
+  const abrir = mostrar === undefined ? !panel.classList.contains('is-open') : !!mostrar;
+  panel.classList.toggle('is-open', abrir);
+  btn.classList.toggle('is-open', abrir);
+  btn.setAttribute('aria-expanded', abrir ? 'true' : 'false');
+  if (abrir) actualizarLabelsDestinoPdf();
 }
 
 async function enviarReportePdfA(destino) {
@@ -343,10 +348,11 @@ async function enviarReportePdfA(destino) {
   }
   const btnCli = document.getElementById('btn-pdf-cliente');
   const btnTi = document.getElementById('btn-pdf-tienda');
+  const label = document.getElementById('btn-enviar-pdf-label');
   const botones = [btnCli, btnTi, btnEnviarPdfWa].filter(Boolean);
   botones.forEach(b => { b.disabled = true; });
-  const textoBtn = btnEnviarPdfWa?.textContent;
-  if (btnEnviarPdfWa) btnEnviarPdfWa.textContent = '⏳ Preparando…';
+  const textoLabel = label?.textContent;
+  if (label) label.textContent = 'Preparando mensaje…';
   try {
     const data = await prepararMensajeConPdf(historialId, destino);
     mensajeWhatsapp.value = data.mensaje;
@@ -357,7 +363,7 @@ async function enviarReportePdfA(destino) {
     alert('Error: ' + err.message);
   } finally {
     botones.forEach(b => { b.disabled = false; });
-    if (btnEnviarPdfWa) btnEnviarPdfWa.textContent = textoBtn || '📤 Enviar reporte + PDF ▾';
+    if (label) label.textContent = textoLabel || 'Enviar reporte + PDF';
   }
 }
 
@@ -374,6 +380,10 @@ btnEnviarPdfWa?.addEventListener('click', (e) => {
 document.getElementById('btn-pdf-cliente')?.addEventListener('click', () => enviarReportePdfA('cliente'));
 document.getElementById('btn-pdf-tienda')?.addEventListener('click', () => enviarReportePdfA('tienda'));
 document.getElementById('btn-pdf-cerrar')?.addEventListener('click', () => togglePanelDestinoPdf(false));
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && panelDestinoAbierto()) togglePanelDestinoPdf(false);
+});
 
 document.getElementById('btn-guardar-descuento')?.addEventListener('click', async () => {
   const err = document.getElementById('descuento-error');
