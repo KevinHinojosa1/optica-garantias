@@ -24,6 +24,7 @@ class MensajePdfRequest(BaseModel):
     cliente_id: int
     historial_id: int
     mensaje: str | None = None
+    destino: str = "tienda"  # tienda | cliente
 
 
 class MensajeResponse(BaseModel):
@@ -33,6 +34,8 @@ class MensajeResponse(BaseModel):
     grupo_nombre: str
     veredicto: str | None = None
     pdf_url: str | None = None
+    destino: str = "tienda"
+    destinatario: str = ""
 
 
 def _url_pdf(request: Request, historial_id: int) -> str:
@@ -136,15 +139,42 @@ async def mensaje_whatsapp_con_pdf(
 
         pdf_url = _url_pdf(request, payload.historial_id)
         mensaje = WhatsAppService.agregar_enlace_pdf(mensaje_base, pdf_url, payload.historial_id)
-        wa_link, tienda = WhatsAppService.enlace_grupo_apoyo(data, mensaje)
+        destino = (payload.destino or "tienda").strip().lower()
+        if destino not in ("tienda", "cliente"):
+            destino = "tienda"
+
+        wa_link_tienda, tienda_full = WhatsAppService.enlace_grupo_apoyo(data, mensaje)
+
+        if destino == "cliente":
+            tel = (data.get("telefono") or "").strip()
+            if not tel:
+                raise HTTPException(
+                    status_code=422,
+                    detail="El cliente no tiene teléfono registrado. Actualice la ficha o envíe a la tienda.",
+                )
+            tel_limpio = WhatsAppService.limpiar_telefono(tel)
+            if not tel_limpio or len(tel_limpio) < 11:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Teléfono del cliente inválido: {tel}",
+                )
+            wa_link = WhatsAppService.generar_enlace(tel_limpio, mensaje)
+            destinatario = f"Cliente · {data.get('nombre', '')} · {tel}"
+        else:
+            wa_link = wa_link_tienda
+            destinatario = tienda_full.get("whatsapp_grupo_nombre") or tienda_full.get("nombre") or "Grupo de Apoyo"
 
         return MensajeResponse(
             mensaje=mensaje,
             wa_link=wa_link,
-            tienda=tienda.get("nombre", ""),
-            grupo_nombre=tienda.get("whatsapp_grupo_nombre", "Grupo de Apoyo"),
+            tienda=tienda_full.get("nombre", ""),
+            grupo_nombre=tienda_full.get("whatsapp_grupo_nombre", "Grupo de Apoyo"),
             veredicto=registro.veredicto,
             pdf_url=pdf_url,
+            destino=destino,
+            destinatario=destinatario,
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Error al preparar mensaje con PDF: {exc}") from exc

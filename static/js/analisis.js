@@ -292,7 +292,7 @@ function mostrarBotonPdf(url, historialId) {
   }
 }
 
-async function prepararMensajeConPdf(historialId) {
+async function prepararMensajeConPdf(historialId, destino = 'tienda') {
   const res = await fetch('/api/mensajes/whatsapp-pdf', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -300,6 +300,7 @@ async function prepararMensajeConPdf(historialId) {
       cliente_id: window.CLIENTE_DATA.id,
       historial_id: historialId,
       mensaje: mensajeWhatsapp.value.trim() || null,
+      destino,
     }),
   });
   const data = await res.json();
@@ -307,26 +308,72 @@ async function prepararMensajeConPdf(historialId) {
   return data;
 }
 
-btnEnviarPdfWa?.addEventListener('click', async (e) => {
+function actualizarLabelsDestinoPdf() {
+  const cli = document.getElementById('label-destino-cliente');
+  const ti = document.getElementById('label-destino-tienda');
+  const tel = window.CLIENTE_DATA?.telefono || '';
+  const nombre = window.CLIENTE_DATA?.nombre || 'cliente';
+  if (cli) {
+    cli.textContent = tel
+      ? `WhatsApp de ${nombre} · ${tel}`
+      : 'Sin teléfono en la ficha — complete el número del cliente';
+  }
+  if (ti) {
+    const g = window.TIENDA_INFO?.whatsapp_grupo_nombre || window.TIENDA_INFO?.nombre || 'Grupo de Apoyo';
+    ti.textContent = g;
+  }
+}
+
+function togglePanelDestinoPdf(mostrar) {
+  const panel = document.getElementById('panel-destino-pdf');
+  if (!panel) return;
+  if (mostrar === undefined) {
+    panel.classList.toggle('hidden');
+  } else {
+    panel.classList.toggle('hidden', !mostrar);
+  }
+  if (!panel.classList.contains('hidden')) actualizarLabelsDestinoPdf();
+}
+
+async function enviarReportePdfA(destino) {
+  const historialId = ultimoHistorialId || Number(btnEnviarPdfWa?.dataset?.historialId);
+  if (!historialId) {
+    alert('Primero analice una imagen con IA para generar el PDF del informe.');
+    return;
+  }
+  const btnCli = document.getElementById('btn-pdf-cliente');
+  const btnTi = document.getElementById('btn-pdf-tienda');
+  const botones = [btnCli, btnTi, btnEnviarPdfWa].filter(Boolean);
+  botones.forEach(b => { b.disabled = true; });
+  const textoBtn = btnEnviarPdfWa?.textContent;
+  if (btnEnviarPdfWa) btnEnviarPdfWa.textContent = '⏳ Preparando…';
+  try {
+    const data = await prepararMensajeConPdf(historialId, destino);
+    mensajeWhatsapp.value = data.mensaje;
+    btnEnviarWa.href = data.wa_link;
+    togglePanelDestinoPdf(false);
+    window.open(data.wa_link, '_blank', 'noopener');
+  } catch (err) {
+    alert('Error: ' + err.message);
+  } finally {
+    botones.forEach(b => { b.disabled = false; });
+    if (btnEnviarPdfWa) btnEnviarPdfWa.textContent = textoBtn || '📤 Enviar reporte + PDF ▾';
+  }
+}
+
+btnEnviarPdfWa?.addEventListener('click', (e) => {
   e.preventDefault();
   const historialId = ultimoHistorialId || Number(btnEnviarPdfWa.dataset.historialId);
   if (!historialId) {
     alert('Primero analice una imagen con IA para generar el PDF del informe.');
     return;
   }
-  const textoOriginal = btnEnviarPdfWa.textContent;
-  btnEnviarPdfWa.textContent = '⏳ Preparando...';
-  try {
-    const data = await prepararMensajeConPdf(historialId);
-    mensajeWhatsapp.value = data.mensaje;
-    btnEnviarPdfWa.href = data.wa_link;
-    window.open(data.wa_link, '_blank', 'noopener');
-  } catch (err) {
-    alert('Error: ' + err.message);
-  } finally {
-    btnEnviarPdfWa.textContent = textoOriginal;
-  }
+  togglePanelDestinoPdf();
 });
+
+document.getElementById('btn-pdf-cliente')?.addEventListener('click', () => enviarReportePdfA('cliente'));
+document.getElementById('btn-pdf-tienda')?.addEventListener('click', () => enviarReportePdfA('tienda'));
+document.getElementById('btn-pdf-cerrar')?.addEventListener('click', () => togglePanelDestinoPdf(false));
 
 document.getElementById('btn-guardar-descuento')?.addEventListener('click', async () => {
   const err = document.getElementById('descuento-error');
