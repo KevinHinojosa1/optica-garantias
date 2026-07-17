@@ -99,7 +99,7 @@
         </span>
       </div>
       <p class="text-xs text-slate-500 mb-4">
-        Claude consulta la <a href="/conocimiento" class="text-optica-600 hover:underline font-medium">Base de Conocimiento</a> oficial que usted nutre con políticas e imágenes.
+        Elija el modo de análisis. La <a href="/conocimiento" class="text-optica-600 hover:underline font-medium">Base de Conocimiento</a> aporta políticas e imágenes que usted nutre.
       </p>
 
       <form id="form-analisis" class="space-y-4">
@@ -109,6 +109,23 @@
           <input type="text" id="asesor" value="{{ default_asesor }}" placeholder="{{ default_asesor }}"
             class="w-full border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none">
         </div>
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+          <p class="text-sm font-semibold text-slate-700 mb-2">Modo de análisis con Claude</p>
+          <label class="flex items-start gap-3 cursor-pointer p-2 rounded-lg hover:bg-white">
+            <input type="radio" name="modo-analisis" id="modo-conocimiento" value="conocimiento" checked class="mt-1 text-optica-600">
+            <span>
+              <span class="font-medium text-slate-800">📚 Claude + Base de conocimiento</span>
+              <span class="block text-xs text-slate-500">Usa políticas e imágenes de referencia de su base de conocimiento.</span>
+            </span>
+          </label>
+          <label class="flex items-start gap-3 cursor-pointer p-2 rounded-lg hover:bg-white">
+            <input type="radio" name="modo-analisis" id="modo-claude-total" value="claude_total" class="mt-1 text-violet-600">
+            <span>
+              <span class="font-medium text-slate-800">✨ Claude total</span>
+              <span class="block text-xs text-slate-500">Analiza solo con Claude y las políticas generales del sistema (sin base de conocimiento).</span>
+            </span>
+          </label>
+        </div>
         <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center cursor-pointer hover:border-optica-500 transition" id="drop-imagen">
           <input type="file" id="imagen" accept="image/*" class="hidden">
           <p class="text-3xl mb-2">📷</p>
@@ -117,7 +134,7 @@
         </div>
         <button type="submit" id="btn-analizar"
           class="w-full bg-optica-600 hover:bg-optica-700 text-white font-semibold py-3 rounded-xl transition">
-          🔍 Analizar con IA
+          🔍 Analizar con Claude
         </button>
       </form>
 
@@ -186,5 +203,5 @@
   window.TIENDA_INFO = {{ tienda_info_json | safe }};
   window.DEFAULT_ASESOR = {{ default_asesor | tojson }};
 </script>
-<script src="/static/js/analisis.js"></script>
+<script src="/static/js/analisis.js?v={{ asset_version }}"></script>
 {% endblock %}

@@ -12,69 +12,64 @@
       <div>
         <p class="text-xs font-medium text-emerald-600 uppercase tracking-wide mb-1">Pedidos y órdenes</p>
         <h2 class="text-xl sm:text-2xl font-semibold glass-title">📦 Reprogramación de entregas</h2>
-        <p class="glass-subtle text-sm mt-1">Avisa cuando un pedido no llegará en la fecha prometida. Mensajes en tú, con emojis, por WhatsApp Business o wa.me.</p>
+        <p class="glass-subtle text-sm mt-1">
+          Matriz Excel → mensaje al cliente, aviso a la tienda y correo con contador del día.
+          Emojis compatibles con Android e iOS.
+        </p>
       </div>
       <div class="flex flex-col items-end gap-2">
         <span class="glass-pill text-xs font-medium text-emerald-700 px-3 py-2 rounded-xl" id="wa-estado">Listo</span>
         <span id="wa-api-badge" class="wa-api-badge wa-api-off">API Business: verificando…</span>
+        <span id="wa-smtp-badge" class="wa-api-badge wa-api-off">Correo: verificando…</span>
       </div>
     </div>
   </div>
 
   <div class="grid lg:grid-cols-2 gap-6">
     <div class="glass-card p-5 space-y-4">
-      <h3 class="font-semibold text-slate-800">1️⃣ Plantilla de aviso de entrega</h3>
-      <p class="text-xs text-slate-500">
-        Variables:
-        <code class="bg-slate-100 px-1 rounded">{nombre}</code>
-        <code class="bg-slate-100 px-1 rounded">{local}</code>
-        <code class="bg-slate-100 px-1 rounded">{producto}</code>
-        <code class="bg-slate-100 px-1 rounded">{orden}</code>
-        <code class="bg-slate-100 px-1 rounded">{factura}</code>
-        <code class="bg-slate-100 px-1 rounded">{fecha_anterior}</code>
-        <code class="bg-slate-100 px-1 rounded">{fecha_reprogramada}</code>
-        <code class="bg-slate-100 px-1 rounded">{motivo}</code>
-        <code class="bg-slate-100 px-1 rounded">{asesor}</code>
-      </p>
-      <textarea id="wa-plantilla" rows="12" class="glass-textarea w-full px-3 py-2 text-sm font-mono">{{ plantilla_ejemplo }}</textarea>
+      <h3 class="font-semibold text-slate-800">1️⃣ Datos del envío</h3>
       <div class="grid sm:grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-medium text-slate-500 mb-1">Asesor</label>
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-medium text-slate-500 mb-1">Asesor (Servicio al Cliente)</label>
           <input type="text" id="wa-asesor" value="{{ default_asesor }}" class="glass-input w-full px-3 py-2 text-sm">
         </div>
-        <div class="flex items-end">
-          <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer pb-2">
-            <input type="checkbox" id="wa-incluir-pie" checked class="rounded text-emerald-600">
-            Incluir encabezado y pie corporativo
-          </label>
-        </div>
-      </div>
-      <div class="grid sm:grid-cols-2 gap-3 pt-1 border-t border-slate-100">
-        <p class="sm:col-span-2 text-xs font-semibold text-slate-600">Valores globales (si no vienen del Excel)</p>
         <div>
-          <label class="block text-xs text-slate-500 mb-1">Nueva fecha de entrega</label>
+          <label class="block text-xs text-slate-500 mb-1">Nueva fecha de entrega (opcional)</label>
           <input type="text" id="wa-fecha-reprog" placeholder="Ej: 20/07/2026" class="glass-input w-full px-3 py-2 text-sm">
         </div>
         <div>
-          <label class="block text-xs text-slate-500 mb-1">Fecha prometida original</label>
+          <label class="block text-xs text-slate-500 mb-1">Fecha prometida original (opcional)</label>
           <input type="text" id="wa-fecha-anterior" placeholder="Ej: 15/07/2026" class="glass-input w-full px-3 py-2 text-sm">
         </div>
         <div class="sm:col-span-2">
-          <label class="block text-xs text-slate-500 mb-1">Motivo del retraso</label>
-          <input type="text" id="wa-motivo" placeholder="Ej: retraso en laboratorio / falta de material" class="glass-input w-full px-3 py-2 text-sm">
+          <label class="block text-xs text-slate-500 mb-1">Motivo del retraso (opcional)</label>
+          <input type="text" id="wa-motivo" placeholder="Ej: retraso en laboratorio" class="glass-input w-full px-3 py-2 text-sm">
         </div>
         <input type="hidden" id="wa-hora" value="">
+        <input type="hidden" id="wa-incluir-pie" checked>
+        <input type="hidden" id="wa-plantilla" value="">
       </div>
-      <button type="button" id="btn-plantilla-ejemplo" class="text-xs font-medium text-optica-600 hover:text-optica-800">↺ Restaurar plantilla de ejemplo</button>
+      <p class="text-xs text-slate-500">
+        Los scripts de <strong>cliente</strong>, <strong>tienda</strong> y <strong>correo</strong> son los oficiales de CX (con emojis).
+        Se personalizan con la matriz.
+      </p>
     </div>
 
     <div class="glass-card p-5 space-y-4 border-2 border-dashed border-emerald-200/80">
-      <h3 class="font-semibold text-slate-800">2️⃣ Excel con contactos</h3>
-      <p class="text-sm text-slate-500">Columnas: teléfono, nombre, local, producto, orden, factura, fecha_reprogramada, fecha_anterior, motivo.</p>
+      <h3 class="font-semibold text-slate-800">2️⃣ Matriz Excel</h3>
+      <p class="text-sm text-slate-500">
+        Columnas: <code class="bg-slate-100 px-1 rounded text-xs">nombre</code>
+        <code class="bg-slate-100 px-1 rounded text-xs">telefono</code>
+        <code class="bg-slate-100 px-1 rounded text-xs">local</code>
+        <code class="bg-slate-100 px-1 rounded text-xs">producto</code>
+        <code class="bg-slate-100 px-1 rounded text-xs">factura</code>
+        <code class="bg-slate-100 px-1 rounded text-xs">orden</code>
+        <code class="bg-slate-100 px-1 rounded text-xs">email_tienda</code>
+      </p>
       <input type="file" id="wa-excel" accept=".xlsx,.xls,.csv"
         class="glass-input w-full px-3 py-2 text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:text-white file:text-xs file:font-semibold">
       <button type="button" id="btn-cargar-excel" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition">
-        📥 Extraer contactos del Excel
+        📥 Cargar matriz
       </button>
       <div id="wa-advertencias" class="hidden text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3"></div>
       <p class="text-xs text-slate-400" id="wa-resumen-contactos">Sin contactos cargados</p>
@@ -83,57 +78,115 @@
 
   <div class="glass-card p-5">
     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-      <h3 class="font-semibold text-slate-800">3️⃣ Vista previa y envío</h3>
+      <h3 class="font-semibold text-slate-800">3️⃣ Generar y enviar</h3>
       <div class="flex flex-wrap gap-2">
         <button type="button" id="btn-generar" disabled class="glass-btn px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 disabled:opacity-40">
-          ✨ Generar mensajes
+          ✨ Generar mensajes (cliente + tienda + correo)
         </button>
         <button type="button" id="btn-exportar" disabled class="bg-optica-600 hover:bg-optica-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold disabled:opacity-40">
           📥 Exportar Excel
         </button>
         <button type="button" id="btn-enviar-masivo" disabled class="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold disabled:opacity-40">
-          📤 Enviar masivamente
+          📤 Enviar WA clientes
         </button>
       </div>
     </div>
 
     <div class="mb-4 p-3 rounded-xl bg-slate-50 border border-slate-200">
-      <p class="text-xs font-semibold text-slate-600 mb-2">Modo de envío</p>
+      <p class="text-xs font-semibold text-slate-600 mb-2">Modo de envío WhatsApp (cliente)</p>
       <div class="flex flex-wrap gap-4 text-sm">
         <label class="flex items-center gap-2 cursor-pointer">
           <input type="radio" name="wa-modo" id="wa-modo-business" value="business" class="text-green-600">
-          <span>📱 WhatsApp Business API <span class="text-xs text-slate-500">(automático)</span></span>
+          <span>📱 WhatsApp Business API</span>
         </label>
         <label class="flex items-center gap-2 cursor-pointer">
           <input type="radio" name="wa-modo" id="wa-modo-wame" value="wame" checked class="text-green-600">
-          <span>💬 WhatsApp Web/App <span class="text-xs text-slate-500">(wa.me manual)</span></span>
+          <span>💬 WhatsApp Web/App (wa.me)</span>
         </label>
       </div>
       <p id="wa-modo-aviso" class="hidden text-xs text-amber-700 mt-2"></p>
-    </div>
-
-    <p class="text-xs text-slate-500 mb-4" id="wa-modo-desc">
-      El envío abre WhatsApp Web/App con cada mensaje listo. Confirma el envío y pasa al siguiente contacto.
-      <label class="inline-flex items-center gap-1.5 ml-2 cursor-pointer">
+      <label class="inline-flex items-center gap-1.5 mt-2 cursor-pointer text-xs text-slate-500">
         <input type="checkbox" id="wa-auto-siguiente" class="rounded text-green-600">
         Pausa automática 5s entre contactos
       </label>
-    </p>
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
       <div class="wa-kpi"><span class="text-xs text-slate-500">Contactos</span><strong id="kpi-total">0</strong></div>
-      <div class="wa-kpi"><span class="text-xs text-slate-500">Válidos</span><strong id="kpi-validos" class="text-emerald-600">0</strong></div>
+      <div class="wa-kpi"><span class="text-xs text-slate-500">Válidos WA</span><strong id="kpi-validos" class="text-emerald-600">0</strong></div>
       <div class="wa-kpi"><span class="text-xs text-slate-500">Enviados</span><strong id="kpi-enviados" class="text-optica-600">0</strong></div>
       <div class="wa-kpi"><span class="text-xs text-slate-500">Pendientes</span><strong id="kpi-pendientes" class="text-amber-600">0</strong></div>
+      <div class="wa-kpi"><span class="text-xs text-slate-500">Hoy (log)</span><strong id="kpi-hoy" class="text-violet-600">{{ resumen_dia.total_cliente if resumen_dia else 0 }}</strong></div>
     </div>
-    <div id="wa-tabla" class="wa-tabla-wrap text-sm text-slate-500 py-8 text-center">
-      Cargue un Excel y genere los mensajes para ver la lista.
+
+    <div id="wa-tabla" class="wa-tabla-wrap text-sm text-slate-500 py-8 text-center mb-6">
+      Cargue la matriz y genere los mensajes.
+    </div>
+
+    <!-- Tres apartados: Cliente | Tienda | Correo -->
+    <div class="border border-slate-200 rounded-2xl overflow-hidden">
+      <div class="flex flex-wrap border-b border-slate-200 bg-slate-50">
+        <button type="button" class="wa-tab active" data-tab="cliente">👤 Mensaje al cliente</button>
+        <button type="button" class="wa-tab" data-tab="tienda">🏬 Mensaje a tienda</button>
+        <button type="button" class="wa-tab" data-tab="correo">✉️ Correo a tienda</button>
+      </div>
+
+      <div id="panel-cliente" class="wa-tab-panel p-4 space-y-3">
+        <p class="text-xs text-slate-500">Seleccione una fila de la tabla. Script oficial de reprogramación al cliente.</p>
+        <textarea id="preview-cliente" rows="14" class="glass-textarea w-full px-3 py-2 text-sm font-mono" readonly placeholder="Genere mensajes para ver el texto al cliente…"></textarea>
+        <div class="flex flex-wrap gap-2">
+          <a id="btn-wa-cliente" href="#" target="_blank" rel="noopener" class="bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm opacity-40 pointer-events-none">💬 Abrir WA cliente</a>
+          <button type="button" id="btn-copy-cliente" class="glass-btn px-4 py-2.5 rounded-xl text-sm font-semibold">📋 Copiar</button>
+          <button type="button" id="btn-mark-cliente" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm disabled:opacity-40" disabled>✅ Marcar enviado</button>
+        </div>
+      </div>
+
+      <div id="panel-tienda" class="wa-tab-panel p-4 space-y-3 hidden">
+        <p class="text-xs text-slate-500">Aviso al equipo del local confirmando que el cliente ya fue notificado.</p>
+        <textarea id="preview-tienda" rows="14" class="glass-textarea w-full px-3 py-2 text-sm font-mono" readonly placeholder="Genere mensajes para ver el texto a tienda…"></textarea>
+        <div class="flex flex-wrap gap-2">
+          <a id="btn-wa-tienda" href="#" target="_blank" rel="noopener" class="bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm opacity-40 pointer-events-none">💬 Abrir WA tienda</a>
+          <button type="button" id="btn-copy-tienda" class="glass-btn px-4 py-2.5 rounded-xl text-sm font-semibold">📋 Copiar</button>
+        </div>
+      </div>
+
+      <div id="panel-correo" class="wa-tab-panel p-4 space-y-3 hidden">
+        <p class="text-xs text-slate-500">
+          Correo al local con la matriz del día (se contabiliza al generar). Elija el local o use el de la fila seleccionada.
+        </p>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs text-slate-500 mb-1">Local / tienda</label>
+            <select id="correo-local" class="glass-input w-full px-3 py-2 text-sm"></select>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-500 mb-1">Email tienda</label>
+            <input type="email" id="correo-email" placeholder="tienda@ejemplo.com" class="glass-input w-full px-3 py-2 text-sm">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-500 mb-1">Asunto</label>
+          <input type="text" id="correo-asunto" class="glass-input w-full px-3 py-2 text-sm">
+        </div>
+        <textarea id="preview-correo" rows="16" class="glass-textarea w-full px-3 py-2 text-sm font-mono" placeholder="Genere mensajes para armar el correo con matriz…"></textarea>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" id="btn-copy-correo" class="glass-btn px-4 py-2.5 rounded-xl text-sm font-semibold">📋 Copiar correo</button>
+          <a id="btn-mailto" href="#" class="bg-optica-600 hover:bg-optica-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm opacity-40 pointer-events-none">✉️ Abrir en cliente de correo</a>
+          <button type="button" id="btn-enviar-smtp" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm">📤 Enviar (SMTP)</button>
+        </div>
+        <p id="correo-hint" class="text-xs text-slate-400"></p>
+      </div>
+    </div>
+
+    <div id="resumen-hoy" class="mt-4 text-xs text-slate-500 bg-violet-50 border border-violet-100 rounded-xl p-3">
+      Contador del día se actualiza al generar o marcar enviados.
     </div>
   </div>
 </div>
 
 <div id="modal-envio" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 glass-modal-overlay">
   <div class="glass-card w-full max-w-lg p-6">
-    <h3 class="font-bold text-slate-800 text-lg mb-1" id="modal-titulo">📤 Envío masivo en curso</h3>
+    <h3 class="font-bold text-slate-800 text-lg mb-1" id="modal-titulo">📤 Envío masivo al cliente</h3>
     <p class="text-sm text-slate-500 mb-4" id="modal-progreso">Contacto 0 de 0</p>
     <div class="h-2 bg-slate-200 rounded-full overflow-hidden mb-4">
       <div id="modal-barra" class="h-full bg-green-600 transition-all" style="width:0%"></div>
@@ -165,6 +218,8 @@
   window.WA_PLANTILLA_EJEMPLO = {{ plantilla_ejemplo | tojson }};
   window.DEFAULT_ASESOR = {{ default_asesor | tojson }};
   window.WA_BUSINESS_ACTIVA = {{ wa_business_activa | tojson }};
+  window.SMTP_ACTIVO = {{ smtp_activo | tojson }};
+  window.RESUMEN_DIA_INICIAL = {{ resumen_dia | tojson }};
 </script>
 <script src="/static/js/whatsapp_envios.js?v={{ asset_version }}"></script>
 {% endblock %}

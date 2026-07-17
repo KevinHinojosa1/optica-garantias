@@ -1,17 +1,20 @@
-"""Reprogramación de entregas WhatsApp — pedidos/órdenes + Excel + wa.me / Business."""
+"""Reprogramación de entregas — mensajes cliente, tienda y correo (matriz diaria)."""
 
 from __future__ import annotations
 
 import io
 import re
-from datetime import datetime
+from collections import defaultdict
 from typing import Any
 
 import pandas as pd
 
 from config import settings
+from services.reprogramacion_log_service import ReprogramacionLogService
+from services.tiendas_service import TiendasService
 from services.whatsapp_service import WhatsAppService
 
+# Emojis Unicode estándar (compatibles Android / iOS)
 MAPEO_COLUMNAS: dict[str, tuple[str, ...]] = {
     "nombre": ("nombre", "cliente", "name", "paciente", "contacto_nombre"),
     "telefono": (
@@ -23,6 +26,10 @@ MAPEO_COLUMNAS: dict[str, tuple[str, ...]] = {
     "orden": ("orden", "numero_orden", "n_orden", "no_orden", "pedido", "numero_pedido", "n_pedido"),
     "cedula": ("cedula", "cédula", "id", "cedula_id", "documento"),
     "factura": ("factura", "numero_factura", "n_factura", "nº_factura", "no_factura"),
+    "email_tienda": (
+        "email_tienda", "correo_tienda", "email_local", "correo_local",
+        "email", "correo", "mail_tienda",
+    ),
     "fecha_reprogramada": (
         "fecha_reprogramada", "nueva_fecha", "fecha_nueva", "fecha_entrega_nueva",
         "nueva_fecha_entrega", "fecha_entrega", "fecha_prometida_nueva", "reprogramacion",
@@ -35,25 +42,36 @@ MAPEO_COLUMNAS: dict[str, tuple[str, ...]] = {
     "motivo": ("motivo", "razon", "razón", "causa", "detalle", "observacion", "observación"),
 }
 
-CAMPOS_MAPEADOS = frozenset(MAPEO_COLUMNAS.keys())
+# Scripts oficiales CX (emojis multiplataforma)
+PLANTILLA_CLIENTE = """📅 REPROGRAMACIÓN DE ENTREGA
+📦 Producto: {producto}
+🏬 Tienda: {local}
+🧾 Factura: {factura}
+━━━━━━━━━━━━━━━━━━━━
+Hola, {nombre} 👋
 
-PLANTILLA_EJEMPLO = """Hola *{nombre}* 👋
+Te saluda {asesor}, de Servicio al Cliente de Óptica Los Andes.
+Queremos contarte que tu orden no estará lista dentro del plazo que te indicamos inicialmente. Lamentamos mucho este cambio y las molestias que pueda ocasionarte. 🙏
+Te enviaremos otro mensaje apenas tu pedido esté disponible.
+Gracias por tu comprensión. 💙
+━━━━━━━━━━━━━━━━━━━━
+Si tienes alguna duda, escríbenos con confianza o comunícate con nosotros al 1800-678-422 opción 2. 💬😊"""
 
-Te escribimos desde *{local}* de *Óptica Los Andes* para contarte sobre tu pedido 📦
+PLANTILLA_TIENDA = """✅ MENSAJE ENVIADO AL CLIENTE
 
-👓 *Producto:* {producto}
-🧾 *Orden / factura:* {orden}
+Hola, equipo {local} 👋
+Les saluda {asesor}, de Servicio al Cliente.
+Les confirmo que el mensaje de reprogramación de entrega ya fue enviado al cliente.
 
-Tu orden no estará lista en los días que te habíamos indicado. Lamentamos el cambio 🙏
+📍 Tienda: {local}
+🧾 Factura: {factura}
+📦 Producto: {producto}
+👤 Cliente: {nombre}
 
-📅 *Fecha prometida:* {fecha_anterior}
-✅ *Nueva fecha de entrega:* {fecha_reprogramada}
+Por favor, mantenerse pendientes del estado de la orden y, en caso de que el cliente se comunique o se acerque a la tienda, atenderlo con mucha delicadeza, empatía y predisposición, brindándole toda la información disponible. 🙏💙"""
 
-ℹ️ *Motivo:* {motivo}
-
-Te avisaremos en cuanto esté listo para retiro o entrega. Si necesitas otra fecha, cuéntanos y lo vemos juntos 😊
-
-¡Gracias por tu paciencia! 💙"""
+# Alias para UI / restauración
+PLANTILLA_EJEMPLO = PLANTILLA_CLIENTE
 
 
 def _normalizar_cols(df: pd.DataFrame) -> pd.DataFrame:
@@ -86,14 +104,11 @@ def _resolver_columna(columnas: list[str], claves: tuple[str, ...]) -> str | Non
     return None
 
 
-def _pie_reprogramacion(asesor: str) -> str:
-    fecha = datetime.now().strftime("%d/%m/%Y %H:%M")
-    pie = f"━━━━━━━━━━━━━━━━━━━━\n🕐 *Mensaje enviado:* {fecha}"
-    if asesor:
-        pie += f"\n👨‍💼 *Tu asesor:* {asesor}"
-    pie += "\n💙 *Gracias por confiar en Óptica Los Andes*"
-    pie += "\n_Si tienes dudas, escríbenos con confianza._"
-    return pie
+def _aplicar_vars(plantilla: str, vars_map: dict[str, str]) -> str:
+    texto = plantilla
+    for key, val in vars_map.items():
+        texto = texto.replace("{" + key + "}", val)
+    return texto.strip()
 
 
 class WhatsAppEnviosService:
@@ -119,37 +134,37 @@ class WhatsAppEnviosService:
         cols = list(df.columns)
         advertencias: list[str] = []
 
-        col_tel = _resolver_columna(cols, MAPEO_COLUMNAS["telefono"])
-        if not col_tel:
-            raise ValueError(
-                "No se encontró columna de teléfono. Use encabezados como: telefono, contacto, celular o whatsapp."
-            )
-
         mapeo = {campo: _resolver_columna(cols, aliases) for campo, aliases in MAPEO_COLUMNAS.items()}
+        col_tel = mapeo.get("telefono")
+        if not col_tel and not mapeo.get("nombre"):
+            raise ValueError(
+                "No se encontró columna de teléfono ni nombre. "
+                "Use encabezados: telefono, nombre, local, producto, factura."
+            )
+        if not col_tel:
+            advertencias.append("Sin columna de teléfono — se generarán mensajes tienda/correo; WhatsApp cliente quedará pendiente.")
         if not mapeo.get("nombre"):
             advertencias.append("No se detectó columna 'nombre' — se usará un saludo genérico.")
-        if not mapeo.get("fecha_reprogramada"):
-            advertencias.append(
-                "Sin columna de nueva fecha de entrega — puedes definirla en el formulario global."
-            )
 
         cols_mapeadas = {v for v in mapeo.values() if v}
         contactos: list[dict[str, Any]] = []
         vistos: set[str] = set()
 
         for i, row in df.iterrows():
-            tel = _limpiar_celda(row.get(col_tel))
-            if not tel:
-                continue
-            tel_key = WhatsAppService.limpiar_telefono(tel)
-            if not tel_key or len(tel_key) < 9:
-                advertencias.append(f"Fila {int(i) + 2}: teléfono inválido «{tel}» — omitido.")
-                continue
-            if tel_key in vistos:
-                continue
-            vistos.add(tel_key)
-
+            tel = _limpiar_celda(row.get(col_tel)) if col_tel else ""
             nombre = _limpiar_celda(row.get(mapeo["nombre"], "")) if mapeo.get("nombre") else ""
+            if not tel and not nombre:
+                continue
+
+            tel_key = WhatsAppService.limpiar_telefono(tel) if tel else ""
+            if tel and (not tel_key or len(tel_key) < 9):
+                advertencias.append(f"Fila {int(i) + 2}: teléfono inválido «{tel}» — se mantiene sin WA cliente.")
+                tel_key = ""
+            dedupe = tel_key or f"row-{i}-{nombre}"
+            if dedupe in vistos:
+                continue
+            vistos.add(dedupe)
+
             contacto: dict[str, Any] = {
                 "nombre": nombre or "amigo/a",
                 "telefono": tel,
@@ -158,6 +173,10 @@ class WhatsAppEnviosService:
                 "orden": _limpiar_celda(row.get(mapeo["orden"], "")) if mapeo.get("orden") else "",
                 "cedula": _limpiar_celda(row.get(mapeo["cedula"], "")) if mapeo.get("cedula") else "",
                 "factura": _limpiar_celda(row.get(mapeo["factura"], "")) if mapeo.get("factura") else "",
+                "email_tienda": (
+                    _limpiar_celda(row.get(mapeo["email_tienda"], ""))
+                    if mapeo.get("email_tienda") else ""
+                ),
                 "fecha_reprogramada": (
                     _limpiar_celda(row.get(mapeo["fecha_reprogramada"], ""))
                     if mapeo.get("fecha_reprogramada") else ""
@@ -179,7 +198,7 @@ class WhatsAppEnviosService:
             contactos.append(contacto)
 
         if not contactos:
-            raise ValueError("No se extrajeron contactos válidos. Revise que el Excel tenga números en la columna de teléfono.")
+            raise ValueError("No se extrajeron filas válidas de la matriz. Revise nombres y teléfonos.")
 
         return {
             "total": len(contactos),
@@ -194,45 +213,51 @@ class WhatsAppEnviosService:
         contacto: dict,
         asesor: str,
         indice: int,
-        *,
-        fecha_reprogramada: str = "",
-        fecha_anterior: str = "",
-        hora: str = "",
-        motivo: str = "",
+        **globales: str,
     ) -> dict[str, str]:
-        local = contacto.get("local") or contacto.get("tienda") or "tu tienda Óptica Los Andes"
-        producto = contacto.get("producto") or ""
-        orden = contacto.get("orden") or contacto.get("factura") or ""
+        local = contacto.get("local") or contacto.get("tienda") or "Óptica Los Andes"
+        producto = contacto.get("producto") or "Pedido óptico"
+        orden = contacto.get("orden") or contacto.get("factura") or "—"
+        factura = contacto.get("factura") or contacto.get("orden") or orden
         vars_map = {
             "nombre": contacto.get("nombre") or "amigo/a",
             "telefono": contacto.get("telefono") or "",
             "local": local,
             "tienda": local,
-            "producto": producto if producto else "tu pedido en Óptica Los Andes",
-            "orden": orden if orden else "tu orden",
-            "pedido": producto if producto else "tu pedido en Óptica Los Andes",
+            "producto": producto,
+            "orden": orden,
+            "pedido": producto,
             "cedula": contacto.get("cedula") or "",
-            "factura": contacto.get("factura") or orden,
+            "factura": factura,
             "asesor": asesor or settings.default_asesor,
             "n": str(indice),
             "fecha_reprogramada": (
-                contacto.get("fecha_reprogramada") or fecha_reprogramada or "te confirmamos pronto"
+                contacto.get("fecha_reprogramada")
+                or globales.get("fecha_reprogramada")
+                or "te confirmamos pronto"
             ),
             "fecha_anterior": (
-                contacto.get("fecha_anterior") or fecha_anterior or "la fecha que te habíamos prometido"
+                contacto.get("fecha_anterior")
+                or globales.get("fecha_anterior")
+                or "la fecha que te habíamos prometido"
             ),
             "nueva_fecha": (
-                contacto.get("fecha_reprogramada") or fecha_reprogramada or "te confirmamos pronto"
-            ),
-            "nueva_fecha_entrega": (
-                contacto.get("fecha_reprogramada") or fecha_reprogramada or "te confirmamos pronto"
+                contacto.get("fecha_reprogramada")
+                or globales.get("fecha_reprogramada")
+                or "te confirmamos pronto"
             ),
             "fecha_prometida": (
-                contacto.get("fecha_anterior") or fecha_anterior or "la fecha que te habíamos prometido"
+                contacto.get("fecha_anterior")
+                or globales.get("fecha_anterior")
+                or "la fecha que te habíamos prometido"
             ),
-            "hora": contacto.get("hora") or hora or "",
-            "horario": contacto.get("hora") or hora or "",
-            "motivo": contacto.get("motivo") or motivo or "retraso en la producción del laboratorio",
+            "hora": contacto.get("hora") or globales.get("hora") or "",
+            "motivo": (
+                contacto.get("motivo")
+                or globales.get("motivo")
+                or "retraso en la producción del laboratorio"
+            ),
+            "email_tienda": contacto.get("email_tienda") or "",
         }
         for k, v in (contacto.get("extra") or {}).items():
             key = re.sub(r"[^a-z0-9_]", "_", k.lower())
@@ -240,34 +265,12 @@ class WhatsAppEnviosService:
         return vars_map
 
     @classmethod
-    def personalizar_plantilla(
-        cls,
-        plantilla: str,
-        contacto: dict,
-        asesor: str,
-        indice: int,
-        **globales: str,
-    ) -> str:
-        vars_map = cls._variables_contacto(contacto, asesor, indice, **globales)
-        texto = plantilla
-        for key, val in vars_map.items():
-            texto = texto.replace("{" + key + "}", val)
-        return texto.strip()
-
-    @classmethod
-    def armar_mensaje_completo(cls, cuerpo: str, asesor: str, contacto: dict) -> str:
-        bloques = ["📦 *ÓPTICA LOS ANDES — REPROGRAMACIÓN DE ENTREGA*"]
-        if contacto.get("local"):
-            bloques.append(f"📍 *Tienda:* {contacto['local']}")
-        if contacto.get("producto"):
-            bloques.append(f"👓 *Producto:* {contacto['producto']}")
-        orden = contacto.get("orden") or contacto.get("factura")
-        if orden:
-            bloques.append(f"🧾 *Orden:* {orden}")
-        bloques.append("━━━━━━━━━━━━━━━━━━━━")
-        bloques.append(cuerpo)
-        bloques.append(_pie_reprogramacion(asesor))
-        return "\n\n".join(bloques)
+    def _wa_tienda(cls, local: str, mensaje: str) -> str:
+        tienda = TiendasService.resolver_para_cliente(local)
+        num = tienda.get("whatsapp_grupo") or ""
+        if not num:
+            return ""
+        return WhatsAppService.generar_enlace(num, mensaje)
 
     @classmethod
     def generar_lote(
@@ -281,7 +284,14 @@ class WhatsAppEnviosService:
         fecha_anterior: str = "",
         hora: str = "",
         motivo: str = "",
+        registrar_log: bool = True,
     ) -> dict[str, Any]:
+        """Genera mensajes cliente + tienda por fila y correos agrupados por local.
+
+        Si registrar_log=True, contabiliza cada cliente en el log del día por local
+        (para la matriz del correo y el histórico).
+        """
+        del plantilla, incluir_pie  # scripts oficiales fijos; se mantiene firma API
         asesor_f = (asesor or "").strip() or settings.default_asesor
         globales = {
             "fecha_reprogramada": fecha_reprogramada.strip(),
@@ -290,39 +300,166 @@ class WhatsAppEnviosService:
             "motivo": motivo.strip(),
         }
         items: list[dict[str, Any]] = []
+        por_local: dict[str, list[dict]] = defaultdict(list)
 
         for i, c in enumerate(contactos, start=1):
+            vars_map = cls._variables_contacto(c, asesor_f, i, **globales)
             tel_raw = c.get("telefono", "")
-            tel_limpio = WhatsAppService.limpiar_telefono(tel_raw)
+            tel_limpio = WhatsAppService.limpiar_telefono(tel_raw) if tel_raw else ""
             error = None
-            valido = True
+            valido = bool(tel_limpio and len(tel_limpio) >= 11)
+            if not valido:
+                error = "Teléfono inválido o ausente (solo tienda/correo)"
 
-            if not tel_limpio or len(tel_limpio) < 11:
-                valido = False
-                error = "Teléfono inválido"
+            msg_cliente = _aplicar_vars(PLANTILLA_CLIENTE, vars_map)
+            msg_tienda = _aplicar_vars(PLANTILLA_TIENDA, vars_map)
+            wa_cliente = WhatsAppService.generar_enlace(tel_limpio, msg_cliente) if valido else ""
+            wa_tienda = cls._wa_tienda(vars_map["local"], msg_tienda)
 
-            cuerpo = cls.personalizar_plantilla(plantilla, c, asesor_f, i, **globales)
-            mensaje = cls.armar_mensaje_completo(cuerpo, asesor_f, c) if incluir_pie else cuerpo
-            wa_link = WhatsAppService.generar_enlace(tel_limpio, mensaje) if valido else ""
+            if registrar_log:
+                ReprogramacionLogService.registrar_envio(
+                    local=vars_map["local"],
+                    nombre=vars_map["nombre"],
+                    producto=vars_map["producto"],
+                    factura=vars_map["factura"],
+                    telefono=tel_raw,
+                    canal="cliente",
+                    estado="Mensaje generado" if valido else "Pendiente (sin teléfono)",
+                )
 
-            items.append({
+            item = {
                 "indice": i,
-                "nombre": c.get("nombre") or "Sin nombre",
+                "nombre": vars_map["nombre"],
                 "telefono": tel_raw,
                 "telefono_limpio": tel_limpio,
-                "mensaje": mensaje,
-                "wa_link": wa_link,
+                "local": vars_map["local"],
+                "producto": vars_map["producto"],
+                "factura": vars_map["factura"],
+                "orden": vars_map["orden"],
+                "email_tienda": c.get("email_tienda") or "",
+                "mensaje": msg_cliente,
+                "mensaje_cliente": msg_cliente,
+                "mensaje_tienda": msg_tienda,
+                "wa_link": wa_cliente,
+                "wa_link_cliente": wa_cliente,
+                "wa_link_tienda": wa_tienda,
                 "valido": valido,
                 "error": error,
-            })
+            }
+            items.append(item)
+            por_local[vars_map["local"]].append(item)
+
+        correos: list[dict[str, Any]] = []
+        for local, filas in por_local.items():
+            correo = cls.generar_correo_local(local, filas, asesor=asesor_f)
+            correos.append(correo)
 
         validos = sum(1 for x in items if x["valido"])
+        resumen_dia = ReprogramacionLogService.resumen_dia()
         return {
             "total": len(items),
             "validos": validos,
             "invalidos": len(items) - validos,
             "items": items,
+            "correos": correos,
+            "resumen_dia": resumen_dia,
+            "plantillas": {
+                "cliente": PLANTILLA_CLIENTE,
+                "tienda": PLANTILLA_TIENDA,
+            },
         }
+
+    @classmethod
+    def generar_correo_local(
+        cls,
+        local: str,
+        filas: list[dict],
+        *,
+        asesor: str = "",
+        usar_log_dia: bool = True,
+    ) -> dict[str, Any]:
+        asesor_f = (asesor or "").strip() or settings.default_asesor
+        # Preferir matriz del día (acumulada) si hay registros en log
+        filas_matriz = filas
+        if usar_log_dia:
+            resumen = ReprogramacionLogService.resumen_local(local)
+            if resumen.get("enviados"):
+                filas_matriz = [
+                    {
+                        "nombre": e.get("nombre", ""),
+                        "producto": e.get("producto", ""),
+                        "factura": e.get("factura", ""),
+                        "estado": e.get("estado", "Mensaje enviado"),
+                    }
+                    for e in resumen["enviados"]
+                ]
+
+        lineas_tabla = [
+            "| N.º | Cliente              | Producto           | Orden/Factura   | Estado de comunicación |",
+            "| --: | -------------------- | ------------------ | --------------- | ---------------------- |",
+        ]
+        for i, f in enumerate(filas_matriz, start=1):
+            nombre = (f.get("nombre") or "—")[:20].ljust(20)
+            producto = (f.get("producto") or "—")[:18].ljust(18)
+            factura = (f.get("factura") or f.get("orden") or "—")[:15].ljust(15)
+            estado = f.get("estado") or ("Mensaje enviado" if f.get("valido", True) else "Pendiente")
+            lineas_tabla.append(
+                f"| {i:>3} | {nombre} | {producto} | {factura} | {estado:<22} |"
+            )
+
+        cuerpo = f"""Estimado Equipo {local}:
+
+Les saluda {asesor_f}, de Servicio al Cliente.
+
+Por medio del presente, les confirmo que se enviaron los mensajes de reprogramación de entrega a los clientes detallados en la siguiente matriz:
+
+{chr(10).join(lineas_tabla)}
+
+Por favor, mantenerse pendientes del estado de cada orden. En caso de que alguno de los clientes se comunique o se acerque a la tienda, solicitamos atenderlo con delicadeza, empatía y predisposición, brindándole información clara y el acompañamiento necesario.
+
+Agradezco su apoyo y seguimiento en cada caso.
+
+Saludos cordiales,
+
+{asesor_f}
+Servicio al Cliente
+Óptica Los Andes"""
+
+        email_dest = ""
+        for f in filas:
+            if f.get("email_tienda"):
+                email_dest = f["email_tienda"]
+                break
+
+        total_hoy = len(filas_matriz)
+        return {
+            "local": local,
+            "asunto": f"Reprogramación de entregas — {local} ({total_hoy} cliente(s))",
+            "cuerpo": cuerpo,
+            "email_tienda": email_dest,
+            "total_matriz": total_hoy,
+            "filas": [
+                {
+                    "nombre": f.get("nombre"),
+                    "producto": f.get("producto"),
+                    "factura": f.get("factura") or f.get("orden"),
+                    "estado": f.get("estado") or "Mensaje enviado",
+                }
+                for f in filas_matriz
+            ],
+        }
+
+    @classmethod
+    def marcar_enviado_cliente(cls, item: dict) -> dict[str, Any]:
+        return ReprogramacionLogService.registrar_envio(
+            local=item.get("local") or "Sin tienda",
+            nombre=item.get("nombre") or "",
+            producto=item.get("producto") or "",
+            factura=item.get("factura") or item.get("orden") or "",
+            telefono=item.get("telefono") or "",
+            canal="cliente",
+            estado="Mensaje enviado",
+        )
 
     @classmethod
     def exportar_excel(cls, items: list[dict]) -> bytes:
@@ -332,11 +469,15 @@ class WhatsAppEnviosService:
                 "N°": it.get("indice"),
                 "Nombre": it.get("nombre"),
                 "Teléfono": it.get("telefono"),
-                "Teléfono limpio": it.get("telefono_limpio"),
-                "Válido": "Sí" if it.get("valido") else "No",
+                "Local": it.get("local"),
+                "Producto": it.get("producto"),
+                "Factura": it.get("factura"),
+                "Válido WA": "Sí" if it.get("valido") else "No",
                 "Error": it.get("error") or "",
-                "Mensaje": it.get("mensaje"),
-                "Enlace WhatsApp": it.get("wa_link"),
+                "Mensaje cliente": it.get("mensaje_cliente") or it.get("mensaje"),
+                "Mensaje tienda": it.get("mensaje_tienda") or "",
+                "Enlace WA cliente": it.get("wa_link_cliente") or it.get("wa_link"),
+                "Enlace WA tienda": it.get("wa_link_tienda") or "",
             })
         df = pd.DataFrame(filas)
         buf = io.BytesIO()

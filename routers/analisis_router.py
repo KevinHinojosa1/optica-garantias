@@ -44,6 +44,7 @@ async def analizar_dano(
     asesor: str = Form(default=None),
     codigo_descuento: str = Form(default=""),
     porcentaje_descuento: str = Form(default=""),
+    modo_analisis: str = Form(default="conocimiento"),
     db: Session = Depends(get_db),
 ):
     cliente = db.query(Cliente).filter(Cliente.id == cliente_id).first()
@@ -52,6 +53,10 @@ async def analizar_dano(
 
     if not imagen.content_type or not imagen.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="El archivo debe ser una imagen (JPG, PNG, WEBP).")
+
+    modo = (modo_analisis or "conocimiento").strip().lower()
+    if modo not in ("conocimiento", "claude_total"):
+        modo = "conocimiento"
 
     try:
         image_bytes = await imagen.read()
@@ -69,8 +74,10 @@ async def analizar_dano(
         cliente_data = cliente_to_response(cliente).model_dump(mode="json")
         asesor_final = (asesor or "").strip() or settings.default_asesor
 
-        ConocimientoService.sembrar_inicial(db)
-        conocimiento = ConocimientoService.buscar_relevantes(db, cliente_data)
+        conocimiento = None
+        if modo == "conocimiento":
+            ConocimientoService.sembrar_inicial(db)
+            conocimiento = ConocimientoService.buscar_relevantes(db, cliente_data)
 
         analisis = await VisionService.analizar_imagen(
             image_bytes,
@@ -78,6 +85,12 @@ async def analizar_dano(
             cliente_data,
             conocimiento=conocimiento,
         )
+        analisis["modo_analisis"] = modo
+        if modo == "claude_total":
+            analisis["potenciado_por"] = "Claude total"
+            analisis["fuentes_conocimiento"] = []
+        elif analisis.get("potenciado_por") == "Claude":
+            analisis["potenciado_por"] = "Claude + Base de conocimiento"
 
         mensaje = WhatsAppService.generar_desde_analisis(cliente_data, analisis, asesor_final)
         wa_link, tienda = WhatsAppService.enlace_grupo_apoyo(cliente_data, mensaje)

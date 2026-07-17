@@ -1,4 +1,4 @@
-"""Router reprogramación de entregas — pedidos/órdenes por wa.me y Business API."""
+"""Router reprogramación de entregas — cliente, tienda, correo y contador diario."""
 
 from __future__ import annotations
 
@@ -12,11 +12,15 @@ from schemas.whatsapp_envios import (
     EnviarBusinessLoteResponse,
     EnviarBusinessRequest,
     EnviarBusinessResponse,
+    EnviarCorreoRequest,
     GenerarEnviosRequest,
     GenerarEnviosResponse,
+    MarcarEnviadoRequest,
     SubirExcelEnviosResponse,
     WhatsAppConfigResponse,
 )
+from services.email_service import EmailService
+from services.reprogramacion_log_service import ReprogramacionLogService
 from services.whatsapp_business_service import WhatsAppBusinessService
 from services.whatsapp_envios_service import PLANTILLA_EJEMPLO, WhatsAppEnviosService
 from templates_shared import templates
@@ -32,12 +36,15 @@ def _kwargs_generar(payload: GenerarEnviosRequest) -> dict:
         "fecha_anterior": payload.fecha_anterior,
         "hora": payload.hora,
         "motivo": payload.motivo,
+        "registrar_log": payload.registrar_log,
     }
 
 
 @router.get("/envios-whatsapp", response_class=HTMLResponse)
 async def pagina_envios_whatsapp(request: Request):
     wa_config = WhatsAppBusinessService.info_config()
+    mail_config = EmailService.info_config()
+    resumen = ReprogramacionLogService.resumen_dia()
     return templates.TemplateResponse(
         request,
         "whatsapp_envios.html",
@@ -45,13 +52,29 @@ async def pagina_envios_whatsapp(request: Request):
             "active": "envios_whatsapp",
             "plantilla_ejemplo": PLANTILLA_EJEMPLO,
             "wa_business_activa": wa_config["business_api_activa"],
+            "smtp_activo": mail_config["smtp_activo"],
+            "resumen_dia": resumen,
         },
     )
 
 
 @router.get("/api/envios-whatsapp/config", response_model=WhatsAppConfigResponse)
 async def api_config_whatsapp():
-    return WhatsAppConfigResponse(**WhatsAppBusinessService.info_config())
+    wa = WhatsAppBusinessService.info_config()
+    mail = EmailService.info_config()
+    return WhatsAppConfigResponse(
+        business_api_activa=wa["business_api_activa"],
+        phone_number_id=wa.get("phone_number_id", ""),
+        api_version=wa.get("api_version", ""),
+        smtp_activo=mail["smtp_activo"],
+        smtp_host=mail.get("smtp_host", ""),
+        smtp_from=mail.get("smtp_from", ""),
+    )
+
+
+@router.get("/api/envios-whatsapp/resumen-dia")
+async def api_resumen_dia(fecha: str | None = None):
+    return ReprogramacionLogService.resumen_dia(fecha)
 
 
 @router.post("/api/envios-whatsapp/subir-excel", response_model=SubirExcelEnviosResponse)
@@ -77,7 +100,7 @@ async def api_generar_envios(payload: GenerarEnviosRequest):
     try:
         contactos = [c.model_dump() for c in payload.contactos]
         data = WhatsAppEnviosService.generar_lote(
-            payload.plantilla,
+            payload.plantilla or PLANTILLA_EJEMPLO,
             contactos,
             **_kwargs_generar(payload),
         )
@@ -91,9 +114,9 @@ async def api_exportar_envios(payload: GenerarEnviosRequest):
     try:
         contactos = [c.model_dump() for c in payload.contactos]
         data = WhatsAppEnviosService.generar_lote(
-            payload.plantilla,
+            payload.plantilla or PLANTILLA_EJEMPLO,
             contactos,
-            **_kwargs_generar(payload),
+            **{**_kwargs_generar(payload), "registrar_log": False},
         )
         xlsx = WhatsAppEnviosService.exportar_excel(data["items"])
         stamp = datetime.now().strftime("%Y%m%d_%H%M")
@@ -102,6 +125,53 @@ async def api_exportar_envios(payload: GenerarEnviosRequest):
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             headers={"Content-Disposition": f'attachment; filename="entregas_reprogramadas_{stamp}.xlsx"'},
         )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+
+@router.post("/api/envios-whatsapp/marcar-enviado")
+async def api_marcar_enviado(payload: MarcarEnviadoRequest):
+    resumen = ReprogramacionLogService.registrar_envio(
+        local=payload.local,
+        nombre=payload.nombre,
+        producto=payload.producto,
+        factura=payload.factura,
+        telefono=payload.telefono,
+        canal=payload.canal,
+        estado=payload.estado,
+    )
+    return {
+        "ok": True,
+        "resumen_local": resumen,
+        "resumen_dia": ReprogramacionLogService.resumen_dia(),
+    }
+
+
+@router.post("/api/envios-whatsapp/enviar-correo")
+async def api_enviar_correo(payload: EnviarCorreoRequest):
+    if not payload.email_tienda.strip():
+        raise HTTPException(
+            status_code=400,
+            detail="Indique el correo de la tienda (columna email_tienda en el Excel o campo del formulario).",
+        )
+    try:
+        if EmailService.esta_configurado():
+            result = EmailService.enviar(
+                destinatario=payload.email_tienda,
+                asunto=payload.asunto,
+                cuerpo=payload.cuerpo,
+            )
+            return {"ok": True, "modo": "smtp", **result}
+
+        mailto = EmailService.mailto_link(payload.email_tienda, payload.asunto, payload.cuerpo)
+        return {
+            "ok": True,
+            "modo": "mailto",
+            "mailto": mailto,
+            "mensaje": "SMTP no configurado — use el enlace mailto o copie el correo.",
+        }
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 

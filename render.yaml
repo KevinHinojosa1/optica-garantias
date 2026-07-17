@@ -34,3 +34,13 @@ services:
         sync: false
       - key: WHATSAPP_API_VERSION
         value: v21.0
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
+        sync: false

@@ -29,3 +29,4 @@ data/consultas/*.jpg
 data/consultas/*.png
 data/conocimiento/*
 !data/conocimiento/.gitkeep
+data/reprogramaciones_envios.json

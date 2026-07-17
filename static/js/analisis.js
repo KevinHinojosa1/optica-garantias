@@ -53,14 +53,16 @@ formAnalisis.addEventListener('submit', async (e) => {
   }
 
   const btn = document.getElementById('btn-analizar');
+  const modo = document.querySelector('input[name="modo-analisis"]:checked')?.value || 'conocimiento';
   btn.disabled = true;
-  btn.textContent = '⏳ Analizando con IA...';
+  btn.textContent = modo === 'claude_total' ? '⏳ Claude total…' : '⏳ Claude + conocimiento…';
   resultadoAnalisis.classList.add('hidden');
 
   const formData = new FormData();
   formData.append('imagen', imagenInput.files[0]);
   const asesor = document.getElementById('asesor').value.trim() || window.DEFAULT_ASESOR || '';
   formData.append('asesor', asesor);
+  formData.append('modo_analisis', modo);
   const codigo = document.getElementById('codigo-descuento')?.value;
   const pct = document.getElementById('porcentaje-descuento')?.value;
   if (codigo) formData.append('codigo_descuento', codigo);
@@ -89,7 +91,7 @@ formAnalisis.addEventListener('submit', async (e) => {
     resultadoAnalisis.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">❌ ${err.message}</div>`;
   } finally {
     btn.disabled = false;
-    btn.textContent = '🔍 Analizar con IA';
+    btn.textContent = '🔍 Analizar con Claude';
   }
 });
 
@@ -103,12 +105,14 @@ function mostrarResultado(a) {
   const fuentes = (a.fuentes_conocimiento || []).map(f =>
     `<li class="text-xs">${escapeHtml(f.titulo)}${f.tiene_imagen ? ' 🖼️' : ''}</li>`
   ).join('');
+  const esKb = a.modo_analisis === 'conocimiento' || (a.fuentes_conocimiento || []).length;
   const bloqueKb = fuentes
-    ? `<div class="bg-white/70 rounded-lg p-3 border border-white"><p class="text-xs font-semibold text-violet-800 mb-1">📚 Base de conocimiento consultada (Claude):</p><ul class="list-disc pl-4 space-y-0.5">${fuentes}</ul></div>`
-    : '<p class="text-xs opacity-70">Nutra la <a href="/conocimiento" class="underline font-medium">Base de Conocimiento</a> para fundamentos más precisos.</p>';
-  const motor = a.potenciado_por === 'Claude'
-    ? '<span class="text-xs font-medium text-violet-700 bg-violet-100 px-2 py-0.5 rounded-full">Claude</span>'
-    : '';
+    ? `<div class="bg-white/70 rounded-lg p-3 border border-white"><p class="text-xs font-semibold text-violet-800 mb-1">📚 Base de conocimiento consultada:</p><ul class="list-disc pl-4 space-y-0.5">${fuentes}</ul></div>`
+    : (esKb
+      ? '<p class="text-xs opacity-70">Sin documentos relevantes en la base. Nutra la <a href="/conocimiento" class="underline font-medium">Base de Conocimiento</a>.</p>'
+      : '<p class="text-xs opacity-70">Modo <strong>Claude total</strong> — sin consulta a la base de conocimiento.</p>');
+  const motorLabel = a.potenciado_por || (a.modo_analisis === 'claude_total' ? 'Claude total' : 'Claude');
+  const motor = `<span class="text-xs font-medium text-violet-700 bg-violet-100 px-2 py-0.5 rounded-full">${escapeHtml(motorLabel)}</span>`;
 
   resultadoAnalisis.classList.remove('hidden');
   resultadoAnalisis.innerHTML = `
