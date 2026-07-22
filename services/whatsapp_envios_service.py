@@ -42,34 +42,42 @@ MAPEO_COLUMNAS: dict[str, tuple[str, ...]] = {
     "motivo": ("motivo", "razon", "razón", "causa", "detalle", "observacion", "observación"),
 }
 
-# Scripts oficiales CX — emojis Unicode básicos (bien soportados en Android/iOS WhatsApp)
-# Separador ASCII para evitar "rombos" por glifos de caja tipográfica en algunos móviles
-PLANTILLA_CLIENTE = """📅 REPROGRAMACIÓN DE ENTREGA
-📦 Producto: {producto}
-🏪 Tienda: {local}
-📄 Factura: {factura}
---------------------
-Hola, {nombre} 👋
+# Scripts oficiales CX — emojis SOLO con escapes \U (archivo ASCII-safe, no se corrompe por encoding)
+# El frontend recompone el mensaje con String.fromCodePoint al enviar (fuente de verdad para WA).
+PLANTILLA_CLIENTE = (
+    "\U0001f4c5 REPROGRAMACI\u00d3N DE ENTREGA\n"
+    "\U0001f4e6 Producto: {producto}\n"
+    "\U0001f3ea Tienda: {local}\n"
+    "\U0001f4c4 Factura: {factura}\n"
+    "--------------------\n"
+    "Hola, {nombre} \U0001f44b\n"
+    "\n"
+    "Te saluda {asesor}, de Servicio al Cliente de \u00d3ptica Los Andes.\n"
+    "Queremos contarte que tu orden no estar\u00e1 lista dentro del plazo que te indicamos inicialmente. "
+    "Lamentamos mucho este cambio y las molestias que pueda ocasionarte. \U0001f64f\n"
+    "Te enviaremos otro mensaje apenas tu pedido est\u00e9 disponible.\n"
+    "Gracias por tu comprensi\u00f3n. \U0001f499\n"
+    "--------------------\n"
+    "Si tienes alguna duda, escr\u00edbenos con confianza o comun\u00edcate con nosotros al "
+    "1800-678-422 opci\u00f3n 2. \U0001f4ac\U0001f60a"
+)
 
-Te saluda {asesor}, de Servicio al Cliente de Óptica Los Andes.
-Queremos contarte que tu orden no estará lista dentro del plazo que te indicamos inicialmente. Lamentamos mucho este cambio y las molestias que pueda ocasionarte. 🙏
-Te enviaremos otro mensaje apenas tu pedido esté disponible.
-Gracias por tu comprensión. 💙
---------------------
-Si tienes alguna duda, escríbenos con confianza o comunícate con nosotros al 1800-678-422 opción 2. 💬😊"""
-
-PLANTILLA_TIENDA = """✅ MENSAJE ENVIADO AL CLIENTE
-
-Hola, equipo {local} 👋
-Les saluda {asesor}, de Servicio al Cliente.
-Les confirmo que el mensaje de reprogramación de entrega ya fue enviado al cliente.
-
-📍 Tienda: {local}
-📄 Factura: {factura}
-📦 Producto: {producto}
-👤 Cliente: {nombre}
-
-Por favor, mantenerse pendientes del estado de la orden y, en caso de que el cliente se comunique o se acerque a la tienda, atenderlo con mucha delicadeza, empatía y predisposición, brindándole toda la información disponible. 🙏💙"""
+PLANTILLA_TIENDA = (
+    "\u2705 MENSAJE ENVIADO AL CLIENTE\n"
+    "\n"
+    "Hola, equipo {local} \U0001f44b\n"
+    "Les saluda {asesor}, de Servicio al Cliente.\n"
+    "Les confirmo que el mensaje de reprogramaci\u00f3n de entrega ya fue enviado al cliente.\n"
+    "\n"
+    "\U0001f4cd Tienda: {local}\n"
+    "\U0001f4c4 Factura: {factura}\n"
+    "\U0001f4e6 Producto: {producto}\n"
+    "\U0001f464 Cliente: {nombre}\n"
+    "\n"
+    "Por favor, mantenerse pendientes del estado de la orden y, en caso de que el cliente se comunique "
+    "o se acerque a la tienda, atenderlo con mucha delicadeza, empat\u00eda y predisposici\u00f3n, "
+    "brind\u00e1ndole toda la informaci\u00f3n disponible. \U0001f64f\U0001f499"
+)
 
 # Alias para UI / restauración
 PLANTILLA_EJEMPLO = PLANTILLA_CLIENTE

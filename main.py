@@ -79,9 +79,15 @@ from starlette.requests import Request as StarletteRequest
 class NoCacheMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: StarletteRequest, call_next):
         response = await call_next(request)
-        if request.url.path.startswith("/static/") or request.url.path in ("/ivr", "/alertas", "/conocimiento", "/envios-whatsapp", "/"):
+        path = request.url.path
+        if path.startswith("/static/") or path in ("/ivr", "/alertas", "/conocimiento", "/envios-whatsapp", "/"):
             response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
             response.headers["Pragma"] = "no-cache"
+        # JS/CSS en UTF-8: evita emojis rotos si el navegador asume latin-1
+        if path.endswith((".js", ".css", ".html", ".json", ".svg")):
+            ct = response.headers.get("content-type", "")
+            if ct and "charset" not in ct.lower():
+                response.headers["content-type"] = f"{ct}; charset=utf-8"
         return response
 
 

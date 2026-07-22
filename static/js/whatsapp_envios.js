@@ -28,66 +28,64 @@ function escapeHtml(t) {
   return d.innerHTML;
 }
 
-/** Teléfono internacional Ecuador (misma lógica del backend). */
-function limpiarTelefonoEC(telefono) {
-  let d = String(telefono || '').replace(/\D/g, '');
-  if (!d) return '';
-  if (d.startsWith('593')) return d;
-  if (d.startsWith('0')) d = d.slice(1);
-  if (d.length === 9) return `593${d}`;
-  return d;
+function asesorActual() {
+  return document.getElementById('wa-asesor')?.value.trim() || window.DEFAULT_ASESOR || 'Servicio al Cliente';
 }
 
-/**
- * Texto listo para WhatsApp = el mismo del preview (emojis intactos).
- * Solo limpia invisibles y unifica saltos de línea.
- */
-function prepararTextoWhatsApp(mensaje) {
-  return String(mensaje ?? '')
-    .replace(/\uFEFF/g, '')
-    .replace(/\u200B/g, '')
-    .replace(/\u2501/g, '-')
-    .replace(/\u2500/g, '-')
-    .replace(/\r\n/g, '\n')
-    .replace(/\r/g, '\n');
+function modoPrefillActivo() {
+  return !!document.getElementById('wa-prefill-url')?.checked;
 }
 
-/**
- * Construye wa.me (solo para export / referencia).
- * Al abrir el chat use siempre abrirWhatsApp().
- */
+/** Recompone mensajes con emojis por code point (nunca confiar en encoding del servidor para WA). */
+function refrescarMensajesItem(it) {
+  if (!it || !window.WaEmoji) return it;
+  const as = asesorActual();
+  it.mensaje_cliente = WaEmoji.componerMensajeCliente(it, as);
+  it.mensaje_tienda = WaEmoji.componerMensajeTienda(it, as);
+  it.mensaje = it.mensaje_cliente;
+  return it;
+}
+
 function buildWaLink(telefono, mensaje) {
-  const num = limpiarTelefonoEC(telefono);
+  const num = (window.WaEmoji && WaEmoji.limpiarTelefonoEC(telefono)) || String(telefono || '').replace(/\D/g, '');
   if (!num) return '';
-  const texto = prepararTextoWhatsApp(mensaje);
-  return `https://wa.me/${num}?text=${encodeURIComponent(texto)}`;
+  return `https://wa.me/${num}?text=${encodeURIComponent(String(mensaje || ''))}`;
 }
 
 /**
- * Abre WhatsApp con el mensaje exacto (emojis como en el preview).
- * Codifica UTF-8 UNA sola vez y usa setAttribute para no re-serializar la URL
- * (el .href del navegador puede romper emojis → rombo con ?).
+ * Abre WhatsApp en modo SEGURO (default):
+ * 1) Arma el mensaje con emojis correctos (fromCodePoint)
+ * 2) Copia al portapapeles
+ * 3) Abre el chat SIN ?text=  → el usuario pega y los emojis salen bien en Web/Android/iOS
+ *
+ * Si marca "prellenar en el enlace", intenta ?text= (puede fallar en algunos clientes).
  */
-function abrirWhatsApp(telefono, mensaje) {
-  const num = limpiarTelefonoEC(telefono);
-  if (!num) {
-    toast('No hay número de WhatsApp válido', 'error');
+async function abrirWhatsApp(telefono, mensaje) {
+  if (!window.WaEmoji) {
+    toast('Error: no se cargó el módulo de emojis. Recargue la página (Cmd+Shift+R).', 'error');
     return false;
   }
-  const texto = prepararTextoWhatsApp(mensaje);
-  if (!texto.trim()) {
-    toast('El mensaje está vacío', 'error');
+  const modo = modoPrefillActivo() ? 'prefill' : 'seguro';
+  const result = await WaEmoji.abrirWhatsAppSeguro(telefono, mensaje, { modo });
+  if (!result.ok) {
+    toast(result.error || 'No se pudo abrir WhatsApp', 'error');
     return false;
   }
-  const url = `https://wa.me/${num}?text=${encodeURIComponent(texto)}`;
-  const a = document.createElement('a');
-  a.setAttribute('href', url);
-  a.setAttribute('target', '_blank');
-  a.setAttribute('rel', 'noopener noreferrer');
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  if (modo === 'seguro') {
+    toast(
+      result.copiado
+        ? '📋 Mensaje copiado. En WhatsApp: pega con Ctrl+V (o mantener → Pegar). Los emojis saldrán bien.'
+        : 'WhatsApp abierto. Copia el mensaje del recuadro y pégalo en el chat.',
+      'ok',
+    );
+  } else {
+    toast(
+      result.copiado
+        ? 'WhatsApp abierto (texto en enlace). Si ves rombos, desmarca prellenar y vuelve a intentar.'
+        : 'WhatsApp abierto.',
+      'ok',
+    );
+  }
   return true;
 }
 
@@ -95,30 +93,33 @@ function openWhatsApp(telefono, mensaje) {
   return abrirWhatsApp(telefono, mensaje);
 }
 
-/** WA cliente: usa el textarea #preview-cliente (lo que se ve en pantalla). */
-function abrirWaClienteDesdePreview() {
-  const mensaje = document.getElementById('preview-cliente')?.value ?? '';
+/** WA cliente: recompone mensaje oficial + envío seguro */
+async function abrirWaClienteDesdePreview() {
   const it = itemSeleccionado;
-  const tel = it?.telefono_limpio || it?.telefono || '';
-  if (!mensaje.trim()) {
-    toast('Genere mensajes y seleccione un contacto', 'info');
+  if (!it) {
+    toast('Seleccione un contacto de la tabla', 'info');
     return;
   }
-  if (abrirWhatsApp(tel, mensaje)) {
-    toast('WhatsApp abierto con el mensaje del cliente', 'ok');
-  }
+  refrescarMensajesItem(it);
+  const mensaje = it.mensaje_cliente;
+  document.getElementById('preview-cliente').value = mensaje;
+  const tel = it.telefono_limpio || it.telefono || '';
+  await abrirWhatsApp(tel, mensaje);
 }
 
-/** WA tienda: usa el textarea #preview-tienda. */
-function abrirWaTiendaDesdePreview() {
-  const mensaje = document.getElementById('preview-tienda')?.value ?? '';
+/** WA tienda: recompone + envío seguro al grupo */
+async function abrirWaTiendaDesdePreview() {
   const it = itemSeleccionado;
-  if (!mensaje.trim()) {
-    toast('Genere mensajes y seleccione un contacto', 'info');
+  if (!it) {
+    toast('Seleccione un contacto de la tabla', 'info');
     return;
   }
+  refrescarMensajesItem(it);
+  const mensaje = it.mensaje_tienda;
+  document.getElementById('preview-tienda').value = mensaje;
+
   let tel = '';
-  const waTi = it?.wa_link_tienda || '';
+  const waTi = it.wa_link_tienda || '';
   if (waTi) {
     try {
       const u = new URL(waTi, 'https://wa.me');
@@ -136,7 +137,7 @@ function abrirWaTiendaDesdePreview() {
     toast('No hay WhatsApp de tienda para este local', 'error');
     return;
   }
-  abrirWhatsApp(tel, mensaje);
+  await abrirWhatsApp(tel, mensaje);
 }
 
 function modoEnvio() {
@@ -297,16 +298,17 @@ function renderTabla() {
 }
 
 function seleccionarItem(it) {
-  itemSeleccionado = it;
-  // El textarea es la fuente de verdad del mensaje (tal como se envía a WA)
-  document.getElementById('preview-cliente').value = it.mensaje_cliente || it.mensaje || '';
-  document.getElementById('preview-tienda').value = it.mensaje_tienda || '';
-  document.getElementById('btn-mark-cliente').disabled = !it.valido && !it.nombre;
+  itemSeleccionado = refrescarMensajesItem({ ...it });
+  // Preview = mensaje recompuesto en el navegador (emojis correctos)
+  document.getElementById('preview-cliente').value = itemSeleccionado.mensaje_cliente || '';
+  document.getElementById('preview-tienda').value = itemSeleccionado.mensaje_tienda || '';
+  document.getElementById('btn-mark-cliente').disabled = !itemSeleccionado.valido && !itemSeleccionado.nombre;
 
   const btnCli = document.getElementById('btn-wa-cliente');
-  const telCli = limpiarTelefonoEC(it.telefono_limpio || it.telefono || '');
+  const telCli = (window.WaEmoji && WaEmoji.limpiarTelefonoEC(itemSeleccionado.telefono_limpio || itemSeleccionado.telefono || ''))
+    || String(itemSeleccionado.telefono || '').replace(/\D/g, '');
   if (btnCli) {
-    if (telCli && (it.mensaje_cliente || it.mensaje)) {
+    if (telCli && itemSeleccionado.mensaje_cliente) {
       btnCli.disabled = false;
       btnCli.classList.remove('opacity-40', 'pointer-events-none');
     } else {
@@ -317,7 +319,7 @@ function seleccionarItem(it) {
 
   const btnTi = document.getElementById('btn-wa-tienda');
   if (btnTi) {
-    if (it.wa_link_tienda && it.mensaje_tienda) {
+    if (itemSeleccionado.wa_link_tienda && itemSeleccionado.mensaje_tienda) {
       btnTi.disabled = false;
       btnTi.classList.remove('opacity-40', 'pointer-events-none');
     } else {
@@ -327,14 +329,14 @@ function seleccionarItem(it) {
   }
 
   const sel = document.getElementById('correo-local');
-  if (sel && it.local) {
-    const opt = [...sel.options].find(o => o.value === it.local);
+  if (sel && itemSeleccionado.local) {
+    const opt = [...sel.options].find(o => o.value === itemSeleccionado.local);
     if (opt) {
-      sel.value = it.local;
-      mostrarCorreoLocal(it.local);
+      sel.value = itemSeleccionado.local;
+      mostrarCorreoLocal(itemSeleccionado.local);
     }
   }
-  if (it.email_tienda) document.getElementById('correo-email').value = it.email_tienda;
+  if (itemSeleccionado.email_tienda) document.getElementById('correo-email').value = itemSeleccionado.email_tienda;
   renderTabla();
 }
 
@@ -418,7 +420,10 @@ async function generarMensajes() {
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || 'Error al generar');
 
-  itemsEnvio = (data.items || []).map(it => ({ ...it, _enviado: false }));
+  itemsEnvio = (data.items || []).map(it => {
+    const row = { ...it, _enviado: false };
+    return refrescarMensajesItem(row);
+  });
   correosPorLocal = data.correos || [];
   document.getElementById('wa-estado').textContent = `${data.validos} WA listos`;
   llenarSelectCorreos();
@@ -556,22 +561,19 @@ function mostrarContactoCola() {
   document.getElementById('modal-barra').style.width = `${Math.round((indiceCola / total) * 100)}%`;
   document.getElementById('modal-nombre').textContent = it.nombre;
   document.getElementById('modal-telefono').textContent = it.telefono;
+  refrescarMensajesItem(it);
   const msgCli = it.mensaje_cliente || it.mensaje || '';
   const telCli = it.telefono_limpio || it.telefono || '';
   document.getElementById('modal-preview').textContent = msgCli;
-  // No poner URL larga en href: se arma al clic / al abrir
-  const modalLink = document.getElementById('modal-abrir-wa');
-  if (modalLink) {
-    modalLink.removeAttribute('href');
-    modalLink.dataset.ready = '1';
-  }
 
   const esBusiness = modoEnvio() === 'business' && businessApiActiva;
   if (!esBusiness) {
+    // No auto-abrir con ?text= (rompe emojis). Solo abre chat + copia en gesto del usuario.
+    // En envío masivo: copiar y abrir chat vacío; el asesor pega y confirma.
     abrirWhatsApp(telCli, msgCli);
     if (document.getElementById('wa-auto-siguiente')?.checked) {
       clearTimeout(autoTimer);
-      autoTimer = setTimeout(() => marcarEnviadoYSiguiente(), 5000);
+      autoTimer = setTimeout(() => marcarEnviadoYSiguiente(), 8000);
     }
   } else if (document.getElementById('wa-auto-siguiente')?.checked && !enviandoBusiness) {
     enviarPorBusiness(it).then(ok => {
@@ -586,9 +588,10 @@ async function enviarPorBusiness(it) {
   const btn = document.getElementById('modal-enviar-business');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Enviando…'; }
   try {
+    refrescarMensajesItem(it);
     const res = await fetch('/api/envios-whatsapp/enviar-business', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({
         item: {
           indice: it.indice,
@@ -680,11 +683,12 @@ document.getElementById('btn-wa-tienda')?.addEventListener('click', (e) => {
   e.preventDefault();
   abrirWaTiendaDesdePreview();
 });
-document.getElementById('modal-abrir-wa')?.addEventListener('click', (e) => {
+document.getElementById('modal-abrir-wa')?.addEventListener('click', async (e) => {
   e.preventDefault();
   const it = colaEnvio[indiceCola];
   if (!it) return;
-  abrirWhatsApp(it.telefono_limpio || it.telefono, it.mensaje_cliente || it.mensaje);
+  refrescarMensajesItem(it);
+  await abrirWhatsApp(it.telefono_limpio || it.telefono, it.mensaje_cliente || it.mensaje);
 });
 document.getElementById('btn-mark-cliente')?.addEventListener('click', () =>
   marcarEnviadoCliente().catch(e => toast(e.message, 'error')));

@@ -136,12 +136,23 @@
         <textarea id="preview-cliente" rows="14" class="glass-textarea w-full px-3 py-2 text-sm font-mono" readonly placeholder="Genere mensajes para ver el texto al cliente…"></textarea>
         <div class="flex flex-wrap gap-2">
           <button type="button" id="btn-wa-cliente" class="bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm opacity-40 pointer-events-none" disabled>
-            💬 Abrir WA cliente
+            💬 Enviar a WhatsApp (cliente)
           </button>
-          <button type="button" id="btn-copy-cliente" class="glass-btn px-4 py-2.5 rounded-xl text-sm font-semibold">📋 Copiar</button>
+          <button type="button" id="btn-copy-cliente" class="glass-btn px-4 py-2.5 rounded-xl text-sm font-semibold">📋 Copiar mensaje</button>
           <button type="button" id="btn-mark-cliente" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm disabled:opacity-40" disabled>✅ Marcar enviado</button>
         </div>
-        <p class="text-[11px] text-slate-400">Se envía el texto exacto del recuadro de arriba (con emojis), codificado en UTF-8 al abrir WhatsApp.</p>
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 py-2.5 text-xs text-emerald-900 space-y-1.5">
+          <p class="font-semibold">Cómo enviar sin rombos (Web, Android e iPhone)</p>
+          <ol class="list-decimal pl-4 space-y-0.5 text-emerald-800">
+            <li>Pulse <strong>Enviar a WhatsApp</strong> — el mensaje se copia solo.</li>
+            <li>Se abre el chat del cliente (vacío a propósito).</li>
+            <li>En WhatsApp: <strong>pegue</strong> el mensaje (Ctrl+V o mantener → Pegar).</li>
+          </ol>
+          <label class="flex items-center gap-2 pt-1 cursor-pointer text-slate-600">
+            <input type="checkbox" id="wa-prefill-url" class="rounded text-green-600">
+            Intentar prellenar el texto en el enlace (puede mostrar rombos en algunos dispositivos)
+          </label>
+        </div>
       </div>
 
       <div id="panel-tienda" class="wa-tab-panel p-4 space-y-3 hidden">
@@ -226,5 +237,6 @@
   window.SMTP_ACTIVO = {{ smtp_activo | tojson }};
   window.RESUMEN_DIA_INICIAL = {{ resumen_dia | tojson }};
 </script>
+<script src="/static/js/wa_emoji.js?v={{ asset_version }}"></script>
 <script src="/static/js/whatsapp_envios.js?v={{ asset_version }}"></script>
 {% endblock %}
