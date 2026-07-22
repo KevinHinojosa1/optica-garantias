@@ -10,9 +10,12 @@
       <p id="cx-version-badge" class="text-xs text-optica-600 font-semibold mt-1"></p>
       <p id="ia-status-badge" class="text-xs mt-0.5"></p>
     </div>
-    <a href="/api/scripts/exportar" id="btn-exportar-scripts"
-      class="w-full sm:w-auto text-center bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center justify-center gap-2">
-      📥 Exportar Excel
+    <a href="/api/scripts/exportar" id="btn-exportar-scripts" class="btn-ola btn-ola--success">
+      <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">📥</span>
+      <span class="btn-ola__text">
+        <span class="btn-ola__title">Exportar Excel</span>
+        <span class="btn-ola__sub">Descargar scripts CX</span>
+      </span>
     </a>
   </div>
 
@@ -22,9 +25,9 @@
     <div class="flex flex-wrap gap-3 mb-3">
       <input type="text" id="buscar-ficha" placeholder="Buscar por nombre, cédula o factura..."
         class="flex-1 min-w-[220px] border rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-optica-500 outline-none bg-white">
-      <button type="button" id="btn-buscar-ficha"
-        class="bg-optica-600 hover:bg-optica-700 text-white font-semibold px-5 py-2.5 rounded-xl transition">
-        Buscar
+      <button type="button" id="btn-buscar-ficha" class="btn-ola btn-ola--primary">
+        <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">🔍</span>
+        <span>Buscar</span>
       </button>
     </div>
     <div id="resultados-ficha" class="space-y-2 max-h-48 overflow-y-auto"></div>
@@ -149,9 +152,14 @@
           <input type="text" id="contexto-respuesta" placeholder="Ej: Retraso en laboratorio, nueva fecha 22/06"
             class="w-full border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-optica-500 outline-none">
         </div>
-        <button type="button" id="btn-generar-respuesta"
-          class="w-full bg-optica-600 hover:bg-optica-700 text-white font-semibold px-5 py-3 rounded-xl transition">
-          ✨ Generar respuesta estructurada
+        <button type="button" id="btn-generar-respuesta" class="btn-ola btn-ola--ai btn-ola--block btn-ola--lg">
+          <span class="btn-ola__left">
+            <span class="btn-ola__icon">✨</span>
+            <span class="btn-ola__text">
+              <span class="btn-ola__title">Generar respuesta estructurada</span>
+              <span class="btn-ola__sub">Voz + WhatsApp con ficha del cliente</span>
+            </span>
+          </span>
         </button>
         <p id="respuesta-status" class="text-sm text-slate-500"></p>
       </div>
@@ -168,13 +176,13 @@
             El mensaje completo para WhatsApp aparecerá aquí...
           </div>
         </div>
-        <div class="flex gap-2">
-          <button type="button" id="btn-copiar-respuesta-wa"
-            class="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
-            📋 Copiar WhatsApp
+        <div class="flex flex-wrap gap-2">
+          <button type="button" id="btn-copiar-respuesta-wa" class="btn-ola btn-ola--secondary flex-1">
+            <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">📋</span>
+            <span>Copiar WhatsApp</span>
           </button>
           <a id="link-respuesta-wa" href="#" target="_blank" rel="noopener"
-            class="flex-1 py-2.5 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white text-center transition pointer-events-none opacity-50">
+            class="btn-ola btn-ola--wa flex-1 btn-ola--center pointer-events-none opacity-50">
             💬 Abrir WhatsApp
           </a>
         </div>

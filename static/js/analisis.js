@@ -55,7 +55,10 @@ formAnalisis.addEventListener('submit', async (e) => {
   const btn = document.getElementById('btn-analizar');
   const modo = document.querySelector('input[name="modo-analisis"]:checked')?.value || 'conocimiento';
   btn.disabled = true;
-  btn.textContent = modo === 'claude_total' ? '⏳ Claude total…' : '⏳ Claude + conocimiento…';
+  const titleEl = btn.querySelector('.btn-ola__title');
+  const subEl = btn.querySelector('.btn-ola__sub');
+  if (titleEl) titleEl.textContent = modo === 'claude_total' ? 'Claude total…' : 'Claude + conocimiento…';
+  if (subEl) subEl.textContent = 'Analizando imagen…';
   resultadoAnalisis.classList.add('hidden');
 
   const formData = new FormData();
@@ -91,7 +94,10 @@ formAnalisis.addEventListener('submit', async (e) => {
     resultadoAnalisis.innerHTML = `<div class="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">❌ ${err.message}</div>`;
   } finally {
     btn.disabled = false;
-    btn.textContent = '🔍 Analizar con Claude';
+    const titleEl = btn.querySelector('.btn-ola__title');
+    const subEl = btn.querySelector('.btn-ola__sub');
+    if (titleEl) titleEl.textContent = 'Analizar con Claude';
+    if (subEl) subEl.textContent = 'Veredicto del daño con IA';
   }
 });
 

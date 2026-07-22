@@ -80,11 +80,15 @@
           <input type="checkbox" id="kb-activo" checked class="rounded text-optica-600">
           Activo (usar en veredictos)
         </label>
-        <div class="flex gap-2 pt-2">
-          <button type="submit" id="btn-guardar-kb" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold">
-            💾 Guardar entrada
+        <div class="flex flex-wrap gap-2 pt-2">
+          <button type="submit" id="btn-guardar-kb" class="btn-ola btn-ola--success">
+            <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">💾</span>
+            <span class="btn-ola__text">
+              <span class="btn-ola__title">Guardar entrada</span>
+              <span class="btn-ola__sub">Base de conocimiento</span>
+            </span>
           </button>
-          <button type="button" id="btn-cancelar-kb" class="hidden glass-btn px-4 py-2.5 rounded-xl text-sm">Cancelar</button>
+          <button type="button" id="btn-cancelar-kb" class="hidden btn-ola btn-ola--secondary">Cancelar</button>
         </div>
       </form>
     </div>

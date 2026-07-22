@@ -69,8 +69,14 @@
       </p>
       <input type="file" id="wa-excel" accept=".xlsx,.xls,.csv"
         class="glass-input w-full px-3 py-2 text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:text-white file:text-xs file:font-semibold">
-      <button type="button" id="btn-cargar-excel" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition">
-        📥 Cargar matriz
+      <button type="button" id="btn-cargar-excel" class="btn-ola btn-ola--success btn-ola--block btn-ola--lg">
+        <span class="btn-ola__left">
+          <span class="btn-ola__icon">📥</span>
+          <span class="btn-ola__text">
+            <span class="btn-ola__title">Cargar matriz</span>
+            <span class="btn-ola__sub">Excel o CSV con contactos</span>
+          </span>
+        </span>
       </button>
       <div id="wa-advertencias" class="hidden text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3"></div>
       <p class="text-xs text-slate-400" id="wa-resumen-contactos">Sin contactos cargados</p>
@@ -80,15 +86,27 @@
   <div class="glass-card p-5">
     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
       <h3 class="font-semibold text-slate-800">3️⃣ Generar y enviar</h3>
-      <div class="flex flex-wrap gap-2">
-        <button type="button" id="btn-generar" disabled class="glass-btn px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 disabled:opacity-40">
-          ✨ Generar mensajes (cliente + tienda + correo)
+      <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+        <button type="button" id="btn-generar" disabled class="btn-ola btn-ola--secondary">
+          <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">✨</span>
+          <span class="btn-ola__text">
+            <span class="btn-ola__title">Generar mensajes</span>
+            <span class="btn-ola__sub">Cliente + tienda + correo</span>
+          </span>
         </button>
-        <button type="button" id="btn-exportar" disabled class="bg-optica-600 hover:bg-optica-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold disabled:opacity-40">
-          📥 Exportar Excel
+        <button type="button" id="btn-exportar" disabled class="btn-ola btn-ola--primary">
+          <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">📥</span>
+          <span class="btn-ola__text">
+            <span class="btn-ola__title">Exportar Excel</span>
+            <span class="btn-ola__sub">Con enlaces y textos</span>
+          </span>
         </button>
-        <button type="button" id="btn-enviar-masivo" disabled class="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold disabled:opacity-40">
-          📤 Enviar WA clientes
+        <button type="button" id="btn-enviar-masivo" disabled class="btn-ola btn-ola--wa">
+          <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">📤</span>
+          <span class="btn-ola__text">
+            <span class="btn-ola__title">Enviar WA clientes</span>
+            <span class="btn-ola__sub">Envío masivo guiado</span>
+          </span>
         </button>
       </div>
     </div>
@@ -136,11 +154,23 @@
         <p class="text-xs text-slate-500">Seleccione una fila de la tabla. Script oficial de reprogramación al cliente.</p>
         <textarea id="preview-cliente" rows="14" class="glass-textarea w-full px-3 py-2 text-sm font-mono" readonly placeholder="Genere mensajes para ver el texto al cliente…"></textarea>
         <div class="flex flex-wrap gap-2">
-          <button type="button" id="btn-wa-cliente" class="bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm opacity-40 pointer-events-none" disabled>
-            💬 Enviar a WhatsApp (cliente)
+          <button type="button" id="btn-wa-cliente" class="btn-ola btn-ola--wa btn-ola--block opacity-40 pointer-events-none" disabled>
+            <span class="btn-ola__left">
+              <span class="btn-ola__icon">💬</span>
+              <span class="btn-ola__text">
+                <span class="btn-ola__title">Enviar a WhatsApp (cliente)</span>
+                <span class="btn-ola__sub">Copia el mensaje y abre el chat</span>
+              </span>
+            </span>
           </button>
-          <button type="button" id="btn-copy-cliente" class="glass-btn px-4 py-2.5 rounded-xl text-sm font-semibold">📋 Copiar mensaje</button>
-          <button type="button" id="btn-mark-cliente" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm disabled:opacity-40" disabled>✅ Marcar enviado</button>
+          <button type="button" id="btn-copy-cliente" class="btn-ola btn-ola--secondary">
+            <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">📋</span>
+            <span>Copiar mensaje</span>
+          </button>
+          <button type="button" id="btn-mark-cliente" class="btn-ola btn-ola--success" disabled>
+            <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">✅</span>
+            <span>Marcar enviado</span>
+          </button>
         </div>
         <div class="rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 py-2.5 text-xs text-emerald-900 space-y-1.5">
           <p class="font-semibold">Cómo enviar sin rombos (Web, Android e iPhone)</p>
@@ -160,10 +190,19 @@
         <p class="text-xs text-slate-500">Aviso al equipo del local confirmando que el cliente ya fue notificado.</p>
         <textarea id="preview-tienda" rows="14" class="glass-textarea w-full px-3 py-2 text-sm font-mono" readonly placeholder="Genere mensajes para ver el texto a tienda…"></textarea>
         <div class="flex flex-wrap gap-2">
-          <button type="button" id="btn-wa-tienda" class="bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm opacity-40 pointer-events-none" disabled>
-            💬 Abrir WA tienda
+          <button type="button" id="btn-wa-tienda" class="btn-ola btn-ola--wa btn-ola--block opacity-40 pointer-events-none" disabled>
+            <span class="btn-ola__left">
+              <span class="btn-ola__icon">💬</span>
+              <span class="btn-ola__text">
+                <span class="btn-ola__title">Enviar a WhatsApp (tienda)</span>
+                <span class="btn-ola__sub">Aviso al equipo del local</span>
+              </span>
+            </span>
           </button>
-          <button type="button" id="btn-copy-tienda" class="glass-btn px-4 py-2.5 rounded-xl text-sm font-semibold">📋 Copiar</button>
+          <button type="button" id="btn-copy-tienda" class="btn-ola btn-ola--secondary">
+            <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">📋</span>
+            <span>Copiar</span>
+          </button>
         </div>
       </div>
 
@@ -187,9 +226,18 @@
         </div>
         <textarea id="preview-correo" rows="16" class="glass-textarea w-full px-3 py-2 text-sm font-mono" placeholder="Genere mensajes para armar el correo con matriz…"></textarea>
         <div class="flex flex-wrap gap-2">
-          <button type="button" id="btn-copy-correo" class="glass-btn px-4 py-2.5 rounded-xl text-sm font-semibold">📋 Copiar correo</button>
-          <a id="btn-mailto" href="#" class="bg-optica-600 hover:bg-optica-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm opacity-40 pointer-events-none">✉️ Abrir en cliente de correo</a>
-          <button type="button" id="btn-enviar-smtp" class="bg-violet-600 hover:bg-violet-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm">📤 Enviar (SMTP)</button>
+          <button type="button" id="btn-copy-correo" class="btn-ola btn-ola--secondary">
+            <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">📋</span>
+            <span>Copiar correo</span>
+          </button>
+          <a id="btn-mailto" href="#" class="btn-ola btn-ola--primary opacity-40 pointer-events-none">
+            <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">✉️</span>
+            <span>Abrir en correo</span>
+          </a>
+          <button type="button" id="btn-enviar-smtp" class="btn-ola btn-ola--violet">
+            <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">📤</span>
+            <span>Enviar (SMTP)</span>
+          </button>
         </div>
         <p id="correo-hint" class="text-xs text-slate-400"></p>
       </div>
@@ -226,17 +274,11 @@
     <p class="text-sm text-slate-500 mb-3" id="modal-telefono">—</p>
     <pre id="modal-preview" class="text-xs bg-slate-50 border rounded-xl p-3 max-h-32 overflow-y-auto whitespace-pre-wrap mb-4"></pre>
     <div class="flex flex-wrap gap-2">
-      <button type="button" id="modal-abrir-wa" class="flex-1 text-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl">
-        💬 Abrir en WhatsApp
-      </button>
-      <button type="button" id="modal-enviar-business" class="hidden flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl">
-        📱 Enviar por Business API
-      </button>
-      <button type="button" id="modal-enviado" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl">
-        ✅ Enviado — Siguiente
-      </button>
-      <button type="button" id="modal-saltar" class="glass-btn px-4 py-3 rounded-xl text-sm">Saltar</button>
-      <button type="button" id="modal-cerrar" class="glass-btn px-4 py-3 rounded-xl text-sm text-red-600">Detener</button>
+      <button type="button" id="modal-abrir-wa" class="btn-ola btn-ola--wa flex-1 btn-ola--center">💬 Abrir en WhatsApp</button>
+      <button type="button" id="modal-enviar-business" class="hidden btn-ola btn-ola--success flex-1 btn-ola--center">📱 Enviar por Business API</button>
+      <button type="button" id="modal-enviado" class="btn-ola btn-ola--success flex-1 btn-ola--center">✅ Enviado — Siguiente</button>
+      <button type="button" id="modal-saltar" class="btn-ola btn-ola--secondary">Saltar</button>
+      <button type="button" id="modal-cerrar" class="btn-ola btn-ola--ghost-danger">Detener</button>
     </div>
   </div>
 </div>

@@ -28,9 +28,14 @@
         <p id="archivo-nombre" class="text-optica-600 font-semibold mt-3 hidden"></p>
       </div>
 
-      <button type="submit" id="btn-importar" disabled
-        class="w-full bg-optica-600 hover:bg-optica-700 disabled:bg-slate-300 text-white font-semibold py-3 rounded-xl transition">
-        Importar clientes
+      <button type="submit" id="btn-importar" disabled class="btn-ola btn-ola--primary btn-ola--block btn-ola--lg">
+        <span class="btn-ola__left">
+          <span class="btn-ola__icon">📥</span>
+          <span class="btn-ola__text">
+            <span class="btn-ola__title">Importar clientes</span>
+            <span class="btn-ola__sub">Subir CSV o Excel con protección anti-duplicados</span>
+          </span>
+        </span>
       </button>
     </form>
 
@@ -53,17 +58,35 @@
       </p>
     </div>
 
-    <div class="flex flex-col sm:flex-row gap-3">
-      <button id="btn-importar-carpeta" {% if not existe_archivo_base %}disabled{% endif %}
-        class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-semibold py-3 rounded-xl transition">
-        🔄 Actualizar desde carpeta (reemplazar todo)
+    <div class="btn-ola-grid">
+      <button id="btn-importar-carpeta" type="button" {% if not existe_archivo_base %}disabled{% endif %}
+        class="btn-ola btn-ola--success btn-ola--block">
+        <span class="btn-ola__left">
+          <span class="btn-ola__icon">🔄</span>
+          <span class="btn-ola__text">
+            <span class="btn-ola__title">Actualizar desde carpeta</span>
+            <span class="btn-ola__sub">Reemplaza toda la base con el Excel</span>
+          </span>
+        </span>
       </button>
-      <button id="btn-agregar-carpeta" {% if not existe_archivo_base %}disabled{% endif %}
-        class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-semibold py-3 rounded-xl transition">
-        ➕ Agregar desde carpeta
+      <button id="btn-agregar-carpeta" type="button" {% if not existe_archivo_base %}disabled{% endif %}
+        class="btn-ola btn-ola--primary btn-ola--block">
+        <span class="btn-ola__left">
+          <span class="btn-ola__icon">➕</span>
+          <span class="btn-ola__text">
+            <span class="btn-ola__title">Agregar desde carpeta</span>
+            <span class="btn-ola__sub">Solo inserta registros nuevos</span>
+          </span>
+        </span>
       </button>
-      <button id="btn-limpiar" class="bg-red-50 hover:bg-red-100 text-red-700 font-semibold py-3 px-5 rounded-xl border border-red-200 transition">
-        🗑️ Limpiar base
+      <button id="btn-limpiar" type="button" class="btn-ola btn-ola--ghost-danger btn-ola--block btn-ola--span-2">
+        <span class="btn-ola__left">
+          <span class="btn-ola__icon">🗑️</span>
+          <span class="btn-ola__text">
+            <span class="btn-ola__title">Limpiar base</span>
+            <span class="btn-ola__sub">Elimina todos los pacientes importados</span>
+          </span>
+        </span>
       </button>
     </div>
     <p class="text-xs text-slate-400 mt-3">

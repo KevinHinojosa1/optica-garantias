@@ -11,7 +11,10 @@
   <div class="lg:col-span-2 space-y-6">
     <div class="flex flex-col-reverse sm:flex-row sm:flex-wrap items-stretch sm:items-center justify-between gap-3">
       <a href="/clientes" class="text-optica-600 hover:underline text-sm">← Volver a atención de clientes</a>
-      <button id="btn-eliminar" class="w-full sm:w-auto text-sm bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 font-semibold px-4 py-2 rounded-xl transition">🗑️ Eliminar cliente</button>
+      <button id="btn-eliminar" type="button" class="btn-ola btn-ola--ghost-danger btn-ola--sm">
+        <span class="btn-ola__icon" style="width:1.75rem;height:1.75rem;font-size:0.9rem">🗑️</span>
+        <span>Eliminar cliente</span>
+      </button>
     </div>
 
     {% if es_duplicado %}
@@ -75,8 +78,12 @@
       </div>
       <p id="descuento-error" class="hidden mt-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2"></p>
       <p id="descuento-ok" class="hidden mt-3 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2"></p>
-      <button id="btn-guardar-descuento" class="mt-4 bg-optica-600 hover:bg-optica-700 text-white font-semibold px-5 py-2.5 rounded-xl transition">
-        Guardar descuento
+      <button id="btn-guardar-descuento" type="button" class="btn-ola btn-ola--primary mt-4">
+        <span class="btn-ola__icon">🏷️</span>
+        <span class="btn-ola__text">
+          <span class="btn-ola__title">Guardar descuento</span>
+          <span class="btn-ola__sub">Código y porcentaje aplicado</span>
+        </span>
       </button>
     </div>
 
@@ -136,9 +143,14 @@
           <p class="text-slate-600">Seleccionar imagen del daño</p>
           <img id="preview" class="hidden max-h-48 mx-auto mt-4 rounded-lg shadow" alt="Preview">
         </div>
-        <button type="submit" id="btn-analizar"
-          class="w-full bg-optica-600 hover:bg-optica-700 text-white font-semibold py-3 rounded-xl transition">
-          🔍 Analizar con Claude
+        <button type="submit" id="btn-analizar" class="btn-ola btn-ola--ai btn-ola--block btn-ola--lg">
+          <span class="btn-ola__left">
+            <span class="btn-ola__icon">🔍</span>
+            <span class="btn-ola__text">
+              <span class="btn-ola__title">Analizar con Claude</span>
+              <span class="btn-ola__sub">Veredicto del daño con IA</span>
+            </span>
+          </span>
         </button>
       </form>
 
@@ -157,29 +169,47 @@
       </p>
       <textarea id="mensaje-whatsapp" rows="12"
         class="w-full border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-optica-500 outline-none font-mono">{{ mensaje_inicial }}</textarea>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-        <a id="btn-descargar-pdf" href="#" target="_blank" class="hidden w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center justify-center gap-2">
-          📄 Descargar PDF
+      <div class="btn-ola-grid mt-4">
+        <a id="btn-descargar-pdf" href="#" target="_blank" class="btn-ola btn-ola--indigo btn-ola--block hidden">
+          <span class="btn-ola__left">
+            <span class="btn-ola__icon">📄</span>
+            <span class="btn-ola__text">
+              <span class="btn-ola__title">Descargar PDF</span>
+              <span class="btn-ola__sub">Informe con logo oficial</span>
+            </span>
+          </span>
         </a>
-        <button id="btn-regenerar" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold px-5 py-2.5 rounded-xl transition">
-          🔄 Regenerar reporte
+        <button id="btn-regenerar" type="button" class="btn-ola btn-ola--secondary btn-ola--block">
+          <span class="btn-ola__left">
+            <span class="btn-ola__icon">🔄</span>
+            <span class="btn-ola__text">
+              <span class="btn-ola__title">Regenerar reporte</span>
+              <span class="btn-ola__sub">Actualizar mensaje del grupo</span>
+            </span>
+          </span>
         </button>
         <a id="btn-enviar-wa" href="{{ wa_link }}" target="_blank" rel="noopener"
-          class="w-full text-center bg-green-600 hover:bg-green-700 text-white font-semibold px-5 py-2.5 rounded-xl transition inline-flex items-center justify-center gap-2">
-          📤 Enviar reporte (tienda)
+          class="btn-ola btn-ola--wa btn-ola--block btn-ola--span-2">
+          <span class="btn-ola__left">
+            <span class="btn-ola__icon">📤</span>
+            <span class="btn-ola__text">
+              <span class="btn-ola__title">Enviar reporte (tienda)</span>
+              <span class="btn-ola__sub">WhatsApp del grupo de apoyo</span>
+            </span>
+          </span>
         </a>
       </div>
 
       <div class="pdf-send mt-3" id="wrap-enviar-pdf">
-        <button type="button" id="btn-enviar-pdf-wa" class="pdf-send-btn" aria-expanded="false" aria-controls="panel-destino-pdf">
-          <span class="pdf-send-btn__left">
-            <span class="pdf-send-btn__icon" aria-hidden="true">📄</span>
-            <span>
-              <span class="pdf-send-btn__title" id="btn-enviar-pdf-label">Enviar reporte + PDF</span>
-              <span class="pdf-send-btn__sub">Incluye enlace del informe · elija destinatario</span>
+        <button type="button" id="btn-enviar-pdf-wa" class="btn-ola btn-ola--success btn-ola--block btn-ola--lg pdf-send-btn" aria-expanded="false" aria-controls="panel-destino-pdf" style="justify-content:space-between">
+          <span class="btn-ola__left">
+            <span class="btn-ola__icon" aria-hidden="true">📄</span>
+            <span class="btn-ola__text">
+              <span class="btn-ola__title" id="btn-enviar-pdf-label">Enviar reporte + PDF</span>
+              <span class="btn-ola__sub">Incluye enlace del informe · elija destinatario</span>
             </span>
           </span>
-          <span class="pdf-send-btn__chevron" aria-hidden="true">
+          <span class="btn-ola__chevron" aria-hidden="true">
             <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
           </span>
         </button>
