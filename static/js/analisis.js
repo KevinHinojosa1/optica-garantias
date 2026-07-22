@@ -156,10 +156,17 @@ function actualizarEnlaceGrupo(waLink, grupoNombre) {
   }
 }
 
-function buildWaLink(mensaje) {
-  const encoded = encodeURIComponent(mensaje);
-  const num = GRUPO_NUMERO.replace(/\D/g, '');
-  return `https://wa.me/${num}?text=${encoded}`;
+function buildWaLink(mensaje, telefono) {
+  const num = String(telefono || GRUPO_NUMERO || '').replace(/\D/g, '');
+  let texto = String(mensaje || '');
+  texto = texto
+    .replace(/\u2501/g, '-')
+    .replace(/\u2500/g, '-')
+    .replace(/\u2014/g, '-')
+    .replace(/\u2013/g, '-')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n');
+  return `https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(texto)}`;
 }
 
 function aplicarReporte(mensaje, waLink, grupoNombre, veredicto) {

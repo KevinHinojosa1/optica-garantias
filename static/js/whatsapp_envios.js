@@ -28,6 +28,37 @@ function escapeHtml(t) {
   return d.innerHTML;
 }
 
+/**
+ * Construye el enlace de WhatsApp en el navegador (UTF-8 / encodeURIComponent).
+ * Evita emojis rotos (rombos) que a veces salen con URLs pre-codificadas en el servidor.
+ */
+function buildWaLink(telefono, mensaje) {
+  const num = String(telefono || '').replace(/\D/g, '');
+  if (!num) return '';
+  let texto = String(mensaje || '');
+  // Separadores tipográficos que en algunos WhatsApp se ven como rombo
+  texto = texto
+    .replace(/\u2501/g, '-')
+    .replace(/\u2500/g, '-')
+    .replace(/\u2014/g, '-')
+    .replace(/\u2013/g, '-')
+    .replace(/\ufeff/g, '')
+    .replace(/\u200b/g, '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n');
+  return `https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(texto)}`;
+}
+
+function openWhatsApp(telefono, mensaje) {
+  const url = buildWaLink(telefono, mensaje);
+  if (!url) {
+    toast('No hay número de WhatsApp válido', 'error');
+    return '';
+  }
+  window.open(url, '_blank', 'noopener');
+  return url;
+}
+
 function modoEnvio() {
   return document.getElementById('wa-modo-business')?.checked ? 'business' : 'wame';
 }
@@ -192,9 +223,13 @@ function seleccionarItem(it) {
   document.getElementById('btn-mark-cliente').disabled = !it.valido && !it.nombre;
 
   const linkCli = document.getElementById('btn-wa-cliente');
-  const waCli = it.wa_link_cliente || it.wa_link || '';
+  const telCli = it.telefono_limpio || it.telefono || '';
+  const msgCli = it.mensaje_cliente || it.mensaje || '';
+  const waCli = buildWaLink(telCli, msgCli) || it.wa_link_cliente || it.wa_link || '';
   if (waCli) {
     linkCli.href = waCli;
+    linkCli.dataset.telefono = telCli;
+    linkCli.dataset.mensaje = msgCli;
     linkCli.classList.remove('opacity-40', 'pointer-events-none');
   } else {
     linkCli.href = '#';
@@ -202,8 +237,18 @@ function seleccionarItem(it) {
   }
 
   const linkTi = document.getElementById('btn-wa-tienda');
-  if (it.wa_link_tienda) {
-    linkTi.href = it.wa_link_tienda;
+  // Tienda: usar enlace del servidor (grupo) o reconstruir si hay teléfono en el link
+  const waTi = it.wa_link_tienda || '';
+  if (waTi) {
+    // Reconstruir text= desde el mensaje para emojis correctos
+    try {
+      const u = new URL(waTi);
+      const phone = u.searchParams.get('phone') || (u.pathname || '').replace(/\D/g, '');
+      const waTiFixed = buildWaLink(phone, it.mensaje_tienda || '');
+      linkTi.href = waTiFixed || waTi;
+    } catch {
+      linkTi.href = waTi;
+    }
     linkTi.classList.remove('opacity-40', 'pointer-events-none');
   } else {
     linkTi.href = '#';
@@ -440,12 +485,15 @@ function mostrarContactoCola() {
   document.getElementById('modal-barra').style.width = `${Math.round((indiceCola / total) * 100)}%`;
   document.getElementById('modal-nombre').textContent = it.nombre;
   document.getElementById('modal-telefono').textContent = it.telefono;
-  document.getElementById('modal-preview').textContent = it.mensaje_cliente || it.mensaje;
-  document.getElementById('modal-abrir-wa').href = it.wa_link_cliente || it.wa_link;
+  const msgCli = it.mensaje_cliente || it.mensaje || '';
+  const telCli = it.telefono_limpio || it.telefono || '';
+  document.getElementById('modal-preview').textContent = msgCli;
+  const waUrl = buildWaLink(telCli, msgCli) || it.wa_link_cliente || it.wa_link || '#';
+  document.getElementById('modal-abrir-wa').href = waUrl;
 
   const esBusiness = modoEnvio() === 'business' && businessApiActiva;
   if (!esBusiness) {
-    window.open(it.wa_link_cliente || it.wa_link, '_blank', 'noopener');
+    openWhatsApp(telCli, msgCli);
     if (document.getElementById('wa-auto-siguiente')?.checked) {
       clearTimeout(autoTimer);
       autoTimer = setTimeout(() => marcarEnviadoYSiguiente(), 5000);

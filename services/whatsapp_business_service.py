@@ -47,16 +47,19 @@ class WhatsAppBusinessService:
         if not numero:
             raise ValueError("Teléfono inválido para WhatsApp Business.")
 
+        from services.whatsapp_service import WhatsAppService
+
+        cuerpo = WhatsAppService.normalizar_mensaje_whatsapp(mensaje)[:4096]
         payload = {
             "messaging_product": "whatsapp",
             "recipient_type": "individual",
             "to": numero,
             "type": "text",
-            "text": {"preview_url": False, "body": mensaje[:4096]},
+            "text": {"preview_url": False, "body": cuerpo},
         }
         headers = {
             "Authorization": f"Bearer {settings.whatsapp_business_token}",
-            "Content-Type": "application/json",
+            "Content-Type": "application/json; charset=utf-8",
         }
 
         with httpx.Client(timeout=30.0) as client:

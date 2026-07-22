@@ -42,19 +42,20 @@ MAPEO_COLUMNAS: dict[str, tuple[str, ...]] = {
     "motivo": ("motivo", "razon", "razón", "causa", "detalle", "observacion", "observación"),
 }
 
-# Scripts oficiales CX (emojis multiplataforma)
+# Scripts oficiales CX — emojis Unicode básicos (bien soportados en Android/iOS WhatsApp)
+# Separador ASCII para evitar "rombos" por glifos de caja tipográfica en algunos móviles
 PLANTILLA_CLIENTE = """📅 REPROGRAMACIÓN DE ENTREGA
 📦 Producto: {producto}
-🏬 Tienda: {local}
-🧾 Factura: {factura}
-━━━━━━━━━━━━━━━━━━━━
+🏪 Tienda: {local}
+📄 Factura: {factura}
+--------------------
 Hola, {nombre} 👋
 
 Te saluda {asesor}, de Servicio al Cliente de Óptica Los Andes.
 Queremos contarte que tu orden no estará lista dentro del plazo que te indicamos inicialmente. Lamentamos mucho este cambio y las molestias que pueda ocasionarte. 🙏
 Te enviaremos otro mensaje apenas tu pedido esté disponible.
 Gracias por tu comprensión. 💙
-━━━━━━━━━━━━━━━━━━━━
+--------------------
 Si tienes alguna duda, escríbenos con confianza o comunícate con nosotros al 1800-678-422 opción 2. 💬😊"""
 
 PLANTILLA_TIENDA = """✅ MENSAJE ENVIADO AL CLIENTE
@@ -64,7 +65,7 @@ Les saluda {asesor}, de Servicio al Cliente.
 Les confirmo que el mensaje de reprogramación de entrega ya fue enviado al cliente.
 
 📍 Tienda: {local}
-🧾 Factura: {factura}
+📄 Factura: {factura}
 📦 Producto: {producto}
 👤 Cliente: {nombre}
 
@@ -311,8 +312,12 @@ class WhatsAppEnviosService:
             if not valido:
                 error = "Teléfono inválido o ausente (solo tienda/correo)"
 
-            msg_cliente = _aplicar_vars(PLANTILLA_CLIENTE, vars_map)
-            msg_tienda = _aplicar_vars(PLANTILLA_TIENDA, vars_map)
+            msg_cliente = WhatsAppService.normalizar_mensaje_whatsapp(
+                _aplicar_vars(PLANTILLA_CLIENTE, vars_map)
+            )
+            msg_tienda = WhatsAppService.normalizar_mensaje_whatsapp(
+                _aplicar_vars(PLANTILLA_TIENDA, vars_map)
+            )
             wa_cliente = WhatsAppService.generar_enlace(tel_limpio, msg_cliente) if valido else ""
             wa_tienda = cls._wa_tienda(vars_map["local"], msg_tienda)
 

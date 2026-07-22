@@ -19,9 +19,38 @@ class WhatsAppService:
         return digits
 
     @staticmethod
+    def normalizar_mensaje_whatsapp(mensaje: str) -> str:
+        """Normaliza el texto para que emojis y tildes lleguen bien a WhatsApp (UTF-8)."""
+        if mensaje is None:
+            return ""
+        if not isinstance(mensaje, str):
+            mensaje = str(mensaje)
+        # NFC: forma canónica Unicode (evita glifos rotos / rombos en móviles)
+        import unicodedata
+
+        texto = unicodedata.normalize("NFC", mensaje)
+        # Separadores tipográficos que en algunos dispositivos salen como rombo
+        texto = (
+            texto.replace("\u2501", "-")  # ━
+            .replace("\u2500", "-")  # ─
+            .replace("\u2014", "-")  # —
+            .replace("\u2013", "-")  # –
+            .replace("\ufeff", "")
+            .replace("\u200b", "")
+        )
+        # Unificar saltos de línea
+        texto = texto.replace("\r\n", "\n").replace("\r", "\n")
+        return texto
+
+    @staticmethod
     def generar_enlace(telefono: str, mensaje: str) -> str:
+        """Genera enlace wa.me con texto codificado en UTF-8 (emojis correctos en iOS/Android)."""
         numero = WhatsAppService.limpiar_telefono(telefono)
-        return f"https://wa.me/{numero}?text={quote(mensaje)}"
+        texto = WhatsAppService.normalizar_mensaje_whatsapp(mensaje)
+        # safe='' codifica todo lo no alfanumérico; encoding UTF-8 explícito
+        texto_q = quote(texto, safe="", encoding="utf-8", errors="strict")
+        # api.whatsapp.com es más estable con Unicode que solo wa.me en algunos clientes
+        return f"https://api.whatsapp.com/send?phone={numero}&text={texto_q}"
 
     @classmethod
     def _encabezado_interno(cls, cliente: dict, tienda: dict) -> str:
