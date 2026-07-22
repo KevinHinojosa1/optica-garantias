@@ -57,7 +57,7 @@ def migrate_db():
 
 
 def init_db():
-    from models import cliente, conocimiento, historial, ivr  # noqa: F401
+    from models import cliente, conocimiento, historial, ivr, reprogramacion  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
     migrate_db()
@@ -65,3 +65,13 @@ def init_db():
     consultas_dir = settings.base_dir / settings.consultas_imagenes_dir
     consultas_dir.mkdir(parents=True, exist_ok=True)
     (settings.base_dir / "data" / "conocimiento").mkdir(parents=True, exist_ok=True)
+
+    # Importar JSON antiguo de reprogramaciones si existe
+    try:
+        from services.reprogramacion_log_service import ReprogramacionLogService
+
+        n = ReprogramacionLogService.migrar_json_si_existe()
+        if n:
+            print(f"Reprogramaciones: migrados {n} registros JSON → BD", flush=True)
+    except Exception as exc:
+        print(f"Migración reprogramaciones (no crítica): {exc}", flush=True)

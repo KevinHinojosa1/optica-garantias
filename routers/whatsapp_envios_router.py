@@ -4,9 +4,12 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from fastapi import APIRouter, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse, Response
+from sqlalchemy.orm import Session
 
+from config import settings
+from database import get_db
 from schemas.whatsapp_envios import (
     EnviarBusinessLoteRequest,
     EnviarBusinessLoteResponse,
@@ -40,11 +43,25 @@ def _kwargs_generar(payload: GenerarEnviosRequest) -> dict:
     }
 
 
+def _db_info() -> dict:
+    url = settings.database_url or ""
+    if url.startswith("sqlite"):
+        motor = "SQLite"
+        detalle = url.replace("sqlite:///", "")
+    elif "postgres" in url:
+        motor = "PostgreSQL"
+        detalle = "conectado (producción)"
+    else:
+        motor = "SQLAlchemy"
+        detalle = url[:40] + ("…" if len(url) > 40 else "")
+    return {"motor": motor, "detalle": detalle, "fuente": "base_de_datos"}
+
+
 @router.get("/envios-whatsapp", response_class=HTMLResponse)
-async def pagina_envios_whatsapp(request: Request):
+async def pagina_envios_whatsapp(request: Request, db: Session = Depends(get_db)):
     wa_config = WhatsAppBusinessService.info_config()
     mail_config = EmailService.info_config()
-    resumen = ReprogramacionLogService.resumen_dia()
+    resumen = ReprogramacionLogService.resumen_dia(db=db)
     return templates.TemplateResponse(
         request,
         "whatsapp_envios.html",
@@ -54,6 +71,7 @@ async def pagina_envios_whatsapp(request: Request):
             "wa_business_activa": wa_config["business_api_activa"],
             "smtp_activo": mail_config["smtp_activo"],
             "resumen_dia": resumen,
+            "db_info": _db_info(),
         },
     )
 
@@ -73,8 +91,20 @@ async def api_config_whatsapp():
 
 
 @router.get("/api/envios-whatsapp/resumen-dia")
-async def api_resumen_dia(fecha: str | None = None):
-    return ReprogramacionLogService.resumen_dia(fecha)
+async def api_resumen_dia(fecha: str | None = None, db: Session = Depends(get_db)):
+    return ReprogramacionLogService.resumen_dia(fecha, db=db)
+
+
+@router.get("/api/envios-whatsapp/historial")
+async def api_historial_reprogramaciones(
+    fecha: str | None = None,
+    local: str | None = None,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+):
+    data = ReprogramacionLogService.listar(fecha=fecha, local=local, limit=limit, db=db)
+    data["db"] = _db_info()
+    return data
 
 
 @router.post("/api/envios-whatsapp/subir-excel", response_model=SubirExcelEnviosResponse)
@@ -130,7 +160,7 @@ async def api_exportar_envios(payload: GenerarEnviosRequest):
 
 
 @router.post("/api/envios-whatsapp/marcar-enviado")
-async def api_marcar_enviado(payload: MarcarEnviadoRequest):
+async def api_marcar_enviado(payload: MarcarEnviadoRequest, db: Session = Depends(get_db)):
     resumen = ReprogramacionLogService.registrar_envio(
         local=payload.local,
         nombre=payload.nombre,
@@ -139,11 +169,13 @@ async def api_marcar_enviado(payload: MarcarEnviadoRequest):
         telefono=payload.telefono,
         canal=payload.canal,
         estado=payload.estado,
+        db=db,
     )
     return {
         "ok": True,
         "resumen_local": resumen,
-        "resumen_dia": ReprogramacionLogService.resumen_dia(),
+        "resumen_dia": ReprogramacionLogService.resumen_dia(db=db),
+        "db": _db_info(),
     }
 
 

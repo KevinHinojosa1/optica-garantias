@@ -183,12 +183,55 @@ function pintarResumenDia(resumen) {
   const box = document.getElementById('resumen-hoy');
   if (!box) return;
   const locales = resumen.por_local || [];
+  const fuente = resumen.fuente === 'base_de_datos' ? ' · 💾 BD' : '';
   if (!locales.length) {
-    box.innerHTML = `Hoy (${escapeHtml(resumen.fecha || '')}): sin mensajes contabilizados aún.`;
+    box.innerHTML = `Hoy (${escapeHtml(resumen.fecha || '')}): sin mensajes contabilizados aún${fuente}.`;
     return;
   }
-  box.innerHTML = `<strong>Hoy ${escapeHtml(resumen.fecha)}:</strong> ${resumen.total_cliente} mensaje(s) al cliente · `
+  box.innerHTML = `<strong>Hoy ${escapeHtml(resumen.fecha)}:</strong> ${resumen.total_cliente} mensaje(s) al cliente${fuente} · `
     + locales.map(l => `${escapeHtml(l.local)}: <strong>${l.total_cliente}</strong>`).join(' · ');
+}
+
+async function cargarHistorialBd() {
+  const cont = document.getElementById('wa-historial-bd');
+  if (!cont) return;
+  try {
+    const res = await fetch('/api/envios-whatsapp/historial?limit=50');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Error al cargar historial');
+    if (data.db) {
+      const m = document.getElementById('wa-db-motor');
+      const d = document.getElementById('wa-db-detalle');
+      const b = document.getElementById('wa-db-badge');
+      if (m) m.textContent = data.db.motor || 'BD';
+      if (d) d.textContent = data.db.detalle || '';
+      if (b) b.textContent = `💾 BD: ${data.db.motor || 'OK'}`;
+    }
+    const items = data.items || [];
+    if (!items.length) {
+      cont.innerHTML = 'Aún no hay reprogramaciones guardadas. Genere mensajes para guardar en la base de datos.';
+      return;
+    }
+    cont.innerHTML = `
+      <table class="w-full text-left">
+        <thead><tr class="text-slate-400 border-b">
+          <th class="py-1 pr-2">Fecha</th><th class="py-1 pr-2">Local</th><th class="py-1 pr-2">Cliente</th>
+          <th class="py-1 pr-2">Factura</th><th class="py-1">Estado</th>
+        </tr></thead>
+        <tbody>
+          ${items.map(it => `<tr class="border-b border-slate-50">
+            <td class="py-1 pr-2 whitespace-nowrap">${escapeHtml(it.fecha || '')} ${escapeHtml(it.hora || '')}</td>
+            <td class="py-1 pr-2">${escapeHtml(it.local || '')}</td>
+            <td class="py-1 pr-2"><strong>${escapeHtml(it.nombre || '')}</strong></td>
+            <td class="py-1 pr-2">${escapeHtml(it.factura || '')}</td>
+            <td class="py-1">${escapeHtml(it.estado || '')}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      <p class="mt-2 text-slate-400">Mostrando ${items.length} de ${data.total || items.length} registro(s).</p>`;
+  } catch (e) {
+    cont.textContent = 'No se pudo cargar el historial: ' + e.message;
+  }
 }
 
 function actualizarModoUI() {
@@ -432,7 +475,8 @@ async function generarMensajes() {
   actualizarBotones();
   actualizarKpis();
   renderTabla();
-  toast(`✨ ${data.total} mensajes generados · ${correosPorLocal.length} correo(s) por local · contados en el día`, 'ok');
+  toast(`✨ ${data.total} mensajes generados y guardados en BD · ${correosPorLocal.length} correo(s) por local`, 'ok');
+  cargarHistorialBd();
 }
 
 async function exportarExcel() {
@@ -478,7 +522,8 @@ async function marcarEnviadoCliente() {
   pintarResumenDia(data.resumen_dia);
   actualizarKpis();
   renderTabla();
-  toast('✅ Marcado como enviado y contabilizado', 'ok');
+  toast('✅ Marcado como enviado y guardado en BD', 'ok');
+  cargarHistorialBd();
 }
 
 async function enviarSmtp() {
@@ -665,6 +710,8 @@ document.querySelectorAll('.wa-tab').forEach(tab => {
   });
 });
 
+document.getElementById('btn-recargar-historial')?.addEventListener('click', () =>
+  cargarHistorialBd().catch(e => toast(e.message, 'error')));
 document.getElementById('btn-cargar-excel')?.addEventListener('click', () =>
   cargarExcel().catch(e => toast(e.message, 'error')));
 document.getElementById('btn-generar')?.addEventListener('click', () =>
@@ -714,3 +761,4 @@ actualizarBotones();
 actualizarKpis();
 cargarConfigApi();
 if (window.RESUMEN_DIA_INICIAL) pintarResumenDia(window.RESUMEN_DIA_INICIAL);
+cargarHistorialBd();

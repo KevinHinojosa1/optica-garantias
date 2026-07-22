@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import io
 import re
+import uuid
 from collections import defaultdict
 from typing import Any
 
@@ -308,6 +309,7 @@ class WhatsAppEnviosService:
             "hora": hora.strip(),
             "motivo": motivo.strip(),
         }
+        lote_id = uuid.uuid4().hex[:16]
         items: list[dict[str, Any]] = []
         por_local: dict[str, list[dict]] = defaultdict(list)
 
@@ -338,6 +340,13 @@ class WhatsAppEnviosService:
                     telefono=tel_raw,
                     canal="cliente",
                     estado="Mensaje generado" if valido else "Pendiente (sin teléfono)",
+                    asesor=asesor_f,
+                    mensaje=msg_cliente,
+                    email_tienda=c.get("email_tienda") or "",
+                    motivo=vars_map.get("motivo") or "",
+                    fecha_reprogramada=vars_map.get("fecha_reprogramada") or "",
+                    fecha_anterior=vars_map.get("fecha_anterior") or "",
+                    lote_id=lote_id,
                 )
 
             item = {
@@ -376,6 +385,7 @@ class WhatsAppEnviosService:
             "items": items,
             "correos": correos,
             "resumen_dia": resumen_dia,
+            "lote_id": lote_id,
             "plantillas": {
                 "cliente": PLANTILLA_CLIENTE,
                 "tienda": PLANTILLA_TIENDA,
