@@ -28,35 +28,115 @@ function escapeHtml(t) {
   return d.innerHTML;
 }
 
+/** Teléfono internacional Ecuador (misma lógica del backend). */
+function limpiarTelefonoEC(telefono) {
+  let d = String(telefono || '').replace(/\D/g, '');
+  if (!d) return '';
+  if (d.startsWith('593')) return d;
+  if (d.startsWith('0')) d = d.slice(1);
+  if (d.length === 9) return `593${d}`;
+  return d;
+}
+
 /**
- * Construye el enlace de WhatsApp en el navegador (UTF-8 / encodeURIComponent).
- * Evita emojis rotos (rombos) que a veces salen con URLs pre-codificadas en el servidor.
+ * Texto listo para WhatsApp = el mismo del preview (emojis intactos).
+ * Solo limpia invisibles y unifica saltos de línea.
  */
-function buildWaLink(telefono, mensaje) {
-  const num = String(telefono || '').replace(/\D/g, '');
-  if (!num) return '';
-  let texto = String(mensaje || '');
-  // Separadores tipográficos que en algunos WhatsApp se ven como rombo
-  texto = texto
+function prepararTextoWhatsApp(mensaje) {
+  return String(mensaje ?? '')
+    .replace(/\uFEFF/g, '')
+    .replace(/\u200B/g, '')
     .replace(/\u2501/g, '-')
     .replace(/\u2500/g, '-')
-    .replace(/\u2014/g, '-')
-    .replace(/\u2013/g, '-')
-    .replace(/\ufeff/g, '')
-    .replace(/\u200b/g, '')
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n');
-  return `https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(texto)}`;
+}
+
+/**
+ * Construye wa.me (solo para export / referencia).
+ * Al abrir el chat use siempre abrirWhatsApp().
+ */
+function buildWaLink(telefono, mensaje) {
+  const num = limpiarTelefonoEC(telefono);
+  if (!num) return '';
+  const texto = prepararTextoWhatsApp(mensaje);
+  return `https://wa.me/${num}?text=${encodeURIComponent(texto)}`;
+}
+
+/**
+ * Abre WhatsApp con el mensaje exacto (emojis como en el preview).
+ * Codifica UTF-8 UNA sola vez y usa setAttribute para no re-serializar la URL
+ * (el .href del navegador puede romper emojis → rombo con ?).
+ */
+function abrirWhatsApp(telefono, mensaje) {
+  const num = limpiarTelefonoEC(telefono);
+  if (!num) {
+    toast('No hay número de WhatsApp válido', 'error');
+    return false;
+  }
+  const texto = prepararTextoWhatsApp(mensaje);
+  if (!texto.trim()) {
+    toast('El mensaje está vacío', 'error');
+    return false;
+  }
+  const url = `https://wa.me/${num}?text=${encodeURIComponent(texto)}`;
+  const a = document.createElement('a');
+  a.setAttribute('href', url);
+  a.setAttribute('target', '_blank');
+  a.setAttribute('rel', 'noopener noreferrer');
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  return true;
 }
 
 function openWhatsApp(telefono, mensaje) {
-  const url = buildWaLink(telefono, mensaje);
-  if (!url) {
-    toast('No hay número de WhatsApp válido', 'error');
-    return '';
+  return abrirWhatsApp(telefono, mensaje);
+}
+
+/** WA cliente: usa el textarea #preview-cliente (lo que se ve en pantalla). */
+function abrirWaClienteDesdePreview() {
+  const mensaje = document.getElementById('preview-cliente')?.value ?? '';
+  const it = itemSeleccionado;
+  const tel = it?.telefono_limpio || it?.telefono || '';
+  if (!mensaje.trim()) {
+    toast('Genere mensajes y seleccione un contacto', 'info');
+    return;
   }
-  window.open(url, '_blank', 'noopener');
-  return url;
+  if (abrirWhatsApp(tel, mensaje)) {
+    toast('WhatsApp abierto con el mensaje del cliente', 'ok');
+  }
+}
+
+/** WA tienda: usa el textarea #preview-tienda. */
+function abrirWaTiendaDesdePreview() {
+  const mensaje = document.getElementById('preview-tienda')?.value ?? '';
+  const it = itemSeleccionado;
+  if (!mensaje.trim()) {
+    toast('Genere mensajes y seleccione un contacto', 'info');
+    return;
+  }
+  let tel = '';
+  const waTi = it?.wa_link_tienda || '';
+  if (waTi) {
+    try {
+      const u = new URL(waTi, 'https://wa.me');
+      tel = u.searchParams.get('phone') || '';
+      if (!tel) {
+        const m = String(u.pathname || waTi).match(/(\d{10,15})/);
+        if (m) tel = m[1];
+      }
+    } catch {
+      const m = String(waTi).match(/(\d{10,15})/);
+      if (m) tel = m[1];
+    }
+  }
+  if (!tel) {
+    toast('No hay WhatsApp de tienda para este local', 'error');
+    return;
+  }
+  abrirWhatsApp(tel, mensaje);
 }
 
 function modoEnvio() {
@@ -218,41 +298,32 @@ function renderTabla() {
 
 function seleccionarItem(it) {
   itemSeleccionado = it;
+  // El textarea es la fuente de verdad del mensaje (tal como se envía a WA)
   document.getElementById('preview-cliente').value = it.mensaje_cliente || it.mensaje || '';
   document.getElementById('preview-tienda').value = it.mensaje_tienda || '';
   document.getElementById('btn-mark-cliente').disabled = !it.valido && !it.nombre;
 
-  const linkCli = document.getElementById('btn-wa-cliente');
-  const telCli = it.telefono_limpio || it.telefono || '';
-  const msgCli = it.mensaje_cliente || it.mensaje || '';
-  const waCli = buildWaLink(telCli, msgCli) || it.wa_link_cliente || it.wa_link || '';
-  if (waCli) {
-    linkCli.href = waCli;
-    linkCli.dataset.telefono = telCli;
-    linkCli.dataset.mensaje = msgCli;
-    linkCli.classList.remove('opacity-40', 'pointer-events-none');
-  } else {
-    linkCli.href = '#';
-    linkCli.classList.add('opacity-40', 'pointer-events-none');
+  const btnCli = document.getElementById('btn-wa-cliente');
+  const telCli = limpiarTelefonoEC(it.telefono_limpio || it.telefono || '');
+  if (btnCli) {
+    if (telCli && (it.mensaje_cliente || it.mensaje)) {
+      btnCli.disabled = false;
+      btnCli.classList.remove('opacity-40', 'pointer-events-none');
+    } else {
+      btnCli.disabled = true;
+      btnCli.classList.add('opacity-40', 'pointer-events-none');
+    }
   }
 
-  const linkTi = document.getElementById('btn-wa-tienda');
-  // Tienda: usar enlace del servidor (grupo) o reconstruir si hay teléfono en el link
-  const waTi = it.wa_link_tienda || '';
-  if (waTi) {
-    // Reconstruir text= desde el mensaje para emojis correctos
-    try {
-      const u = new URL(waTi);
-      const phone = u.searchParams.get('phone') || (u.pathname || '').replace(/\D/g, '');
-      const waTiFixed = buildWaLink(phone, it.mensaje_tienda || '');
-      linkTi.href = waTiFixed || waTi;
-    } catch {
-      linkTi.href = waTi;
+  const btnTi = document.getElementById('btn-wa-tienda');
+  if (btnTi) {
+    if (it.wa_link_tienda && it.mensaje_tienda) {
+      btnTi.disabled = false;
+      btnTi.classList.remove('opacity-40', 'pointer-events-none');
+    } else {
+      btnTi.disabled = true;
+      btnTi.classList.add('opacity-40', 'pointer-events-none');
     }
-    linkTi.classList.remove('opacity-40', 'pointer-events-none');
-  } else {
-    linkTi.href = '#';
-    linkTi.classList.add('opacity-40', 'pointer-events-none');
   }
 
   const sel = document.getElementById('correo-local');
@@ -488,12 +559,16 @@ function mostrarContactoCola() {
   const msgCli = it.mensaje_cliente || it.mensaje || '';
   const telCli = it.telefono_limpio || it.telefono || '';
   document.getElementById('modal-preview').textContent = msgCli;
-  const waUrl = buildWaLink(telCli, msgCli) || it.wa_link_cliente || it.wa_link || '#';
-  document.getElementById('modal-abrir-wa').href = waUrl;
+  // No poner URL larga en href: se arma al clic / al abrir
+  const modalLink = document.getElementById('modal-abrir-wa');
+  if (modalLink) {
+    modalLink.removeAttribute('href');
+    modalLink.dataset.ready = '1';
+  }
 
   const esBusiness = modoEnvio() === 'business' && businessApiActiva;
   if (!esBusiness) {
-    openWhatsApp(telCli, msgCli);
+    abrirWhatsApp(telCli, msgCli);
     if (document.getElementById('wa-auto-siguiente')?.checked) {
       clearTimeout(autoTimer);
       autoTimer = setTimeout(() => marcarEnviadoYSiguiente(), 5000);
@@ -597,6 +672,20 @@ document.getElementById('btn-enviar-masivo')?.addEventListener('click', abrirMod
 document.getElementById('btn-copy-cliente')?.addEventListener('click', () => copiarTexto('preview-cliente'));
 document.getElementById('btn-copy-tienda')?.addEventListener('click', () => copiarTexto('preview-tienda'));
 document.getElementById('btn-copy-correo')?.addEventListener('click', () => copiarTexto('preview-correo'));
+document.getElementById('btn-wa-cliente')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  abrirWaClienteDesdePreview();
+});
+document.getElementById('btn-wa-tienda')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  abrirWaTiendaDesdePreview();
+});
+document.getElementById('modal-abrir-wa')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  const it = colaEnvio[indiceCola];
+  if (!it) return;
+  abrirWhatsApp(it.telefono_limpio || it.telefono, it.mensaje_cliente || it.mensaje);
+});
 document.getElementById('btn-mark-cliente')?.addEventListener('click', () =>
   marcarEnviadoCliente().catch(e => toast(e.message, 'error')));
 document.getElementById('btn-enviar-smtp')?.addEventListener('click', () =>

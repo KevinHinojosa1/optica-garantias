@@ -44,13 +44,16 @@ class WhatsAppService:
 
     @staticmethod
     def generar_enlace(telefono: str, mensaje: str) -> str:
-        """Genera enlace wa.me con texto codificado en UTF-8 (emojis correctos en iOS/Android)."""
+        """Genera enlace wa.me con texto codificado en UTF-8 (emojis correctos en iOS/Android).
+
+        El frontend de Entregas WA reconstruye el enlace al hacer clic (encodeURIComponent)
+        para evitar doble codificación. Este método se usa en export Excel y otros módulos.
+        """
         numero = WhatsAppService.limpiar_telefono(telefono)
         texto = WhatsAppService.normalizar_mensaje_whatsapp(mensaje)
-        # safe='' codifica todo lo no alfanumérico; encoding UTF-8 explícito
+        # quote con UTF-8: emojis → %F0%9F… (formato que WhatsApp decodifica bien)
         texto_q = quote(texto, safe="", encoding="utf-8", errors="strict")
-        # api.whatsapp.com es más estable con Unicode que solo wa.me en algunos clientes
-        return f"https://api.whatsapp.com/send?phone={numero}&text={texto_q}"
+        return f"https://wa.me/{numero}?text={texto_q}"
 
     @classmethod
     def _encabezado_interno(cls, cliente: dict, tienda: dict) -> str:

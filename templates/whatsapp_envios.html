@@ -135,17 +135,22 @@
         <p class="text-xs text-slate-500">Seleccione una fila de la tabla. Script oficial de reprogramación al cliente.</p>
         <textarea id="preview-cliente" rows="14" class="glass-textarea w-full px-3 py-2 text-sm font-mono" readonly placeholder="Genere mensajes para ver el texto al cliente…"></textarea>
         <div class="flex flex-wrap gap-2">
-          <a id="btn-wa-cliente" href="#" target="_blank" rel="noopener" class="bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm opacity-40 pointer-events-none">💬 Abrir WA cliente</a>
+          <button type="button" id="btn-wa-cliente" class="bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm opacity-40 pointer-events-none" disabled>
+            💬 Abrir WA cliente
+          </button>
           <button type="button" id="btn-copy-cliente" class="glass-btn px-4 py-2.5 rounded-xl text-sm font-semibold">📋 Copiar</button>
           <button type="button" id="btn-mark-cliente" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm disabled:opacity-40" disabled>✅ Marcar enviado</button>
         </div>
+        <p class="text-[11px] text-slate-400">Se envía el texto exacto del recuadro de arriba (con emojis), codificado en UTF-8 al abrir WhatsApp.</p>
       </div>
 
       <div id="panel-tienda" class="wa-tab-panel p-4 space-y-3 hidden">
         <p class="text-xs text-slate-500">Aviso al equipo del local confirmando que el cliente ya fue notificado.</p>
         <textarea id="preview-tienda" rows="14" class="glass-textarea w-full px-3 py-2 text-sm font-mono" readonly placeholder="Genere mensajes para ver el texto a tienda…"></textarea>
         <div class="flex flex-wrap gap-2">
-          <a id="btn-wa-tienda" href="#" target="_blank" rel="noopener" class="bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm opacity-40 pointer-events-none">💬 Abrir WA tienda</a>
+          <button type="button" id="btn-wa-tienda" class="bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2.5 rounded-xl text-sm opacity-40 pointer-events-none" disabled>
+            💬 Abrir WA tienda
+          </button>
           <button type="button" id="btn-copy-tienda" class="glass-btn px-4 py-2.5 rounded-xl text-sm font-semibold">📋 Copiar</button>
         </div>
       </div>
@@ -195,9 +200,9 @@
     <p class="text-sm text-slate-500 mb-3" id="modal-telefono">—</p>
     <pre id="modal-preview" class="text-xs bg-slate-50 border rounded-xl p-3 max-h-32 overflow-y-auto whitespace-pre-wrap mb-4"></pre>
     <div class="flex flex-wrap gap-2">
-      <a id="modal-abrir-wa" href="#" target="_blank" rel="noopener" class="flex-1 text-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl">
+      <button type="button" id="modal-abrir-wa" class="flex-1 text-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl">
         💬 Abrir en WhatsApp
-      </a>
+      </button>
       <button type="button" id="modal-enviar-business" class="hidden flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl">
         📱 Enviar por Business API
       </button>
