@@ -7,6 +7,8 @@ const META = window.ALERTAS_META || {};
 let gridApi = null;
 let filaSeleccionada = null;
 let debounceTimer = null;
+let chartsCargados = false;
+let chartsVisibles = false;
 
 const OPCIONES = {
   llamada: META.opciones_llamada || ['Pendiente', 'Sí', 'No', 'si', 'no'],
@@ -20,35 +22,37 @@ const EDITABLES = new Set(META.columnas_editables || [
   'clasificacion', 'estado_gestion', 'asesor', 'quien_llama', 'correos_disculpa',
 ]);
 
+/* Columnas esenciales visibles; el resto en panel de columnas de ag-Grid (menú) */
 const COLUMNAS_GRID = [
-  { field: 'n', headerName: 'n', width: 60, pinned: 'left', checkboxSelection: true, headerCheckboxSelection: true },
-  { field: 'mes', headerName: 'Mes', width: 80, pinned: 'left' },
+  { field: 'n', headerName: '#', width: 70, pinned: 'left', checkboxSelection: true, headerCheckboxSelection: true },
   { field: 'fecha_alerta', headerName: 'Fecha', width: 100, pinned: 'left' },
-  { field: 'local', headerName: 'Local', width: 140 },
-  { field: 'area', headerName: 'Área', width: 100 },
-  { field: 'optometra', headerName: 'Optómetra', width: 130 },
-  { field: 'asesor', headerName: 'Asesor', width: 130, editable: true },
-  { field: 'calificacion', headerName: 'Calif.', width: 70 },
-  { field: 'pregunta', headerName: 'Pregunta', width: 180, wrapText: true, autoHeight: true },
-  { field: 'responde', headerName: 'Responde', width: 80 },
-  { field: 'comentario', headerName: 'Comentario', width: 220, wrapText: true, autoHeight: true },
-  { field: 'cliente', headerName: 'CLIENTE', width: 120 },
-  { field: 'contacto', headerName: 'CONTACTO', width: 110 },
+  { field: 'local', headerName: 'Local', width: 130 },
+  { field: 'cliente', headerName: 'Cliente', width: 130 },
+  { field: 'contacto', headerName: 'Teléfono', width: 110 },
+  { field: 'comentario', headerName: 'Comentario', flex: 1, minWidth: 180, wrapText: true, autoHeight: true },
+  { field: 'clasificacion', headerName: 'Clasificación', width: 150, editable: true,
+    cellEditor: 'agSelectCellEditor', cellEditorParams: { values: OPCIONES.clasificacion } },
+  { field: 'estado_gestion', headerName: 'Estado', width: 120, editable: true,
+    cellEditor: 'agSelectCellEditor', cellEditorParams: { values: OPCIONES.estado } },
   { field: 'llamada_cliente', headerName: 'Llamada', width: 100, editable: true,
     cellEditor: 'agSelectCellEditor', cellEditorParams: { values: OPCIONES.llamada } },
   { field: 'contesto', headerName: 'Contestó', width: 100, editable: true,
     cellEditor: 'agSelectCellEditor', cellEditorParams: { values: OPCIONES.contesto } },
-  { field: 'observacion_gestion', headerName: 'Observación / Gestión', width: 240, editable: true, wrapText: true, autoHeight: true },
-  { field: 'solucion', headerName: 'SOLUCIÓN', width: 200, editable: true, wrapText: true, autoHeight: true },
-  { field: 'clasificacion', headerName: 'CLASIFICACION', width: 170, editable: true,
-    cellEditor: 'agSelectCellEditor', cellEditorParams: { values: OPCIONES.clasificacion } },
-  { field: 'justificacion_ia', headerName: 'Justificación IA', width: 220, wrapText: true, autoHeight: true },
-  { field: 'estado_gestion', headerName: 'Estado', width: 120, editable: true,
-    cellEditor: 'agSelectCellEditor', cellEditorParams: { values: OPCIONES.estado } },
-  { field: 'quien_llama', headerName: 'Quien llama', width: 110, editable: true },
-  { field: 'correos_disculpa', headerName: 'Correos disculpa', width: 110, editable: true },
-  { field: 'dialogo_ia', headerName: 'Diálogo IA', width: 180, wrapText: true, autoHeight: true },
-  { field: 'clasificado_por', headerName: 'Clasif. por', width: 90 },
+  { field: 'asesor', headerName: 'Asesor', width: 120, editable: true },
+  { field: 'observacion_gestion', headerName: 'Gestión', width: 180, editable: true, wrapText: true, autoHeight: true },
+  { field: 'solucion', headerName: 'Solución', width: 160, editable: true, wrapText: true, autoHeight: true },
+  /* Secundarias (ocultas por defecto — se activan en columnas del grid) */
+  { field: 'mes', headerName: 'Mes', width: 80, hide: true },
+  { field: 'area', headerName: 'Área', width: 100, hide: true },
+  { field: 'optometra', headerName: 'Optómetra', width: 120, hide: true },
+  { field: 'calificacion', headerName: 'Calif.', width: 70, hide: true },
+  { field: 'pregunta', headerName: 'Pregunta', width: 160, hide: true, wrapText: true },
+  { field: 'responde', headerName: 'Responde', width: 80, hide: true },
+  { field: 'justificacion_ia', headerName: 'Justificación IA', width: 180, hide: true, wrapText: true },
+  { field: 'quien_llama', headerName: 'Quien llama', width: 110, hide: true, editable: true },
+  { field: 'correos_disculpa', headerName: 'Correos', width: 100, hide: true, editable: true },
+  { field: 'dialogo_ia', headerName: 'Diálogo IA', width: 160, hide: true, wrapText: true },
+  { field: 'clasificado_por', headerName: 'Clasif. por', width: 90, hide: true },
 ];
 
 const CAMPOS_MODAL = [
@@ -112,7 +116,8 @@ async function cargarDatos() {
   const data = await res.json();
   document.getElementById('filtro-resumen').textContent =
     `Mostrando ${data.filtrado} de ${data.total} casos · Pendientes sin gestión: ${data.pendientes}`;
-  document.getElementById('badge-pendientes').textContent = `⏳ Pendientes: ${data.pendientes}`;
+  const badge = document.getElementById('badge-pendientes');
+  if (badge) badge.textContent = `⏳ ${data.pendientes} pendientes`;
   if (gridApi) gridApi.setGridOption('rowData', data.filas || []);
   return data;
 }
@@ -128,20 +133,50 @@ async function cargarKpis() {
 }
 
 async function cargarGraficos() {
+  if (!chartsVisibles) return;
   const res = await fetch(urlConFiltros('/api/alertas/graficos'));
   if (!res.ok) return;
   const g = await res.json();
   const cfg = { responsive: true, displayModeBar: false };
-  Plotly.newPlot('chart-tendencia', g.tendencia.data, g.tendencia.layout, cfg);
-  Plotly.newPlot('chart-problemas', g.top_problemas.data, g.top_problemas.layout, cfg);
-  Plotly.newPlot('chart-heatmap', g.heatmap.data, g.heatmap.layout, cfg);
-  if (g.heatmap_mes_local) Plotly.newPlot('chart-heatmap-mes', g.heatmap_mes_local.data, g.heatmap_mes_local.layout, cfg);
-  Plotly.newPlot('chart-donut', g.donut.data, g.donut.layout, cfg);
+  if (document.getElementById('chart-tendencia')) {
+    Plotly.newPlot('chart-tendencia', g.tendencia.data, g.tendencia.layout, cfg);
+  }
+  if (document.getElementById('chart-problemas')) {
+    Plotly.newPlot('chart-problemas', g.top_problemas.data, g.top_problemas.layout, cfg);
+  }
+  if (document.getElementById('chart-heatmap')) {
+    Plotly.newPlot('chart-heatmap', g.heatmap.data, g.heatmap.layout, cfg);
+  }
+  if (document.getElementById('chart-donut')) {
+    Plotly.newPlot('chart-donut', g.donut.data, g.donut.layout, cfg);
+  }
+  if (g.heatmap_mes_local && document.getElementById('chart-heatmap-mes')) {
+    document.getElementById('wrap-heatmap-mes')?.classList.remove('hidden');
+    Plotly.newPlot('chart-heatmap-mes', g.heatmap_mes_local.data, g.heatmap_mes_local.layout, cfg);
+  }
+  chartsCargados = true;
 }
 
 async function refrescarTodo() {
-  await Promise.all([cargarDatos(), cargarKpis(), cargarGraficos()]);
-  document.getElementById('btn-exportar').href = urlConFiltros('/api/alertas/exportar');
+  const jobs = [cargarDatos(), cargarKpis()];
+  if (chartsVisibles) jobs.push(cargarGraficos());
+  await Promise.all(jobs);
+  const exp = document.getElementById('btn-exportar');
+  if (exp) exp.href = urlConFiltros('/api/alertas/exportar');
+}
+
+function actualizarPanelIaSeleccion() {
+  const panel = document.getElementById('panel-ia');
+  const label = document.getElementById('ia-caso-label');
+  if (!label) return;
+  if (filaSeleccionada) {
+    panel?.classList.add('has-case');
+    label.textContent =
+      `Caso #${filaSeleccionada.n} — ${filaSeleccionada.cliente || 'Sin nombre'} · ${filaSeleccionada.local || ''}`;
+  } else {
+    panel?.classList.remove('has-case');
+    label.textContent = 'Seleccione un caso en la matriz para generar WhatsApp o correo.';
+  }
 }
 
 function initGrid() {
@@ -150,21 +185,29 @@ function initGrid() {
   gridApi = agGrid.createGrid(el, {
     columnDefs: COLUMNAS_GRID,
     rowData: [],
-    defaultColDef: { sortable: true, filter: true, resizable: true },
+    defaultColDef: {
+      sortable: true,
+      filter: true,
+      resizable: true,
+      minWidth: 70,
+    },
     rowSelection: 'multiple',
     suppressRowClickSelection: false,
     animateRows: true,
     onSelectionChanged() {
       const rows = gridApi.getSelectedRows();
       filaSeleccionada = rows[0] || null;
-      document.getElementById('grid-resumen').textContent = `Filas seleccionadas: ${rows.length}`;
-      const label = document.getElementById('ia-caso-label');
-      label.textContent = filaSeleccionada
-        ? `Caso #${filaSeleccionada.n} — ${filaSeleccionada.cliente || 'Sin nombre'} · ${filaSeleccionada.local || ''}`
-        : 'Seleccione una fila para generar mensaje WhatsApp o correo.';
+      const res = document.getElementById('grid-resumen');
+      if (res) {
+        res.textContent = rows.length
+          ? `${rows.length} seleccionado(s)${filaSeleccionada?.cliente ? ` · ${filaSeleccionada.cliente}` : ''}`
+          : 'Seleccione un caso';
+      }
+      actualizarPanelIaSeleccion();
     },
     onRowDoubleClicked(ev) {
       filaSeleccionada = ev.data;
+      actualizarPanelIaSeleccion();
       abrirModalEdicion();
     },
   });
@@ -383,15 +426,75 @@ function limpiarFiltros() {
   refrescarTodo();
 }
 
+function cerrarMenus() {
+  document.getElementById('menu-mas-acciones')?.classList.add('hidden');
+  document.getElementById('btn-mas-acciones')?.setAttribute('aria-expanded', 'false');
+}
+
+function togglePanel(panelId, btnId, openClass = 'is-open') {
+  const panel = document.getElementById(panelId);
+  const btn = document.getElementById(btnId);
+  if (!panel) return;
+  const open = panel.classList.contains('hidden');
+  panel.classList.toggle('hidden', !open);
+  btn?.classList.toggle(openClass, open);
+  btn?.setAttribute('aria-expanded', open ? 'true' : 'false');
+  return open;
+}
+
 function bindEventos() {
+  document.getElementById('btn-toggle-carga')?.addEventListener('click', () => {
+    togglePanel('panel-subir-excel', 'btn-toggle-carga');
+  });
+
+  document.getElementById('btn-toggle-filtros')?.addEventListener('click', () => {
+    const open = togglePanel('panel-filtros-extra', 'btn-toggle-filtros');
+    const b = document.getElementById('btn-toggle-filtros');
+    if (b) b.textContent = open ? 'Filtros ▴' : 'Filtros ▾';
+  });
+
+  document.getElementById('btn-mas-acciones')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const menu = document.getElementById('menu-mas-acciones');
+    const btn = document.getElementById('btn-mas-acciones');
+    const open = menu?.classList.contains('hidden');
+    menu?.classList.toggle('hidden', !open);
+    btn?.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+
+  document.addEventListener('click', (e) => {
+    const menu = document.getElementById('menu-mas-acciones');
+    const btn = document.getElementById('btn-mas-acciones');
+    if (!menu || menu.classList.contains('hidden')) return;
+    if (btn?.contains(e.target) || menu.contains(e.target)) return;
+    cerrarMenus();
+  });
+
+  document.getElementById('btn-toggle-charts')?.addEventListener('click', async () => {
+    cerrarMenus();
+    chartsVisibles = !chartsVisibles;
+    document.getElementById('panel-charts')?.classList.toggle('hidden', !chartsVisibles);
+    if (chartsVisibles) {
+      toast('Cargando gráficos…', 'info');
+      try {
+        await cargarGraficos();
+      } catch (e) {
+        toast(e.message, 'error');
+      }
+    }
+  });
+
   document.getElementById('btn-limpiar-filtros')?.addEventListener('click', limpiarFiltros);
   document.getElementById('btn-guardar')?.addEventListener('click', () => guardarCambios().catch(e => toast(e.message, 'error')));
-  document.getElementById('btn-clasificar-reglas')?.addEventListener('click', () =>
+  document.getElementById('btn-clasificar-reglas')?.addEventListener('click', () => {
+    cerrarMenus();
     clasificar('/api/alertas/clasificar-reglas').then(d => {
       toast(`Clasificadas ${d.clasificadas} fila(s)`, 'ok');
       return refrescarTodo();
-    }).catch(e => toast(e.message, 'error')));
+    }).catch(e => toast(e.message, 'error'));
+  });
   document.getElementById('btn-clasificar-ia')?.addEventListener('click', async () => {
+    cerrarMenus();
     try {
       const ids = idsSeleccionados();
       const total = ids.length
@@ -406,10 +509,17 @@ function bindEventos() {
   });
   document.getElementById('btn-procesar-excel')?.addEventListener('click', () =>
     procesarExcel().catch(e => toast(e.message, 'error')));
-  document.getElementById('btn-generar-dialogo')?.addEventListener('click', () => generarRespuestaIa().catch(e => toast(e.message, 'error')));
-  document.getElementById('btn-sugerir-respuesta')?.addEventListener('click', () => generarRespuestaIa().catch(e => toast(e.message, 'error')));
-  document.getElementById('btn-claude-fila')?.addEventListener('click', () => generarRespuestaIa().catch(e => toast(e.message, 'error')));
-  document.getElementById('btn-editar-fila')?.addEventListener('click', abrirModalEdicion);
+  document.getElementById('btn-generar-dialogo')?.addEventListener('click', () =>
+    generarRespuestaIa().catch(e => toast(e.message, 'error')));
+  document.getElementById('btn-claude-fila')?.addEventListener('click', () => {
+    cerrarMenus();
+    document.getElementById('panel-ia')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    generarRespuestaIa().catch(e => toast(e.message, 'error'));
+  });
+  document.getElementById('btn-editar-fila')?.addEventListener('click', () => {
+    cerrarMenus();
+    abrirModalEdicion();
+  });
   document.getElementById('btn-copiar-wa')?.addEventListener('click', () => {
     navigator.clipboard.writeText(document.getElementById('ia-whatsapp')?.value || '');
     toast('Copiado', 'ok');
@@ -418,12 +528,17 @@ function bindEventos() {
   document.getElementById('modal-guardar')?.addEventListener('click', guardarModalEnGrid);
   document.getElementById('modal-claude')?.addEventListener('click', () => generarRespuestaIa().catch(e => toast(e.message, 'error')));
   document.getElementById('btn-recargar-excel')?.addEventListener('click', async () => {
+    cerrarMenus();
     if (!confirm('¿Recargar datos desde Excel? Se conservan las ediciones guardadas por ID.')) return;
-    const res = await fetch('/api/alertas/recargar-excel', { method: 'POST' });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Error');
-    toast(`Excel recargado · ${data.total} registros`, 'ok');
-    await refrescarTodo();
+    try {
+      const res = await fetch('/api/alertas/recargar-excel', { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Error');
+      toast(`Excel recargado · ${data.total} registros`, 'ok');
+      await refrescarTodo();
+    } catch (e) {
+      toast(e.message, 'error');
+    }
   });
   ['filtro-desde', 'filtro-hasta', 'filtro-texto', 'filtro-solo-pendientes',
     'filtro-meses', 'filtro-locales', 'filtro-areas', 'filtro-clasificacion', 'filtro-estados', 'filtro-contesto']

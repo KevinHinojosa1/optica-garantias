@@ -1,8 +1,9 @@
-/* Alertas Telegram — estilos del módulo */
+/* Alertas Telegram — layout limpio y dinámico */
 
 .alertas-ag-grid {
   width: 100%;
-  height: 560px;
+  height: min(62vh, 560px);
+  min-height: 360px;
   --ag-font-family: 'Inter', system-ui, sans-serif;
   --ag-font-size: 13px;
   --ag-header-background-color: #1e3a5f;
@@ -20,16 +21,71 @@
   border: 1px solid rgba(255, 255, 255, 0.75);
 }
 
-.kpi-alertas {
-  transition: transform 0.15s ease;
+.alerta-kpi {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 0.875rem;
+  padding: 0.65rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.alerta-kpi__label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.alerta-kpi__val {
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.15;
 }
 
 .chart-alertas {
-  min-height: 300px;
+  min-height: 260px;
 }
 
 .chart-alertas-tall {
-  min-height: 380px;
+  min-height: 320px;
+}
+
+/* Menú "Más acciones" */
+.alerta-menu {
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 0.875rem;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+  padding: 0.35rem;
+}
+
+.alerta-menu__item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.75rem;
+  border: none;
+  background: transparent;
+  border-radius: 0.6rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.alerta-menu__item:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* Panel carga abierto */
+#btn-toggle-carga.is-open {
+  border-radius: 1rem 1rem 0.35rem 0.35rem;
 }
 
 #toast-alertas.toast-ok {
@@ -45,4 +101,10 @@
 #toast-alertas.toast-info {
   border-left: 4px solid #2563eb;
   color: #1e40af;
+}
+
+/* Panel IA: resalta cuando hay caso */
+#panel-ia.has-case {
+  border-color: rgba(167, 139, 250, 0.45);
+  box-shadow: 0 8px 28px rgba(124, 58, 237, 0.08);
 }

@@ -8,213 +8,270 @@
 {% endblock %}
 
 {% block content %}
-<div class="space-y-5" id="alertas-app">
-  <div class="glass-card p-5 sm:p-6">
+<div class="space-y-4" id="alertas-app">
+
+  {# ── Cabecera + KPIs ── #}
+  <div class="glass-card p-4 sm:p-5">
     <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <p class="text-xs font-medium text-optica-600 uppercase tracking-wide mb-1">Centro de Operaciones</p>
-        <h2 class="text-xl sm:text-2xl font-semibold glass-title">📡 Alertas Telegram — Matriz IA-first</h2>
-        <p class="glass-subtle text-sm mt-1">{{ meta.fuente }} · {{ meta.total_casos }} registros · v{{ asset_version }}</p>
+      <div class="min-w-0">
+        <p class="text-xs font-medium text-optica-600 uppercase tracking-wide mb-0.5">Centro de Operaciones</p>
+        <h2 class="text-xl sm:text-2xl font-semibold glass-title">📡 Alertas Telegram</h2>
+        <p class="glass-subtle text-sm mt-0.5">Seguimiento diario · {{ meta.total_casos }} casos en base</p>
       </div>
-      <div class="flex flex-wrap gap-2">
+      <div class="flex flex-wrap items-center gap-2">
         {% if ia_disponible %}
-        <span class="glass-pill text-xs font-medium text-emerald-700 px-3 py-2 rounded-xl">🤖 Claude · {{ ia_modelo }}</span>
+        <span class="glass-pill text-xs font-medium text-emerald-700 px-3 py-1.5 rounded-xl">🤖 Claude listo</span>
         {% else %}
-        <span class="glass-pill text-xs font-medium text-amber-700 px-3 py-2 rounded-xl">⚠️ Claude no configurado</span>
+        <span class="glass-pill text-xs font-medium text-amber-700 px-3 py-1.5 rounded-xl">⚠️ Sin Claude</span>
         {% endif %}
-        <span class="glass-pill text-xs font-medium text-amber-800 px-3 py-2 rounded-xl" id="badge-pendientes">⏳ Pendientes: {{ meta.pendientes }}</span>
+        <span class="glass-pill text-xs font-medium text-amber-800 px-3 py-1.5 rounded-xl" id="badge-pendientes">⏳ {{ meta.pendientes }} pendientes</span>
       </div>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">
+      <div class="alerta-kpi"><span class="alerta-kpi__label">Filtrados</span><strong id="kpi-total" class="alerta-kpi__val text-optica-700">—</strong></div>
+      <div class="alerta-kpi"><span class="alerta-kpi__label">Sin gestión</span><strong id="kpi-sin-gestion" class="alerta-kpi__val text-amber-600">—</strong></div>
+      <div class="alerta-kpi"><span class="alerta-kpi__label">Resueltos</span><strong id="kpi-resueltos" class="alerta-kpi__val text-emerald-600">—</strong></div>
+      <div class="alerta-kpi"><span class="alerta-kpi__label">Contestó Sí</span><strong id="kpi-contesto" class="alerta-kpi__val text-optica-600">—</strong></div>
     </div>
   </div>
 
-  <div class="glass-card p-4 sm:p-5 border-2 border-dashed border-optica-200/80 bg-optica-50/30" id="panel-subir-excel">
-    <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
-      <div>
-        <h3 class="font-semibold text-slate-800">📤 Subir Excel — hoja GENERAL</h3>
-        <p class="text-sm text-slate-500 mt-1">Carga diaria de ALERTAS TELEGRAM 2026.xlsx. La IA clasifica Pregunta + Comentario; usted solo revisa y ajusta.</p>
-      </div>
-      <span class="glass-pill text-xs font-medium text-optica-700 px-3 py-2 rounded-xl" id="upload-estado">Listo para cargar</span>
-    </div>
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
-      <div class="lg:col-span-2">
-        <label class="block text-xs font-medium text-slate-500 mb-1">Archivo .xlsx</label>
-        <input type="file" id="input-excel" accept=".xlsx,.xls" class="glass-input w-full px-3 py-2 text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-optica-600 file:text-white file:text-xs file:font-semibold">
-      </div>
-      <div>
-        <label class="block text-xs font-medium text-slate-500 mb-1">Modo de carga</label>
-        <select id="upload-modo" class="glass-input w-full px-3 py-2 text-sm">
-          <option value="reemplazar">Reemplazar todo</option>
-          <option value="incremental">Solo filas nuevas</option>
-        </select>
-      </div>
-    </div>
-    <div class="flex flex-wrap items-center gap-4 mt-4">
-      <label class="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
-        <input type="checkbox" id="upload-auto-ia" checked class="rounded border-optica-300 text-optica-600">
-        🤖 Clasificar con IA al cargar (por lotes)
-      </label>
-      <button type="button" id="btn-procesar-excel" class="btn-ola btn-ola--primary">
-        <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">📥</span>
+  {# ── Barra de acciones principales ── #}
+  <div class="glass-card p-3 sm:p-4">
+    <div class="flex flex-wrap items-center gap-2">
+      <button type="button" id="btn-toggle-carga" class="btn-ola btn-ola--primary" aria-expanded="false">
+        <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">📤</span>
         <span class="btn-ola__text">
-          <span class="btn-ola__title">Procesar archivo</span>
-          <span class="btn-ola__sub">Cargar Excel de alertas</span>
+          <span class="btn-ola__title">Cargar Excel</span>
+          <span class="btn-ola__sub">Matriz diaria GENERAL</span>
+        </span>
+        <span class="btn-ola__chevron" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
         </span>
       </button>
-    </div>
-    <div id="upload-progreso" class="hidden mt-4">
-      <div class="h-2 rounded-full bg-slate-200 overflow-hidden">
-        <div id="upload-progreso-bar" class="h-full bg-optica-600 transition-all duration-300" style="width:0%"></div>
-      </div>
-      <p class="text-xs text-slate-600 mt-2" id="upload-progreso-texto">Clasificando con IA...</p>
-    </div>
-  </div>
-
-  <div class="glass-card p-4 sm:p-5">
-    <div class="flex items-center justify-between gap-3 mb-4">
-      <h3 class="font-semibold text-slate-700">Filtros</h3>
-      <button type="button" id="btn-limpiar-filtros" class="text-xs font-medium text-optica-600 hover:text-optica-700">Limpiar filtros</button>
-    </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-      <div><label class="block text-xs font-medium text-slate-500 mb-1">Desde</label>
-        <input type="date" id="filtro-desde" class="glass-input w-full px-3 py-2 text-sm" value="{{ meta.fecha_min or '' }}"></div>
-      <div><label class="block text-xs font-medium text-slate-500 mb-1">Hasta</label>
-        <input type="date" id="filtro-hasta" class="glass-input w-full px-3 py-2 text-sm" value="{{ meta.fecha_max or '' }}"></div>
-      <div><label class="block text-xs font-medium text-slate-500 mb-1">Mes</label>
-        <select id="filtro-meses" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[42px]">
-          {% for m in meta.meses %}<option value="{{ m }}">{{ m }}</option>{% endfor %}
-        </select></div>
-      <div><label class="block text-xs font-medium text-slate-500 mb-1">Buscar texto</label>
-        <input type="search" id="filtro-texto" placeholder="Cliente, comentario, local..." class="glass-input w-full px-3 py-2 text-sm"></div>
-      <div class="flex items-end">
-        <label class="flex items-center gap-2 text-sm font-medium text-amber-800 cursor-pointer pb-2">
-          <input type="checkbox" id="filtro-solo-pendientes" class="rounded border-amber-300 text-optica-600">
-          Solo pendientes sin gestión
-        </label>
-      </div>
-    </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-3">
-      <div><label class="block text-xs font-medium text-slate-500 mb-1">Local</label>
-        <select id="filtro-locales" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[88px]">
-          {% for loc in meta.locales %}<option value="{{ loc }}">{{ loc }}</option>{% endfor %}
-        </select></div>
-      <div><label class="block text-xs font-medium text-slate-500 mb-1">Área</label>
-        <select id="filtro-areas" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[88px]">
-          {% for a in meta.areas %}<option value="{{ a }}">{{ a }}</option>{% endfor %}
-        </select></div>
-      <div><label class="block text-xs font-medium text-slate-500 mb-1">Clasificación</label>
-        <select id="filtro-clasificacion" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[88px]">
-          {% for c in meta.opciones_clasificacion %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
-        </select></div>
-      <div><label class="block text-xs font-medium text-slate-500 mb-1">Estado / Contestó</label>
-        <select id="filtro-estados" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[88px]">
-          {% for e in meta.opciones_estado %}<option value="{{ e }}">{{ e }}</option>{% endfor %}
-        </select>
-        <select id="filtro-contesto" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[88px] mt-2">
-          {% for c in meta.opciones_contesto %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
-        </select></div>
-    </div>
-    <p class="text-xs text-slate-500 mt-3" id="filtro-resumen">Cargando...</p>
-  </div>
-
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-    <div class="glass-card p-4 text-center kpi-alertas"><p class="text-xs font-medium text-slate-500 uppercase">Total filtrado</p><p class="text-2xl font-bold text-optica-700 mt-1" id="kpi-total">—</p></div>
-    <div class="glass-card p-4 text-center kpi-alertas"><p class="text-xs font-medium text-slate-500 uppercase">Sin gestión</p><p class="text-2xl font-bold text-amber-600 mt-1" id="kpi-sin-gestion">—</p></div>
-    <div class="glass-card p-4 text-center kpi-alertas"><p class="text-xs font-medium text-slate-500 uppercase">Resueltos</p><p class="text-2xl font-bold text-emerald-600 mt-1" id="kpi-resueltos">—</p></div>
-    <div class="glass-card p-4 text-center kpi-alertas"><p class="text-xs font-medium text-slate-500 uppercase">Contestó Sí</p><p class="text-2xl font-bold text-optica-600 mt-1" id="kpi-contesto">—</p></div>
-  </div>
-
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    <div class="glass-card p-3"><div id="chart-tendencia" class="chart-alertas"></div></div>
-    <div class="glass-card p-3"><div id="chart-problemas" class="chart-alertas"></div></div>
-    <div class="glass-card p-3 lg:col-span-2"><div id="chart-heatmap" class="chart-alertas chart-alertas-tall"></div></div>
-    <div class="glass-card p-3"><div id="chart-heatmap-mes" class="chart-alertas chart-alertas-tall"></div></div>
-    <div class="glass-card p-3"><div id="chart-donut" class="chart-alertas"></div></div>
-  </div>
-
-  <div class="glass-card p-4 sm:p-5">
-    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-      <h3 class="font-semibold text-slate-700">📋 Matriz GENERAL — seguimiento diario</h3>
-      <p class="text-xs text-slate-500" id="grid-resumen">Filas seleccionadas: 0</p>
-    </div>
-    <div class="flex flex-wrap gap-2 mb-4">
       <button type="button" id="btn-guardar" class="btn-ola btn-ola--success">
         <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">💾</span>
         <span class="btn-ola__text">
-          <span class="btn-ola__title">Guardar cambios</span>
-          <span class="btn-ola__sub">Actualizar matriz</span>
+          <span class="btn-ola__title">Guardar</span>
+          <span class="btn-ola__sub">Cambios de la matriz</span>
         </span>
       </button>
-      <a id="btn-exportar" href="#" class="btn-ola btn-ola--primary">
+      <a id="btn-exportar" href="#" class="btn-ola btn-ola--secondary">
         <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">📥</span>
-        <span class="btn-ola__text">
-          <span class="btn-ola__title">Exportar Excel</span>
-          <span class="btn-ola__sub">Descargar matriz</span>
-        </span>
+        <span>Exportar</span>
       </a>
-      <button type="button" id="btn-editar-fila" class="btn-ola btn-ola--secondary">✏️ Editar fila</button>
-      <button type="button" id="btn-claude-fila" class="btn-ola btn-ola--ai">
-        <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">✨</span>
-        <span>Claude — fila</span>
+      <div class="relative">
+        <button type="button" id="btn-mas-acciones" class="btn-ola btn-ola--secondary" aria-expanded="false">
+          Más acciones ▾
+        </button>
+        <div id="menu-mas-acciones" class="hidden alerta-menu absolute left-0 sm:right-0 sm:left-auto top-full mt-1 z-30 min-w-[220px]">
+          <button type="button" id="btn-editar-fila" class="alerta-menu__item">✏️ Editar fila seleccionada</button>
+          <button type="button" id="btn-claude-fila" class="alerta-menu__item">✨ Generar mensaje Claude</button>
+          <button type="button" id="btn-clasificar-reglas" class="alerta-menu__item">🏷️ Clasificar (reglas)</button>
+          <button type="button" id="btn-clasificar-ia" class="alerta-menu__item">🤖 Clasificar con IA</button>
+          <button type="button" id="btn-recargar-excel" class="alerta-menu__item">🔄 Recargar Excel base</button>
+          <button type="button" id="btn-toggle-charts" class="alerta-menu__item">📊 Mostrar / ocultar gráficos</button>
+        </div>
+      </div>
+      <span class="text-xs text-slate-500 ml-auto" id="grid-resumen">Seleccione un caso</span>
+    </div>
+
+    {# Panel carga (colapsable) #}
+    <div id="panel-subir-excel" class="hidden mt-4 pt-4 border-t border-slate-200/80">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-end">
+        <div class="lg:col-span-5">
+          <label class="block text-xs font-medium text-slate-500 mb-1">Archivo .xlsx</label>
+          <input type="file" id="input-excel" accept=".xlsx,.xls"
+            class="glass-input w-full px-3 py-2 text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-optica-600 file:text-white file:text-xs file:font-semibold">
+        </div>
+        <div class="lg:col-span-3">
+          <label class="block text-xs font-medium text-slate-500 mb-1">Modo</label>
+          <select id="upload-modo" class="glass-input w-full px-3 py-2 text-sm">
+            <option value="reemplazar">Reemplazar todo</option>
+            <option value="incremental">Solo filas nuevas</option>
+          </select>
+        </div>
+        <div class="lg:col-span-4 flex flex-wrap items-center gap-3">
+          <label class="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
+            <input type="checkbox" id="upload-auto-ia" checked class="rounded border-optica-300 text-optica-600">
+            Clasificar con IA
+          </label>
+          <button type="button" id="btn-procesar-excel" class="btn-ola btn-ola--primary btn-ola--sm">
+            <span class="btn-ola__icon" style="width:1.75rem;height:1.75rem;font-size:0.85rem">⚡</span>
+            Procesar
+          </button>
+          <span class="text-xs text-slate-500" id="upload-estado">Listo</span>
+        </div>
+      </div>
+      <div id="upload-progreso" class="hidden mt-3">
+        <div class="h-2 rounded-full bg-slate-200 overflow-hidden">
+          <div id="upload-progreso-bar" class="h-full bg-optica-600 transition-all duration-300" style="width:0%"></div>
+        </div>
+        <p class="text-xs text-slate-600 mt-1.5" id="upload-progreso-texto">Clasificando…</p>
+      </div>
+    </div>
+  </div>
+
+  {# ── Filtros compactos ── #}
+  <div class="glass-card p-3 sm:p-4">
+    <div class="flex flex-wrap items-end gap-3">
+      <div class="flex-1 min-w-[160px]">
+        <label class="block text-xs font-medium text-slate-500 mb-1">Buscar</label>
+        <input type="search" id="filtro-texto" placeholder="Cliente, local, comentario…" class="glass-input w-full px-3 py-2 text-sm">
+      </div>
+      <div class="w-full sm:w-36">
+        <label class="block text-xs font-medium text-slate-500 mb-1">Desde</label>
+        <input type="date" id="filtro-desde" class="glass-input w-full px-3 py-2 text-sm" value="{{ meta.fecha_min or '' }}">
+      </div>
+      <div class="w-full sm:w-36">
+        <label class="block text-xs font-medium text-slate-500 mb-1">Hasta</label>
+        <input type="date" id="filtro-hasta" class="glass-input w-full px-3 py-2 text-sm" value="{{ meta.fecha_max or '' }}">
+      </div>
+      <label class="flex items-center gap-2 text-sm font-medium text-amber-800 cursor-pointer pb-2 whitespace-nowrap">
+        <input type="checkbox" id="filtro-solo-pendientes" class="rounded border-amber-300 text-optica-600">
+        Solo pendientes
+      </label>
+      <button type="button" id="btn-toggle-filtros" class="btn-ola btn-ola--secondary btn-ola--sm" aria-expanded="false">
+        Filtros ▾
       </button>
-      <button type="button" id="btn-clasificar-reglas" class="btn-ola btn-ola--secondary">🏷️ Clasificar (reglas)</button>
-      <button type="button" id="btn-clasificar-ia" class="btn-ola btn-ola--secondary">🤖 Clasificar con IA</button>
-      <button type="button" id="btn-recargar-excel" class="btn-ola btn-ola--secondary">🔄 Recargar Excel</button>
+      <button type="button" id="btn-limpiar-filtros" class="text-xs font-semibold text-optica-600 hover:underline pb-2">Limpiar</button>
+    </div>
+
+    <div id="panel-filtros-extra" class="hidden mt-3 pt-3 border-t border-slate-100">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Mes</label>
+          <select id="filtro-meses" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[72px]">
+            {% for m in meta.meses %}<option value="{{ m }}">{{ m }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Local</label>
+          <select id="filtro-locales" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[72px]">
+            {% for loc in meta.locales %}<option value="{{ loc }}">{{ loc }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Área</label>
+          <select id="filtro-areas" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[72px]">
+            {% for a in meta.areas %}<option value="{{ a }}">{{ a }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Clasificación</label>
+          <select id="filtro-clasificacion" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[72px]">
+            {% for c in meta.opciones_clasificacion %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Estado</label>
+          <select id="filtro-estados" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[72px]">
+            {% for e in meta.opciones_estado %}<option value="{{ e }}">{{ e }}</option>{% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Contestó</label>
+          <select id="filtro-contesto" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[72px]">
+            {% for c in meta.opciones_contesto %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+      <p class="text-xs text-slate-400 mt-2">Ctrl/Cmd + clic para varios. Los filtros se aplican al cambiar.</p>
+    </div>
+    <p class="text-xs text-slate-500 mt-2" id="filtro-resumen">Cargando…</p>
+  </div>
+
+  {# ── Gráficos (ocultos por defecto) ── #}
+  <div id="panel-charts" class="hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+      <div class="glass-card p-3"><div id="chart-tendencia" class="chart-alertas"></div></div>
+      <div class="glass-card p-3"><div id="chart-problemas" class="chart-alertas"></div></div>
+      <div class="glass-card p-3"><div id="chart-donut" class="chart-alertas"></div></div>
+      <div class="glass-card p-3"><div id="chart-heatmap" class="chart-alertas"></div></div>
+      {# heatmap-mes se renderiza solo si el panel está abierto (mismo contenedor opcional) #}
+      <div class="glass-card p-3 lg:col-span-2 hidden" id="wrap-heatmap-mes"><div id="chart-heatmap-mes" class="chart-alertas chart-alertas-tall"></div></div>
+    </div>
+  </div>
+
+  {# ── Matriz (foco principal) ── #}
+  <div class="glass-card p-3 sm:p-4">
+    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+      <h3 class="font-semibold text-slate-800 text-sm sm:text-base">📋 Matriz de seguimiento</h3>
+      <p class="text-xs text-slate-500">Doble clic en una fila para editar · Seleccione para Claude</p>
     </div>
     <div id="alertas-grid" class="ag-theme-alpine alertas-ag-grid"></div>
   </div>
 
-  <div class="glass-card p-4 sm:p-6" id="panel-ia">
-    <h3 class="font-semibold text-slate-700 mb-1">🤖 Sugerencia de seguimiento — Claude</h3>
-    <p class="text-sm text-slate-500 mb-4" id="ia-caso-label">Seleccione una fila para generar mensaje WhatsApp o correo.</p>
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-      <div><label class="block text-xs font-medium text-slate-500 mb-1">Canal</label>
-        <select id="ia-canal" class="glass-input w-full px-3 py-2 text-sm">
-          <option value="whatsapp">WhatsApp</option><option value="correo">Correo</option><option value="ambos">Ambos</option>
-        </select></div>
-      <div class="sm:col-span-2"><label class="block text-xs font-medium text-slate-500 mb-1">Contexto adicional</label>
-        <input type="text" id="ia-contexto-extra" placeholder="Ej: cliente molesto, segunda llamada..." class="glass-input w-full px-3 py-2 text-sm"></div>
+  {# ── Panel Claude (solo visible con caso seleccionado) ── #}
+  <div id="panel-ia" class="glass-card p-4 sm:p-5 border-2 border-violet-100/80">
+    <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+      <div>
+        <h3 class="font-semibold text-slate-800">🤖 Mensaje al cliente</h3>
+        <p class="text-sm text-slate-500 mt-0.5" id="ia-caso-label">Seleccione un caso en la matriz para generar WhatsApp o correo.</p>
+      </div>
+      <div class="flex flex-wrap gap-2 items-end">
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Canal</label>
+          <select id="ia-canal" class="glass-input px-3 py-2 text-sm">
+            <option value="whatsapp">WhatsApp</option>
+            <option value="correo">Correo</option>
+            <option value="ambos">Ambos</option>
+          </select>
+        </div>
+        <div class="min-w-[180px]">
+          <label class="block text-xs font-medium text-slate-500 mb-1">Nota extra</label>
+          <input type="text" id="ia-contexto-extra" placeholder="Ej: 2.ª llamada…" class="glass-input w-full px-3 py-2 text-sm">
+        </div>
+        <button type="button" id="btn-generar-dialogo" class="btn-ola btn-ola--ai">
+          <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">✨</span>
+          <span class="btn-ola__text">
+            <span class="btn-ola__title">Generar con Claude</span>
+            <span class="btn-ola__sub">Según el caso seleccionado</span>
+          </span>
+        </button>
+      </div>
     </div>
-    <div class="flex flex-wrap gap-2 mb-4">
-      <button type="button" id="btn-generar-dialogo" class="btn-ola btn-ola--ai">
-        <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">✨</span>
-        <span class="btn-ola__text">
-          <span class="btn-ola__title">Generar diálogo con Claude</span>
-          <span class="btn-ola__sub">WhatsApp y correo sugeridos</span>
-        </span>
-      </button>
-      <button type="button" id="btn-sugerir-respuesta" class="btn-ola btn-ola--secondary">💡 Sugerir respuesta IA</button>
-    </div>
-    <div id="ia-resultado" class="hidden space-y-4">
+
+    <div id="ia-resultado" class="hidden space-y-3 pt-3 border-t border-slate-100">
       <p class="text-sm font-medium text-emerald-700" id="ia-generado-por"></p>
-      <div id="ia-dialogo" class="glass-card-inner p-4 text-sm space-y-2 hidden"></div>
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div><label class="block text-xs font-medium text-slate-500 mb-1">WhatsApp</label>
-          <textarea id="ia-whatsapp" rows="6" class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
-          <div class="flex gap-2 mt-2">
-            <button type="button" id="btn-copiar-wa" class="text-xs font-medium text-optica-600">📋 Copiar</button>
-            <a id="btn-wa-link" href="#" target="_blank" rel="noopener" class="text-xs font-medium text-emerald-600 hidden">💬 Enviar WA</a>
-          </div></div>
-        <div><label class="block text-xs font-medium text-slate-500 mb-1">Correo</label>
-          <input type="text" id="ia-asunto" class="glass-input w-full px-3 py-2 text-sm mb-2">
-          <textarea id="ia-correo" rows="5" class="glass-textarea w-full px-3 py-2 text-sm"></textarea></div>
-        <div><label class="block text-xs font-medium text-slate-500 mb-1">Guión de voz</label>
-          <textarea id="ia-voz" rows="6" class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
-          <p class="text-xs text-slate-500 mt-2" id="ia-nota"></p></div>
+      <div id="ia-dialogo" class="glass-card-inner p-3 text-sm space-y-2 hidden"></div>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div>
+          <div class="flex items-center justify-between mb-1">
+            <label class="text-xs font-medium text-slate-500">WhatsApp</label>
+            <div class="flex gap-2">
+              <button type="button" id="btn-copiar-wa" class="text-xs font-semibold text-optica-600">📋 Copiar</button>
+              <a id="btn-wa-link" href="#" target="_blank" rel="noopener" class="text-xs font-semibold text-emerald-600 hidden">💬 Abrir WA</a>
+            </div>
+          </div>
+          <textarea id="ia-whatsapp" rows="5" class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Correo</label>
+          <input type="text" id="ia-asunto" placeholder="Asunto" class="glass-input w-full px-3 py-2 text-sm mb-2">
+          <textarea id="ia-correo" rows="4" class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-500 mb-1">Guión de voz</label>
+        <textarea id="ia-voz" rows="3" class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
+        <p class="text-xs text-slate-500 mt-1" id="ia-nota"></p>
       </div>
     </div>
   </div>
+
   <div id="toast-alertas" class="hidden fixed bottom-4 right-4 z-50 glass-card px-4 py-3 text-sm font-medium shadow-lg"></div>
 </div>
 
+{# Modal edición #}
 <div id="modal-editar" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 glass-modal-overlay">
   <div class="glass-card w-full max-w-3xl max-h-[90vh] overflow-y-auto p-5 sm:p-6 m-0 sm:m-4">
     <div class="flex items-center justify-between mb-4">
       <h3 class="font-semibold text-slate-800">✏️ Editar gestión del caso</h3>
-      <button type="button" id="modal-cerrar" class="text-slate-500 hover:text-slate-700 text-xl">&times;</button>
+      <button type="button" id="modal-cerrar" class="btn-ola btn-ola--secondary btn-ola--sm" aria-label="Cerrar">✕</button>
     </div>
     <p class="text-sm text-slate-500 mb-4" id="modal-subtitulo"></p>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="modal-campos"></div>
-    <div class="flex gap-2 mt-5">
+    <div class="flex flex-wrap gap-2 mt-5">
       <button type="button" id="modal-guardar" class="btn-ola btn-ola--success">💾 Guardar en matriz</button>
       <button type="button" id="modal-claude" class="btn-ola btn-ola--ai">✨ Claude</button>
     </div>
