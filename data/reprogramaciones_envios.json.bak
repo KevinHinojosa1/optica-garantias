@@ -1,0 +1,18 @@
+{
+  "2026-07-17": {
+    "QUICENTRO SHOPPING NORTE": {
+      "enviados": [
+        {
+          "hora": "07:25",
+          "nombre": "Natalia",
+          "producto": "Lentes de contacto",
+          "factura": "ORD-503622",
+          "telefono": "0991234567",
+          "canal": "cliente",
+          "estado": "Mensaje generado"
+        }
+      ],
+      "total": 1
+    }
+  }
+}

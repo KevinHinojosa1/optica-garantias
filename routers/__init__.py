@@ -10,6 +10,7 @@ from routers.respuesta_ia_router import router as respuesta_ia_router
 from routers.tiendas_router import router as tiendas_router
 from routers.conocimiento_router import router as conocimiento_router
 from routers.whatsapp_envios_router import router as whatsapp_envios_router
+from routers.cuaderno_router import router as cuaderno_router
 
 __all__ = [
     "alertas_router",
@@ -24,4 +25,5 @@ __all__ = [
     "tiendas_router",
     "conocimiento_router",
     "whatsapp_envios_router",
+    "cuaderno_router",
 ]

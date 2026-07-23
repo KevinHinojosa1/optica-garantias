@@ -13,6 +13,7 @@ from routers import (
     alertas_router,
     analisis_router,
     clientes_router,
+    cuaderno_router,
     historial_router,
     import_router,
     ivr_router,
@@ -106,6 +107,7 @@ app.include_router(respuesta_ia_router)
 app.include_router(tiendas_router)
 app.include_router(conocimiento_router)
 app.include_router(whatsapp_envios_router)
+app.include_router(cuaderno_router)
 
 
 @app.get("/")

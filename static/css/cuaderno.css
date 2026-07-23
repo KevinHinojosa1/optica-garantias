@@ -1,0 +1,307 @@
+/* Cuaderno creativo — bitácora visual */
+
+.cuaderno-app {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cuaderno-hero {
+  padding: 1.35rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background:
+    radial-gradient(ellipse 70% 80% at 10% 20%, rgba(251, 191, 36, 0.18), transparent 55%),
+    radial-gradient(ellipse 50% 60% at 90% 10%, rgba(167, 139, 250, 0.2), transparent 50%),
+    rgba(255, 255, 255, 0.55);
+}
+
+.cuaderno-kicker {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7c3aed;
+  margin-bottom: 0.25rem;
+}
+
+.cuaderno-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #1e293b;
+}
+
+.cuaderno-sub {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+  max-width: 36rem;
+}
+
+.cuaderno-toolbar {
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.cuaderno-search {
+  flex: 1;
+  min-width: 180px;
+}
+
+.cuaderno-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.cuaderno-chip {
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  border-radius: 9999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cuaderno-chip:hover {
+  border-color: #c4b5fd;
+  color: #5b21b6;
+}
+
+.cuaderno-chip.is-on {
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.cuaderno-check {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cuaderno-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .cuaderno-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cuaderno-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+.cuaderno-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #94a3b8;
+  font-size: 0.95rem;
+}
+
+/* Sticky note card */
+.nota-card {
+  position: relative;
+  border-radius: 1.1rem;
+  padding: 1.1rem 1.15rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nota-card:hover {
+  transform: translateY(-3px) rotate(-0.4deg);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
+}
+
+.nota-card.is-fijada::before {
+  content: "📌";
+  position: absolute;
+  top: 0.55rem;
+  right: 0.7rem;
+  font-size: 1rem;
+}
+
+.nota-card.c-amber { background: linear-gradient(160deg, #fef3c7 0%, #fffbeb 55%, #fff 100%); }
+.nota-card.c-rose { background: linear-gradient(160deg, #ffe4e6 0%, #fff1f2 55%, #fff 100%); }
+.nota-card.c-sky { background: linear-gradient(160deg, #e0f2fe 0%, #f0f9ff 55%, #fff 100%); }
+.nota-card.c-emerald { background: linear-gradient(160deg, #d1fae5 0%, #ecfdf5 55%, #fff 100%); }
+.nota-card.c-violet { background: linear-gradient(160deg, #ede9fe 0%, #f5f3ff 55%, #fff 100%); }
+.nota-card.c-orange { background: linear-gradient(160deg, #ffedd5 0%, #fff7ed 55%, #fff 100%); }
+.nota-card.c-slate { background: linear-gradient(160deg, #e2e8f0 0%, #f8fafc 55%, #fff 100%); }
+
+.nota-card__emoji {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.nota-card__titulo {
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+  line-height: 1.25;
+  padding-right: 1.2rem;
+}
+
+.nota-card__body {
+  font-size: 0.8rem;
+  color: #475569;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+}
+
+.nota-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 0.4rem;
+  border-top: 1px dashed rgba(148, 163, 184, 0.45);
+  font-size: 0.68rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.nota-card__tag {
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 9999px;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.nota-card__thumbs {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.25rem;
+}
+
+.nota-card__thumbs img {
+  width: 2.4rem;
+  height: 2.4rem;
+  object-fit: cover;
+  border-radius: 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.1);
+}
+
+.cuaderno-emoji-row,
+.cuaderno-color-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.cuaderno-emoji-row button {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.65rem;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.cuaderno-emoji-row button.is-on {
+  border-color: #8b5cf6;
+  background: #f5f3ff;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.25);
+}
+
+.cuaderno-color-row button {
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 9999px;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #cbd5e1;
+  cursor: pointer;
+}
+
+.cuaderno-color-row button.is-on {
+  box-shadow: 0 0 0 2px #7c3aed;
+  transform: scale(1.1);
+}
+
+.cuaderno-color-row .c-amber { background: #fbbf24; }
+.cuaderno-color-row .c-rose { background: #fb7185; }
+.cuaderno-color-row .c-sky { background: #38bdf8; }
+.cuaderno-color-row .c-emerald { background: #34d399; }
+.cuaderno-color-row .c-violet { background: #a78bfa; }
+.cuaderno-color-row .c-orange { background: #fb923c; }
+.cuaderno-color-row .c-slate { background: #94a3b8; }
+
+.cuaderno-galeria {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.cuaderno-galeria .thumb {
+  position: relative;
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.cuaderno-galeria .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cuaderno-galeria .thumb button {
+  position: absolute;
+  top: 0.2rem;
+  right: 0.2rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  border: none;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.65);
+  color: #fff;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.cuaderno-actividad {
+  padding: 0.85rem 1rem;
+}
+
+#toast-cuaderno.toast-ok { border-left: 4px solid #16a34a; color: #166534; }
+#toast-cuaderno.toast-error { border-left: 4px solid #dc2626; color: #991b1b; }

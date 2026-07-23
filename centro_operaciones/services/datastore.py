@@ -160,7 +160,25 @@ def _fusionar_con_guardados(excel_df: pd.DataFrame, guardado: pd.DataFrame) -> p
     return _normalizar(out)
 
 
+def _cargar_desde_bd() -> pd.DataFrame | None:
+    """Carga desde SQLAlchemy si hay filas guardadas."""
+    try:
+        from services.alertas_db_service import AlertasDbService
+
+        df = AlertasDbService.cargar_dataframe()
+        if df is not None and not df.empty:
+            return _normalizar(df)
+    except Exception:
+        pass
+    return None
+
+
 def cargar_alertas() -> pd.DataFrame:
+    # 1) Base de datos (fuente preferida para no perder ediciones en Render)
+    db_df = _cargar_desde_bd()
+    if db_df is not None:
+        return db_df
+
     excel_df = None
     if ALERTAS_EXCEL.exists():
         try:
@@ -172,23 +190,30 @@ def cargar_alertas() -> pd.DataFrame:
         try:
             guardado = pd.read_parquet(ALERTAS_PARQUET)
             if excel_df is not None:
-                return _fusionar_con_guardados(excel_df, guardado)
-            return _normalizar(guardado)
+                out = _fusionar_con_guardados(excel_df, guardado)
+            else:
+                out = _normalizar(guardado)
+            guardar_alertas(out)  # sincroniza a BD
+            return out
         except Exception:
             ALERTAS_PARQUET.unlink(missing_ok=True)
 
     if ALERTAS_CSV.exists():
         guardado = pd.read_csv(ALERTAS_CSV, dtype=str, keep_default_na=False)
         if excel_df is not None:
-            return _fusionar_con_guardados(excel_df, guardado)
-        return _normalizar(guardado)
+            out = _fusionar_con_guardados(excel_df, guardado)
+        else:
+            out = _normalizar(guardado)
+        guardar_alertas(out)
+        return out
 
     if excel_df is not None:
         guardar_alertas(excel_df)
         return excel_df
 
     raise FileNotFoundError(
-        "No hay datos de alertas. Coloque ALERTAS_TELEGRAM_2026.xlsx en centro_operaciones/data/"
+        "No hay datos de alertas. Suba un Excel en el módulo Alertas o coloque "
+        "ALERTAS_TELEGRAM_2026.xlsx en centro_operaciones/data/"
     )
 
 
@@ -213,6 +238,20 @@ def guardar_alertas(df: pd.DataFrame) -> None:
         out.to_parquet(ALERTAS_PARQUET, index=False)
     except Exception:
         pass
+    # Persistencia durable en SQLite/PostgreSQL
+    try:
+        from services.alertas_db_service import AlertasDbService
+        from services.actividad_service import ActividadService
+
+        n = AlertasDbService.guardar_dataframe(out)
+        ActividadService.registrar(
+            modulo="alertas",
+            accion="guardar_matriz",
+            detalle=f"{n} filas guardadas en BD",
+            entidad="alertas_telegram",
+        )
+    except Exception as exc:
+        print(f"Alertas BD (no crítico): {exc}", flush=True)
 
 
 def _normalizar(df: pd.DataFrame) -> pd.DataFrame:

@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}Mi Cuaderno{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/cuaderno.css?v={{ asset_version }}">
+{% endblock %}
+
+{% block content %}
+<div id="cuaderno-app" class="cuaderno-app">
+  <header class="cuaderno-hero glass-card">
+    <div class="cuaderno-hero__text">
+      <p class="cuaderno-kicker">Bitácora personal · Óptica Los Andes</p>
+      <h2 class="cuaderno-title">📔 Mi Cuaderno</h2>
+      <p class="cuaderno-sub">Anotaciones, recordatorios e imágenes en un solo lugar. Todo se guarda en la base de datos.</p>
+    </div>
+    <div class="cuaderno-hero__actions">
+      <button type="button" id="btn-nueva-nota" class="btn-ola btn-ola--ai btn-ola--lg">
+        <span class="btn-ola__left">
+          <span class="btn-ola__icon">✨</span>
+          <span class="btn-ola__text">
+            <span class="btn-ola__title">Nueva anotación</span>
+            <span class="btn-ola__sub">Escribe, pega fotos y fija ideas</span>
+          </span>
+        </span>
+      </button>
+    </div>
+  </header>
+
+  <div class="cuaderno-toolbar glass-card">
+    <input type="search" id="cuaderno-buscar" class="glass-input cuaderno-search" placeholder="Buscar en tus notas…">
+    <div class="cuaderno-chips" id="cuaderno-cats"></div>
+    <label class="cuaderno-check">
+      <input type="checkbox" id="cuaderno-fijadas"> Solo fijadas 📌
+    </label>
+  </div>
+
+  <div id="cuaderno-grid" class="cuaderno-grid">
+    <p class="cuaderno-empty">Cargando tu bitácora…</p>
+  </div>
+
+  <section class="cuaderno-actividad glass-card">
+    <div class="flex items-center justify-between gap-2 mb-2">
+      <h3 class="font-semibold text-slate-800 text-sm">📜 Actividad reciente del sistema</h3>
+      <button type="button" id="btn-refrescar-act" class="text-xs font-semibold text-optica-600">Actualizar</button>
+    </div>
+    <div id="cuaderno-actividad" class="text-xs text-slate-600 space-y-1 max-h-40 overflow-y-auto">—</div>
+  </section>
+</div>
+
+{# Modal nota #}
+<div id="modal-nota" class="hidden fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 glass-modal-overlay">
+  <div class="cuaderno-modal glass-card w-full max-w-2xl max-h-[92vh] overflow-y-auto m-0 sm:m-4 p-5 sm:p-6">
+    <div class="flex items-start justify-between gap-3 mb-4">
+      <div>
+        <p class="text-xs font-bold uppercase tracking-wider text-violet-600">Anotación</p>
+        <h3 class="font-bold text-lg text-slate-800" id="modal-nota-titulo-ui">Nueva nota</h3>
+      </div>
+      <button type="button" id="modal-nota-cerrar" class="btn-ola btn-ola--secondary btn-ola--sm">✕</button>
+    </div>
+
+    <input type="hidden" id="nota-id" value="">
+    <div class="grid sm:grid-cols-2 gap-3 mb-3">
+      <div class="sm:col-span-2">
+        <label class="ola-label">Título</label>
+        <input type="text" id="nota-titulo" class="ola-input" placeholder="Ej: Seguimiento Quicentro — ORD-503622">
+      </div>
+      <div>
+        <label class="ola-label">Emoji</label>
+        <div class="cuaderno-emoji-row" id="nota-emoji-pick">
+          <button type="button" data-e="📝" class="is-on">📝</button>
+          <button type="button" data-e="💡">💡</button>
+          <button type="button" data-e="🔥">🔥</button>
+          <button type="button" data-e="📦">📦</button>
+          <button type="button" data-e="🛡️">🛡️</button>
+          <button type="button" data-e="📡">📡</button>
+          <button type="button" data-e="👤">👤</button>
+          <button type="button" data-e="✅">✅</button>
+          <button type="button" data-e="⭐">⭐</button>
+        </div>
+        <input type="hidden" id="nota-emoji" value="📝">
+      </div>
+      <div>
+        <label class="ola-label">Color de la tarjeta</label>
+        <div class="cuaderno-color-row" id="nota-color-pick">
+          <button type="button" data-c="amber" class="c-amber is-on" title="Ámbar"></button>
+          <button type="button" data-c="rose" class="c-rose" title="Rosa"></button>
+          <button type="button" data-c="sky" class="c-sky" title="Cielo"></button>
+          <button type="button" data-c="emerald" class="c-emerald" title="Esmeralda"></button>
+          <button type="button" data-c="violet" class="c-violet" title="Violeta"></button>
+          <button type="button" data-c="orange" class="c-orange" title="Naranja"></button>
+          <button type="button" data-c="slate" class="c-slate" title="Pizarra"></button>
+        </div>
+        <input type="hidden" id="nota-color" value="amber">
+      </div>
+      <div>
+        <label class="ola-label">Categoría</label>
+        <select id="nota-categoria" class="ola-input"></select>
+      </div>
+      <div>
+        <label class="ola-label">Etiquetas (separadas por coma)</label>
+        <input type="text" id="nota-tags" class="ola-input" placeholder="retraso, laboratorio, quicentro">
+      </div>
+      <div class="sm:col-span-2">
+        <label class="ola-label">Contenido / anotaciones</label>
+        <textarea id="nota-contenido" rows="8" class="ola-input font-mono text-sm" placeholder="Escribe aquí todo lo que necesites verificar: números de orden, acuerdos, pasos, etc."></textarea>
+      </div>
+      <div class="sm:col-span-2 flex flex-wrap items-center gap-3">
+        <label class="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+          <input type="checkbox" id="nota-fijada" class="rounded text-violet-600"> Fijar en la parte superior 📌
+        </label>
+        <input type="text" id="nota-autor" class="ola-input max-w-xs" value="{{ default_asesor }}" placeholder="Autor">
+      </div>
+    </div>
+
+    <div id="nota-galeria" class="cuaderno-galeria mb-4"></div>
+    <div class="flex flex-wrap gap-2 mb-4">
+      <label class="btn-ola btn-ola--secondary cursor-pointer">
+        <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">🖼️</span>
+        <span>Agregar imagen</span>
+        <input type="file" id="nota-imagen" accept="image/*" class="hidden">
+      </label>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <button type="button" id="btn-guardar-nota" class="btn-ola btn-ola--success">
+        <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">💾</span>
+        <span class="btn-ola__text">
+          <span class="btn-ola__title">Guardar en base de datos</span>
+          <span class="btn-ola__sub">Se conserva aunque recargues</span>
+        </span>
+      </button>
+      <button type="button" id="btn-eliminar-nota" class="btn-ola btn-ola--ghost-danger hidden">🗑️ Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-cuaderno" class="hidden fixed bottom-4 right-4 z-50 glass-card px-4 py-3 text-sm font-medium shadow-lg"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.DEFAULT_ASESOR = {{ default_asesor | tojson }};
+</script>
+<script src="/static/js/cuaderno.js?v={{ asset_version }}"></script>
+{% endblock %}
