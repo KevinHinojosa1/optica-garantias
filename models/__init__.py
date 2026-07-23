@@ -1,4 +1,5 @@
 from models.alerta import AlertaTelegram
+from models.catalogo import CatalogoJson, PlantillaBot
 from models.cliente import Cliente
 from models.conocimiento import ConocimientoItem
 from models.cuaderno import ActividadLog, CuadernoAdjunto, CuadernoNota
@@ -8,6 +9,8 @@ from models.reprogramacion import ReprogramacionEnvio
 
 __all__ = [
     "AlertaTelegram",
+    "CatalogoJson",
+    "PlantillaBot",
     "Cliente",
     "ConocimientoItem",
     "CuadernoNota",

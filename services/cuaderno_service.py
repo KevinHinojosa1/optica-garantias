@@ -88,9 +88,27 @@ class CuadernoService:
             .limit(max(1, min(limit, 500)))
             .all()
         )
+        notas = [cls._to_dict(n) for n in rows]
+        # Agrupar por mes para vista "cuaderno físico"
+        meses_es = {
+            1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril",
+            5: "Mayo", 6: "Junio", 7: "Julio", 8: "Agosto",
+            9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre",
+        }
+        por_mes: dict[str, list] = {}
+        for n in notas:
+            raw = n.get("updated_at") or n.get("created_at") or ""
+            try:
+                dt = datetime.fromisoformat(raw.replace("Z", ""))
+                clave = f"{meses_es.get(dt.month, dt.month)} {dt.year}"
+            except Exception:
+                clave = "Sin fecha"
+            por_mes.setdefault(clave, []).append(n)
+        secciones = [{"mes": k, "notas": v, "total": len(v)} for k, v in por_mes.items()]
         return {
             "total": len(rows),
-            "notas": [cls._to_dict(n) for n in rows],
+            "notas": notas,
+            "secciones": secciones,
             "categorias": CATEGORIAS,
             "colores": COLORES,
         }

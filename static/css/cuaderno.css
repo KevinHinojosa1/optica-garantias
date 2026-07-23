@@ -1,22 +1,154 @@
-/* Cuaderno creativo — bitácora visual */
+/* Cuaderno creativo — libro físico + bitácora */
 
 .cuaderno-app {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
-.cuaderno-hero {
-  padding: 1.35rem 1.5rem;
+/* Libro abierto */
+.cuaderno-libro {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+@media (min-width: 1024px) {
+  .cuaderno-libro {
+    grid-template-columns: 280px 1fr;
+    gap: 0;
+  }
+}
+
+.cuaderno-tapa {
+  position: relative;
+  border-radius: 1.25rem;
+  min-height: 220px;
+  overflow: hidden;
+  box-shadow:
+    0 20px 50px rgba(76, 29, 149, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+@media (min-width: 1024px) {
+  .cuaderno-tapa {
+    border-radius: 1.25rem 0 0 1.25rem;
+    min-height: 520px;
+  }
+}
+
+.cuaderno-tapa__lomo {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .cuaderno-tapa__lomo {
+    display: block;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 14px;
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.2));
+    z-index: 2;
+  }
+}
+
+.cuaderno-tapa__cara {
+  height: 100%;
+  padding: 1.75rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #fff;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(255, 255, 255, 0.18), transparent 55%),
+    linear-gradient(155deg, #4c1d95 0%, #6d28d9 40%, #7c3aed 70%, #5b21b6 100%);
+}
+
+.cuaderno-tapa__marca {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.cuaderno-tapa__icono {
+  font-size: 3rem;
+  margin: 0.75rem 0 0.5rem;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.25));
+}
+
+.cuaderno-tapa__titulo {
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.cuaderno-tapa__sub {
+  font-size: 0.8rem;
+  opacity: 0.88;
+  margin-top: 0.5rem;
+  max-width: 16rem;
+  line-height: 1.4;
+}
+
+.cuaderno-tapa__autor {
+  margin-top: 1.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  opacity: 0.95;
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  padding-top: 0.75rem;
+  width: 80%;
+}
+
+.cuaderno-tapa__stats {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.cuaderno-hojas {
+  background:
+    repeating-linear-gradient(
+      transparent,
+      transparent 27px,
+      rgba(191, 219, 254, 0.35) 28px
+    ),
+    linear-gradient(180deg, #fffef9 0%, #f8fafc 100%);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 1.25rem;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+  padding: 1.15rem 1.15rem 1.5rem;
+  min-height: 420px;
+}
+
+@media (min-width: 1024px) {
+  .cuaderno-hojas {
+    border-radius: 0 1.25rem 1.25rem 0;
+    border-left: none;
+    box-shadow: 8px 12px 40px rgba(15, 23, 42, 0.1);
+  }
+}
+
+.cuaderno-hero-inner {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  background:
-    radial-gradient(ellipse 70% 80% at 10% 20%, rgba(251, 191, 36, 0.18), transparent 55%),
-    radial-gradient(ellipse 50% 60% at 90% 10%, rgba(167, 139, 250, 0.2), transparent 50%),
-    rgba(255, 255, 255, 0.55);
+  margin-bottom: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px dashed rgba(148, 163, 184, 0.45);
 }
 
 .cuaderno-kicker {
@@ -29,7 +161,7 @@
 }
 
 .cuaderno-title {
-  font-size: 1.6rem;
+  font-size: 1.35rem;
   font-weight: 800;
   letter-spacing: -0.03em;
   color: #1e293b;
@@ -40,6 +172,54 @@
   color: #64748b;
   margin-top: 0.25rem;
   max-width: 36rem;
+}
+
+/* Sección por mes */
+.cuaderno-mes {
+  grid-column: 1 / -1;
+  margin-top: 0.5rem;
+}
+
+.cuaderno-mes__head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.75rem 0 0.65rem;
+  padding: 0.45rem 0.75rem;
+  background: linear-gradient(90deg, rgba(124, 58, 237, 0.1), transparent);
+  border-left: 3px solid #7c3aed;
+  border-radius: 0 0.65rem 0.65rem 0;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: #4c1d95;
+  letter-spacing: -0.01em;
+}
+
+.cuaderno-mes__count {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #7c3aed;
+  background: #ede9fe;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.cuaderno-mes__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .cuaderno-mes__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1100px) {
+  .cuaderno-mes__grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
 }
 
 .cuaderno-toolbar {

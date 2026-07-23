@@ -20,8 +20,41 @@ RUTA_SCRIPTS = Path(__file__).resolve().parent.parent / "data" / "scripts_atenci
 class ScriptsService:
     @staticmethod
     def cargar() -> dict:
+        """Carga scripts desde BD (preferido) o archivo JSON."""
+        try:
+            from services.catalogo_service import CatalogoService
+
+            CatalogoService.seed_scripts()
+            data = CatalogoService.obtener("scripts_atencion")
+            if data and data.get("grupos"):
+                return data
+        except Exception as exc:
+            print(f"Scripts BD: {exc}", flush=True)
         with open(RUTA_SCRIPTS, encoding="utf-8") as f:
             return json.load(f)
+
+    @staticmethod
+    def guardar_catalogo(data: dict) -> None:
+        from services.catalogo_service import CatalogoService
+        from services.actividad_service import ActividadService
+
+        version = str(data.get("version") or "2.0")
+        CatalogoService.guardar("scripts_atencion", data, version=version)
+        ActividadService.registrar(
+            modulo="scripts",
+            accion="guardar_catalogo",
+            detalle=f"version {version}",
+            entidad="scripts_atencion",
+        )
+        # Copia de respaldo en disco
+        try:
+            RUTA_SCRIPTS.parent.mkdir(parents=True, exist_ok=True)
+            RUTA_SCRIPTS.write_text(
+                json.dumps(data, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+        except OSError:
+            pass
 
     @staticmethod
     def personalizar(texto: str, variables: dict[str, str]) -> str:

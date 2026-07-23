@@ -53,5 +53,6 @@ class CuadernoNotaOut(BaseModel):
 class CuadernoListResponse(BaseModel):
     total: int
     notas: list[dict[str, Any]]
+    secciones: list[dict[str, Any]] = Field(default_factory=list)
     categorias: list[dict[str, Any]]
     colores: list[str]

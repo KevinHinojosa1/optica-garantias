@@ -50,7 +50,74 @@ class RespuestaIAService:
         }
 
     @classmethod
+    def _migrar_plantillas_json_a_bd(cls) -> None:
+        """Una vez: mueve plantillas del JSON a tabla plantillas_bot."""
+        try:
+            from database import SessionLocal
+            from models.catalogo import PlantillaBot
+
+            db = SessionLocal()
+            try:
+                if db.query(PlantillaBot).count() > 0:
+                    return
+                if not RUTA_PLANTILLAS.exists():
+                    return
+                data = json.loads(RUTA_PLANTILLAS.read_text(encoding="utf-8"))
+                for p in data.get("plantillas") or []:
+                    codigo = str(p.get("id") or uuid.uuid4().hex[:8])
+                    if db.query(PlantillaBot).filter(PlantillaBot.codigo == codigo).first():
+                        continue
+                    db.add(
+                        PlantillaBot(
+                            codigo=codigo,
+                            nombre=str(p.get("nombre") or "Plantilla"),
+                            modulo=str(p.get("modulo") or ""),
+                            mensaje_whatsapp=str(p.get("mensaje_whatsapp") or ""),
+                            mensaje_correo=str(p.get("mensaje_correo") or ""),
+                            asunto_correo=str(p.get("asunto_correo") or ""),
+                            metadata_json=json.dumps(p.get("metadata") or {}, ensure_ascii=False),
+                            created_at=datetime.utcnow(),
+                            updated_at=datetime.utcnow(),
+                        )
+                    )
+                db.commit()
+            finally:
+                db.close()
+        except Exception as exc:
+            print(f"Migración plantillas bot: {exc}", flush=True)
+
+    @classmethod
     def _cargar_plantillas(cls) -> list[dict]:
+        cls._migrar_plantillas_json_a_bd()
+        try:
+            from database import SessionLocal
+            from models.catalogo import PlantillaBot
+
+            db = SessionLocal()
+            try:
+                rows = db.query(PlantillaBot).order_by(PlantillaBot.id.desc()).all()
+                if rows:
+                    out = []
+                    for r in rows:
+                        try:
+                            meta = json.loads(r.metadata_json or "{}")
+                        except json.JSONDecodeError:
+                            meta = {}
+                        out.append({
+                            "id": r.codigo,
+                            "nombre": r.nombre,
+                            "modulo": r.modulo,
+                            "mensaje_whatsapp": r.mensaje_whatsapp,
+                            "mensaje_correo": r.mensaje_correo,
+                            "asunto_correo": r.asunto_correo,
+                            "creada_en": (r.created_at or datetime.utcnow()).strftime("%Y-%m-%d %H:%M"),
+                            "metadata": meta,
+                        })
+                    return out
+            finally:
+                db.close()
+        except Exception:
+            pass
         if not RUTA_PLANTILLAS.exists():
             return []
         with open(RUTA_PLANTILLAS, encoding="utf-8") as f:
@@ -58,6 +125,7 @@ class RespuestaIAService:
 
     @classmethod
     def _guardar_plantillas(cls, plantillas: list[dict]) -> None:
+        """Compat: reescribe JSON y sincroniza BD."""
         RUTA_PLANTILLAS.parent.mkdir(parents=True, exist_ok=True)
         with open(RUTA_PLANTILLAS, "w", encoding="utf-8") as f:
             json.dump({"plantillas": plantillas}, f, ensure_ascii=False, indent=2)
@@ -80,9 +148,9 @@ class RespuestaIAService:
         asunto_correo: str = "",
         metadata: dict | None = None,
     ) -> dict:
-        plantillas = cls._cargar_plantillas()
+        codigo = str(uuid.uuid4())[:8]
         entry = {
-            "id": str(uuid.uuid4())[:8],
+            "id": codigo,
             "nombre": nombre.strip(),
             "modulo": modulo,
             "mensaje_whatsapp": mensaje_whatsapp,
@@ -91,8 +159,43 @@ class RespuestaIAService:
             "creada_en": datetime.now().strftime("%Y-%m-%d %H:%M"),
             "metadata": metadata or {},
         }
-        plantillas.insert(0, entry)
-        cls._guardar_plantillas(plantillas)
+        try:
+            from database import SessionLocal
+            from models.catalogo import PlantillaBot
+            from services.actividad_service import ActividadService
+
+            db = SessionLocal()
+            try:
+                db.add(
+                    PlantillaBot(
+                        codigo=codigo,
+                        nombre=entry["nombre"],
+                        modulo=modulo or "",
+                        mensaje_whatsapp=mensaje_whatsapp or "",
+                        mensaje_correo=mensaje_correo or "",
+                        asunto_correo=asunto_correo or "",
+                        metadata_json=json.dumps(metadata or {}, ensure_ascii=False),
+                        created_at=datetime.utcnow(),
+                        updated_at=datetime.utcnow(),
+                    )
+                )
+                db.commit()
+                ActividadService.registrar(
+                    modulo="plantillas_bot",
+                    accion="guardar",
+                    detalle=entry["nombre"],
+                    entidad="plantilla",
+                    entidad_id=codigo,
+                    db=db,
+                )
+            finally:
+                db.close()
+        except Exception as exc:
+            print(f"Plantilla BD: {exc}", flush=True)
+            # Fallback JSON
+            plantillas = cls._cargar_plantillas()
+            plantillas.insert(0, entry)
+            cls._guardar_plantillas(plantillas)
         return entry
 
     @classmethod

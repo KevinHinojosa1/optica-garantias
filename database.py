@@ -59,6 +59,7 @@ def migrate_db():
 def init_db():
     from models import (  # noqa: F401
         alerta,
+        catalogo,
         cliente,
         conocimiento,
         cuaderno,
@@ -84,3 +85,14 @@ def init_db():
             print(f"Reprogramaciones: migrados {n} registros JSON → BD", flush=True)
     except Exception as exc:
         print(f"Migración reprogramaciones (no crítica): {exc}", flush=True)
+
+    # Scripts CX y plantillas bot → BD
+    try:
+        from services.catalogo_service import CatalogoService
+        from services.respuesta_ia_service import RespuestaIAService
+
+        if CatalogoService.seed_scripts():
+            print("Scripts CX importados a BD", flush=True)
+        RespuestaIAService._migrar_plantillas_json_a_bd()
+    except Exception as exc:
+        print(f"Seed catálogos (no crítico): {exc}", flush=True)

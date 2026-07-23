@@ -3,9 +3,11 @@
  */
 
 let notasCache = [];
+let seccionesCache = [];
 let categorias = [];
 let catActiva = "";
 let notaActualId = null;
+let vistaPorMes = true;
 
 function toast(msg, tipo = "info") {
   const el = document.getElementById("toast-cuaderno");
@@ -33,7 +35,14 @@ async function cargarNotas() {
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || "Error al cargar");
   notasCache = data.notas || [];
+  seccionesCache = data.secciones || [];
   categorias = data.categorias || [];
+  const sn = document.getElementById("stat-notas");
+  const sm = document.getElementById("stat-mes");
+  if (sn) sn.textContent = `${data.total || 0} notas`;
+  if (sm) {
+    sm.textContent = seccionesCache[0] ? seccionesCache[0].mes : "Sin páginas";
+  }
   renderCats();
   renderGrid();
   fillCategoriaSelect();
@@ -67,6 +76,37 @@ function fillCategoriaSelect() {
   if (cur) sel.value = cur;
 }
 
+function htmlNotaCard(n) {
+  const tags = (n.tags || [])
+    .slice(0, 4)
+    .map((t) => `<span class="nota-card__tag">#${escapeHtml(t)}</span>`)
+    .join("");
+  const thumbs = (n.adjuntos || [])
+    .slice(0, 3)
+    .map((a) => `<img src="${escapeHtml(a.url)}" alt="">`)
+    .join("");
+  const body = (n.contenido || "").trim() || "Sin contenido…";
+  const fecha = (n.updated_at || n.created_at || "").slice(0, 16).replace("T", " ");
+  return `
+    <article class="nota-card c-${escapeHtml(n.color || "amber")} ${n.fijada ? "is-fijada" : ""}" data-id="${n.id}">
+      <div class="nota-card__emoji">${escapeHtml(n.emoji || "📝")}</div>
+      <h3 class="nota-card__titulo">${escapeHtml(n.titulo)}</h3>
+      <div class="nota-card__body">${escapeHtml(body)}</div>
+      ${thumbs ? `<div class="nota-card__thumbs">${thumbs}</div>` : ""}
+      <div class="nota-card__meta">
+        <span>${escapeHtml(n.categoria)}</span>
+        ${tags}
+        <span class="ml-auto">${escapeHtml(fecha)}</span>
+      </div>
+    </article>`;
+}
+
+function bindCards(root) {
+  root.querySelectorAll(".nota-card").forEach((card) => {
+    card.addEventListener("click", () => abrirNota(Number(card.dataset.id)));
+  });
+}
+
 function renderGrid() {
   const grid = document.getElementById("cuaderno-grid");
   if (!grid) return;
@@ -75,38 +115,31 @@ function renderGrid() {
       <div class="cuaderno-empty">
         <p class="text-4xl mb-2">📔</p>
         <p class="font-semibold text-slate-600">Tu cuaderno está vacío</p>
-        <p class="text-sm mt-1">Crea la primera anotación para guardar ideas, órdenes, acuerdos e imágenes.</p>
+        <p class="text-sm mt-1">Abre la primera página: ideas, órdenes, acuerdos e imágenes.</p>
       </div>`;
     return;
   }
-  grid.innerHTML = notasCache
-    .map((n) => {
-      const tags = (n.tags || []).slice(0, 4)
-        .map((t) => `<span class="nota-card__tag">#${escapeHtml(t)}</span>`)
-        .join("");
-      const thumbs = (n.adjuntos || [])
-        .slice(0, 3)
-        .map((a) => `<img src="${escapeHtml(a.url)}" alt="">`)
-        .join("");
-      const body = (n.contenido || "").trim() || "Sin contenido…";
-      const fecha = (n.updated_at || n.created_at || "").slice(0, 16).replace("T", " ");
-      return `
-        <article class="nota-card c-${escapeHtml(n.color || "amber")} ${n.fijada ? "is-fijada" : ""}" data-id="${n.id}">
-          <div class="nota-card__emoji">${escapeHtml(n.emoji || "📝")}</div>
-          <h3 class="nota-card__titulo">${escapeHtml(n.titulo)}</h3>
-          <div class="nota-card__body">${escapeHtml(body)}</div>
-          ${thumbs ? `<div class="nota-card__thumbs">${thumbs}</div>` : ""}
-          <div class="nota-card__meta">
-            <span>${escapeHtml(n.categoria)}</span>
-            ${tags}
-            <span class="ml-auto">${escapeHtml(fecha)}</span>
-          </div>
-        </article>`;
-    })
-    .join("");
-  grid.querySelectorAll(".nota-card").forEach((card) => {
-    card.addEventListener("click", () => abrirNota(Number(card.dataset.id)));
-  });
+
+  vistaPorMes = document.getElementById("cuaderno-vista-mes")?.checked !== false;
+
+  if (vistaPorMes && seccionesCache.length) {
+    grid.innerHTML = seccionesCache
+      .map((sec) => {
+        const cards = (sec.notas || []).map(htmlNotaCard).join("");
+        return `
+          <section class="cuaderno-mes">
+            <div class="cuaderno-mes__head">
+              📅 ${escapeHtml(sec.mes)}
+              <span class="cuaderno-mes__count">${sec.total || 0}</span>
+            </div>
+            <div class="cuaderno-mes__grid">${cards}</div>
+          </section>`;
+      })
+      .join("");
+  } else {
+    grid.innerHTML = notasCache.map(htmlNotaCard).join("");
+  }
+  bindCards(grid);
 }
 
 function abrirModalNueva() {
@@ -314,6 +347,7 @@ document.getElementById("cuaderno-buscar")?.addEventListener("input", () => {
 });
 document.getElementById("cuaderno-fijadas")?.addEventListener("change", () =>
   cargarNotas().catch((e) => toast(e.message, "error")));
+document.getElementById("cuaderno-vista-mes")?.addEventListener("change", () => renderGrid());
 document.getElementById("btn-refrescar-act")?.addEventListener("click", () =>
   cargarActividad());
 

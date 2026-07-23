@@ -7,40 +7,62 @@
 
 {% block content %}
 <div id="cuaderno-app" class="cuaderno-app">
-  <header class="cuaderno-hero glass-card">
-    <div class="cuaderno-hero__text">
-      <p class="cuaderno-kicker">Bitácora personal · Óptica Los Andes</p>
-      <h2 class="cuaderno-title">📔 Mi Cuaderno</h2>
-      <p class="cuaderno-sub">Anotaciones, recordatorios e imágenes en un solo lugar. Todo se guarda en la base de datos.</p>
+
+  {# Portada del cuaderno #}
+  <div class="cuaderno-libro">
+    <div class="cuaderno-tapa">
+      <div class="cuaderno-tapa__lomo"></div>
+      <div class="cuaderno-tapa__cara">
+        <p class="cuaderno-tapa__marca">Óptica Los Andes</p>
+        <div class="cuaderno-tapa__icono">📔</div>
+        <h1 class="cuaderno-tapa__titulo">Mi Cuaderno</h1>
+        <p class="cuaderno-tapa__sub">Bitácora de operaciones · anotaciones · imágenes · verificación</p>
+        <p class="cuaderno-tapa__autor">{{ default_asesor }}</p>
+        <div class="cuaderno-tapa__stats">
+          <span id="stat-notas">— notas</span>
+          <span id="stat-mes">—</span>
+        </div>
+      </div>
     </div>
-    <div class="cuaderno-hero__actions">
-      <button type="button" id="btn-nueva-nota" class="btn-ola btn-ola--ai btn-ola--lg">
-        <span class="btn-ola__left">
-          <span class="btn-ola__icon">✨</span>
-          <span class="btn-ola__text">
-            <span class="btn-ola__title">Nueva anotación</span>
-            <span class="btn-ola__sub">Escribe, pega fotos y fija ideas</span>
+
+    <div class="cuaderno-hojas">
+      <header class="cuaderno-hero-inner">
+        <div>
+          <p class="cuaderno-kicker">Todo se guarda en la base de datos</p>
+          <h2 class="cuaderno-title">Páginas del cuaderno</h2>
+          <p class="cuaderno-sub">Organiza por mes, fija lo urgente y adjunta fotos de órdenes o evidencias.</p>
+        </div>
+        <button type="button" id="btn-nueva-nota" class="btn-ola btn-ola--ai btn-ola--lg">
+          <span class="btn-ola__left">
+            <span class="btn-ola__icon">✨</span>
+            <span class="btn-ola__text">
+              <span class="btn-ola__title">Nueva página</span>
+              <span class="btn-ola__sub">Anotación + imágenes</span>
+            </span>
           </span>
-        </span>
-      </button>
+        </button>
+      </header>
+
+      <div class="cuaderno-toolbar">
+        <input type="search" id="cuaderno-buscar" class="glass-input cuaderno-search" placeholder="Buscar en tus páginas…">
+        <div class="cuaderno-chips" id="cuaderno-cats"></div>
+        <label class="cuaderno-check">
+          <input type="checkbox" id="cuaderno-fijadas"> Solo fijadas 📌
+        </label>
+        <label class="cuaderno-check">
+          <input type="checkbox" id="cuaderno-vista-mes" checked> Por mes 📅
+        </label>
+      </div>
+
+      <div id="cuaderno-grid" class="cuaderno-grid">
+        <p class="cuaderno-empty">Cargando páginas…</p>
+      </div>
     </div>
-  </header>
-
-  <div class="cuaderno-toolbar glass-card">
-    <input type="search" id="cuaderno-buscar" class="glass-input cuaderno-search" placeholder="Buscar en tus notas…">
-    <div class="cuaderno-chips" id="cuaderno-cats"></div>
-    <label class="cuaderno-check">
-      <input type="checkbox" id="cuaderno-fijadas"> Solo fijadas 📌
-    </label>
-  </div>
-
-  <div id="cuaderno-grid" class="cuaderno-grid">
-    <p class="cuaderno-empty">Cargando tu bitácora…</p>
   </div>
 
   <section class="cuaderno-actividad glass-card">
     <div class="flex items-center justify-between gap-2 mb-2">
-      <h3 class="font-semibold text-slate-800 text-sm">📜 Actividad reciente del sistema</h3>
+      <h3 class="font-semibold text-slate-800 text-sm">📜 Actividad reciente (guardados en BD)</h3>
       <button type="button" id="btn-refrescar-act" class="text-xs font-semibold text-optica-600">Actualizar</button>
     </div>
     <div id="cuaderno-actividad" class="text-xs text-slate-600 space-y-1 max-h-40 overflow-y-auto">—</div>
@@ -52,8 +74,8 @@
   <div class="cuaderno-modal glass-card w-full max-w-2xl max-h-[92vh] overflow-y-auto m-0 sm:m-4 p-5 sm:p-6">
     <div class="flex items-start justify-between gap-3 mb-4">
       <div>
-        <p class="text-xs font-bold uppercase tracking-wider text-violet-600">Anotación</p>
-        <h3 class="font-bold text-lg text-slate-800" id="modal-nota-titulo-ui">Nueva nota</h3>
+        <p class="text-xs font-bold uppercase tracking-wider text-violet-600">Página del cuaderno</p>
+        <h3 class="font-bold text-lg text-slate-800" id="modal-nota-titulo-ui">Nueva página</h3>
       </div>
       <button type="button" id="modal-nota-cerrar" class="btn-ola btn-ola--secondary btn-ola--sm">✕</button>
     </div>
