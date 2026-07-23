@@ -65,7 +65,7 @@
         </button>
         <div id="menu-mas-acciones" class="hidden alerta-menu absolute left-0 sm:right-0 sm:left-auto top-full mt-1 z-30 min-w-[220px]">
           <button type="button" id="btn-editar-fila" class="alerta-menu__item">✏️ Editar fila seleccionada</button>
-          <button type="button" id="btn-claude-fila" class="alerta-menu__item">✨ Generar mensaje Claude</button>
+          <button type="button" id="btn-claude-fila" class="alerta-menu__item">⚡ Bot respuesta rápida</button>
           <button type="button" id="btn-clasificar-reglas" class="alerta-menu__item">🏷️ Clasificar (reglas)</button>
           <button type="button" id="btn-clasificar-ia" class="alerta-menu__item">🤖 Clasificar con IA</button>
           <button type="button" id="btn-recargar-excel" class="alerta-menu__item">🔄 Recargar Excel base</button>
@@ -201,62 +201,80 @@
     <div id="alertas-grid" class="ag-theme-alpine alertas-ag-grid"></div>
   </div>
 
-  {# ── Panel Claude (solo visible con caso seleccionado) ── #}
+  {# ── Bot de respuesta rápida ── #}
   <div id="panel-ia" class="glass-card p-4 sm:p-5 border-2 border-violet-100/80">
     <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
       <div>
-        <h3 class="font-semibold text-slate-800">🤖 Mensaje al cliente</h3>
-        <p class="text-sm text-slate-500 mt-0.5" id="ia-caso-label">Seleccione un caso en la matriz para generar WhatsApp o correo.</p>
+        <h3 class="font-semibold text-slate-800">🤖 Bot de respuesta rápida</h3>
+        <p class="text-sm text-slate-500 mt-0.5" id="ia-caso-label">Seleccione un caso en la matriz y genere 3 tonos de respuesta en 1 clic.</p>
       </div>
       <div class="flex flex-wrap gap-2 items-end">
-        <div>
-          <label class="block text-xs font-medium text-slate-500 mb-1">Canal</label>
-          <select id="ia-canal" class="glass-input px-3 py-2 text-sm">
-            <option value="whatsapp">WhatsApp</option>
-            <option value="correo">Correo</option>
-            <option value="ambos">Ambos</option>
-          </select>
+        <div class="min-w-[200px]">
+          <label class="block text-xs font-medium text-slate-500 mb-1">Nota extra (opcional)</label>
+          <input type="text" id="ia-contexto-extra" placeholder="Ej: 2.ª llamada, cliente molesto…" class="glass-input w-full px-3 py-2 text-sm">
         </div>
-        <div class="min-w-[180px]">
-          <label class="block text-xs font-medium text-slate-500 mb-1">Nota extra</label>
-          <input type="text" id="ia-contexto-extra" placeholder="Ej: 2.ª llamada…" class="glass-input w-full px-3 py-2 text-sm">
-        </div>
-        <button type="button" id="btn-generar-dialogo" class="btn-ola btn-ola--ai">
-          <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">✨</span>
-          <span class="btn-ola__text">
-            <span class="btn-ola__title">Generar con Claude</span>
-            <span class="btn-ola__sub">Según el caso seleccionado</span>
+        <input type="hidden" id="ia-canal" value="whatsapp">
+        <button type="button" id="btn-bot-rapido" class="btn-ola btn-ola--ai btn-ola--lg">
+          <span class="btn-ola__left">
+            <span class="btn-ola__icon">⚡</span>
+            <span class="btn-ola__text">
+              <span class="btn-ola__title">Generar 3 respuestas</span>
+              <span class="btn-ola__sub">Empática · Corta · Formal</span>
+            </span>
           </span>
         </button>
       </div>
     </div>
 
-    <div id="ia-resultado" class="hidden space-y-3 pt-3 border-t border-slate-100">
-      <p class="text-sm font-medium text-emerald-700" id="ia-generado-por"></p>
-      <div id="ia-dialogo" class="glass-card-inner p-3 text-sm space-y-2 hidden"></div>
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <div>
-          <div class="flex items-center justify-between mb-1">
-            <label class="text-xs font-medium text-slate-500">WhatsApp</label>
-            <div class="flex gap-2">
-              <button type="button" id="btn-copiar-wa" class="text-xs font-semibold text-optica-600">📋 Copiar</button>
-              <a id="btn-wa-link" href="#" target="_blank" rel="noopener" class="text-xs font-semibold text-emerald-600 hidden">💬 Abrir WA</a>
-            </div>
-          </div>
-          <textarea id="ia-whatsapp" rows="5" class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-slate-500 mb-1">Correo</label>
-          <input type="text" id="ia-asunto" placeholder="Asunto" class="glass-input w-full px-3 py-2 text-sm mb-2">
-          <textarea id="ia-correo" rows="4" class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
-        </div>
+    <div id="bot-opciones" class="hidden pt-3 border-t border-slate-100">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <p class="text-sm font-medium text-violet-800" id="bot-status">Elija un tono y copie o abra WhatsApp</p>
+        <p class="text-xs text-slate-500" id="ia-nota"></p>
       </div>
-      <div>
-        <label class="block text-xs font-medium text-slate-500 mb-1">Guión de voz</label>
-        <textarea id="ia-voz" rows="3" class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
-        <p class="text-xs text-slate-500 mt-1" id="ia-nota"></p>
+      <div id="bot-cards" class="grid grid-cols-1 lg:grid-cols-3 gap-3"></div>
+      <div class="mt-4 hidden" id="bot-preview-wrap">
+        <label class="block text-xs font-medium text-slate-500 mb-1">Vista previa / editar antes de enviar</label>
+        <textarea id="bot-preview" rows="7" class="glass-textarea w-full px-3 py-2 text-sm font-mono"></textarea>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <button type="button" id="btn-bot-copiar" class="btn-ola btn-ola--secondary">📋 Copiar</button>
+          <button type="button" id="btn-bot-wa" class="btn-ola btn-ola--wa">💬 Abrir WhatsApp</button>
+          <button type="button" id="btn-bot-usar-en-gestion" class="btn-ola btn-ola--success">✅ Usar en gestión del caso</button>
+        </div>
       </div>
     </div>
+
+    {# Detalle extendido (opcional, colapsable) #}
+    <details class="mt-4 text-sm">
+      <summary class="cursor-pointer font-semibold text-slate-600 hover:text-slate-800">Más opciones · diálogo y correo completo</summary>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <button type="button" id="btn-generar-dialogo" class="btn-ola btn-ola--secondary btn-ola--sm">✨ Generar paquete completo (WA + correo + voz)</button>
+      </div>
+      <div id="ia-resultado" class="hidden space-y-3 mt-3 pt-3 border-t border-slate-100">
+        <p class="text-sm font-medium text-emerald-700" id="ia-generado-por"></p>
+        <div id="ia-dialogo" class="glass-card-inner p-3 text-sm space-y-2 hidden"></div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-xs font-medium text-slate-500">WhatsApp</label>
+              <div class="flex gap-2">
+                <button type="button" id="btn-copiar-wa" class="text-xs font-semibold text-optica-600">📋 Copiar</button>
+                <a id="btn-wa-link" href="#" target="_blank" rel="noopener" class="text-xs font-semibold text-emerald-600 hidden">💬 Abrir WA</a>
+              </div>
+            </div>
+            <textarea id="ia-whatsapp" rows="5" class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Correo</label>
+            <input type="text" id="ia-asunto" placeholder="Asunto" class="glass-input w-full px-3 py-2 text-sm mb-2">
+            <textarea id="ia-correo" rows="4" class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1">Guión de voz</label>
+          <textarea id="ia-voz" rows="3" class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
+        </div>
+      </div>
+    </details>
   </div>
 
   <div id="toast-alertas" class="hidden fixed bottom-4 right-4 z-50 glass-card px-4 py-3 text-sm font-medium shadow-lg"></div>
@@ -273,7 +291,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="modal-campos"></div>
     <div class="flex flex-wrap gap-2 mt-5">
       <button type="button" id="modal-guardar" class="btn-ola btn-ola--success">💾 Guardar en matriz</button>
-      <button type="button" id="modal-claude" class="btn-ola btn-ola--ai">✨ Claude</button>
+      <button type="button" id="modal-claude" class="btn-ola btn-ola--ai">⚡ Bot respuestas</button>
     </div>
   </div>
 </div>

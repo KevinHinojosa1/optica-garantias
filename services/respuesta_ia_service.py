@@ -207,6 +207,167 @@ class RespuestaIAService:
         return cls._parse_json_ia(resp.json()["content"][0]["text"])
 
     @classmethod
+    def _fallback_rapidas(cls, ctx: dict) -> list[dict]:
+        """3 tonos listos sin API (plantillas CX)."""
+        cliente = ctx.get("cliente_nombre") or "estimado/a cliente"
+        local = ctx.get("local") or "Óptica Los Andes"
+        asesor = ctx.get("asesor") or settings.default_asesor
+        problema = (
+            ctx.get("comentario_cliente")
+            or ctx.get("problema")
+            or ctx.get("descripcion")
+            or "su consulta"
+        )
+        clasif = ctx.get("clasificacion") or ""
+        extra = f" ({clasif})" if clasif else ""
+
+        empatica = (
+            f"Hola, *{cliente}* 👋\n\n"
+            f"Le saluda *{asesor}* de Servicio al Cliente de *Óptica Los Andes* ({local}).\n\n"
+            f"Hemos revisado su caso relacionado con: *{problema}*{extra}.\n"
+            f"Comprendemos lo importante que es para usted y lamentamos cualquier molestia 🙏\n\n"
+            f"Estamos dando seguimiento personalizado y le confirmaremos la solución o los próximos pasos a la brevedad.\n\n"
+            f"Si necesita algo más, escríbanos con confianza. Estamos para servirle 💙"
+        )
+        corta = (
+            f"Hola *{cliente}* 👋\n\n"
+            f"*{asesor}* · {local}\n\n"
+            f"Sobre: *{problema}*\n"
+            f"Ya estamos gestionando su caso. Le avisamos en breve ✅\n\n"
+            f"Gracias por su paciencia."
+        )
+        formal = (
+            f"Estimado/a *{cliente}*,\n\n"
+            f"Le saluda *{asesor}*, de Servicio al Cliente de Óptica Los Andes — *{local}*.\n\n"
+            f"Nos comunicamos en relación con su caso: *{problema}*{extra}.\n\n"
+            f"Su requerimiento se encuentra en seguimiento. Le informaremos el resultado "
+            f"y las acciones correspondientes a la mayor brevedad posible.\n\n"
+            f"Agradecemos su preferencia y comprensión.\n\n"
+            f"Atentamente,\n*{asesor}*\nServicio al Cliente\nÓptica Los Andes"
+        )
+        return [
+            {
+                "id": "empatica",
+                "titulo": "Empática",
+                "descripcion": "Cálida, valida emociones y ofrece seguimiento",
+                "emoji": "💙",
+                "mensaje_whatsapp": empatica,
+            },
+            {
+                "id": "corta",
+                "titulo": "Corta",
+                "descripcion": "Directa, ideal para WhatsApp rápido",
+                "emoji": "⚡",
+                "mensaje_whatsapp": corta,
+            },
+            {
+                "id": "formal",
+                "titulo": "Formal",
+                "descripcion": "Corporativa, para clientes exigentes",
+                "emoji": "📋",
+                "mensaje_whatsapp": formal,
+            },
+        ]
+
+    @classmethod
+    async def generar_respuestas_rapidas(
+        cls,
+        contexto: dict,
+        *,
+        titulo_modulo: str = "Alertas Telegram",
+    ) -> dict:
+        """Genera 3 opciones de WhatsApp (empática, corta, formal) para contestar en segundos."""
+        ctx = dict(contexto)
+        opciones: list[dict] = []
+        generado_por = "plantilla"
+
+        if settings.anthropic_api_key:
+            prompt = (
+                f"{cls._contexto_texto(ctx, titulo_modulo)}\n\n"
+                "Genera TRES mensajes de WhatsApp listos para enviar al cliente, "
+                "en tratamiento de usted, con datos reales del contexto (sin inventar).\n"
+                "Emojis moderados y *negritas* de WhatsApp.\n\n"
+                "Responde ÚNICAMENTE JSON válido:\n"
+                "{\n"
+                '  "opciones": [\n'
+                '    {"id": "empatica", "titulo": "Empática", "descripcion": "...", '
+                '"mensaje_whatsapp": "..."},\n'
+                '    {"id": "corta", "titulo": "Corta", "descripcion": "...", '
+                '"mensaje_whatsapp": "..."},\n'
+                '    {"id": "formal", "titulo": "Formal", "descripcion": "...", '
+                '"mensaje_whatsapp": "..."}\n'
+                "  ],\n"
+                '  "nota_asesor": "consejo breve para el asesor"\n'
+                "}\n"
+                "empatica: cálida y empática (6-10 líneas). "
+                "corta: máximo 5 líneas. "
+                "formal: tono corporativo (8-12 líneas)."
+            )
+            try:
+                payload = {
+                    "model": settings.anthropic_model,
+                    "max_tokens": 2500,
+                    "system": (
+                        "Eres CX de Óptica Los Andes Ecuador. Generas respuestas WhatsApp "
+                        "profesionales en español ecuatoriano (usted). Solo JSON válido."
+                    ),
+                    "messages": [{"role": "user", "content": prompt}],
+                }
+                headers = {
+                    "x-api-key": settings.anthropic_api_key,
+                    "anthropic-version": "2023-06-01",
+                    "content-type": "application/json",
+                }
+                async with httpx.AsyncClient(timeout=90.0) as client:
+                    resp = await client.post(
+                        f"{settings.anthropic_api_base}/messages",
+                        headers=headers,
+                        json=payload,
+                    )
+                if resp.status_code != 200:
+                    raise RuntimeError(resp.text[:300])
+                raw = cls._parse_json_ia(resp.json()["content"][0]["text"])
+                for o in raw.get("opciones") or []:
+                    msg = cls._aplicar_placeholders(str(o.get("mensaje_whatsapp") or ""), ctx)
+                    if not msg.strip():
+                        continue
+                    opciones.append({
+                        "id": o.get("id") or f"opt-{len(opciones)}",
+                        "titulo": o.get("titulo") or "Opción",
+                        "descripcion": o.get("descripcion") or "",
+                        "emoji": {"empatica": "💙", "corta": "⚡", "formal": "📋"}.get(
+                            str(o.get("id", "")), "💬"
+                        ),
+                        "mensaje_whatsapp": msg,
+                    })
+                nota = cls._aplicar_placeholders(str(raw.get("nota_asesor") or ""), ctx)
+                generado_por = "claude"
+                if len(opciones) < 2:
+                    raise RuntimeError("Pocas opciones")
+            except Exception:
+                opciones = cls._fallback_rapidas(ctx)
+                nota = "Plantilla CX (Claude no disponible o falló). Configure ANTHROPIC_API_KEY para mejor calidad."
+                generado_por = "plantilla"
+        else:
+            opciones = cls._fallback_rapidas(ctx)
+            nota = "Plantilla CX. Configure ANTHROPIC_API_KEY para personalizar con Claude."
+
+        telefono = ctx.get("telefono") or ""
+        for o in opciones:
+            o["wa_link"] = ""
+            if telefono and telefono not in ("{telefono}", ""):
+                o["wa_link"] = WhatsAppService.generar_enlace(telefono, o["mensaje_whatsapp"])
+
+        return {
+            "opciones": opciones,
+            "nota_asesor": nota,
+            "generado_por": generado_por,
+            "cliente": ctx.get("cliente_nombre") or "",
+            "telefono": telefono if telefono not in ("{telefono}",) else "",
+            "local": ctx.get("local") or "",
+        }
+
+    @classmethod
     async def generar(
         cls,
         contexto: dict,

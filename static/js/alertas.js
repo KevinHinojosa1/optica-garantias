@@ -378,6 +378,200 @@ async function generarRespuestaIa() {
   toast('Sugerencia generada con Claude', 'ok');
 }
 
+/** ── Bot de respuesta rápida (3 tonos) ── */
+let botOpciones = [];
+let botSeleccionId = null;
+
+function telefonoCaso() {
+  const t = filaSeleccionada?.contacto || filaSeleccionada?.telefono || '';
+  return String(t).replace(/\D/g, '');
+}
+
+function buildWaLinkCliente(mensaje) {
+  const num = telefonoCaso();
+  if (!num) return '';
+  let digits = num;
+  if (digits.startsWith('0')) digits = digits.slice(1);
+  if (digits.length === 9) digits = `593${digits}`;
+  return `https://wa.me/${digits}?text=${encodeURIComponent(mensaje)}`;
+}
+
+async function copiarTexto(texto) {
+  try {
+    await navigator.clipboard.writeText(texto);
+    return true;
+  } catch {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = texto;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
+  }
+}
+
+function renderBotCards(data) {
+  botOpciones = data.opciones || [];
+  botSeleccionId = null;
+  const wrap = document.getElementById('bot-opciones');
+  const cards = document.getElementById('bot-cards');
+  const prevWrap = document.getElementById('bot-preview-wrap');
+  const status = document.getElementById('bot-status');
+  const nota = document.getElementById('ia-nota');
+  if (!wrap || !cards) return;
+
+  wrap.classList.remove('hidden');
+  prevWrap?.classList.add('hidden');
+  const por = data.generado_por === 'claude' ? 'Claude' : 'plantilla CX';
+  if (status) {
+    status.textContent = `${botOpciones.length} opciones · ${por} · elija un tono`;
+  }
+  if (nota) nota.textContent = data.nota_asesor || '';
+
+  cards.innerHTML = botOpciones.map(o => {
+    const prev = (o.mensaje_whatsapp || '').slice(0, 160).replace(/\n/g, ' ');
+    return `
+      <div class="bot-card" data-bot-id="${escapeHtml(o.id)}" role="button" tabindex="0">
+        <div class="bot-card__head">
+          <span class="bot-card__emoji">${escapeHtml(o.emoji || '💬')}</span>
+          <div>
+            <div class="bot-card__titulo">${escapeHtml(o.titulo)}</div>
+            <div class="bot-card__desc">${escapeHtml(o.descripcion || '')}</div>
+          </div>
+        </div>
+        <div class="bot-card__preview">${escapeHtml(prev)}${(o.mensaje_whatsapp || '').length > 160 ? '…' : ''}</div>
+        <div class="bot-card__actions">
+          <button type="button" data-bot-action="select" data-bot-id="${escapeHtml(o.id)}">Ver / editar</button>
+          <button type="button" data-bot-action="copy" data-bot-id="${escapeHtml(o.id)}">📋 Copiar</button>
+          <button type="button" data-bot-action="wa" data-bot-id="${escapeHtml(o.id)}">💬 WhatsApp</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  cards.querySelectorAll('[data-bot-action]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.getAttribute('data-bot-id');
+      const action = btn.getAttribute('data-bot-action');
+      const opt = botOpciones.find(x => x.id === id);
+      if (!opt) return;
+      if (action === 'select') seleccionarBotOpcion(id);
+      if (action === 'copy') copiarBotMensaje(opt.mensaje_whatsapp);
+      if (action === 'wa') abrirBotWhatsApp(opt.mensaje_whatsapp);
+    });
+  });
+  cards.querySelectorAll('.bot-card').forEach(card => {
+    card.addEventListener('click', () => seleccionarBotOpcion(card.getAttribute('data-bot-id')));
+  });
+}
+
+function seleccionarBotOpcion(id) {
+  botSeleccionId = id;
+  const opt = botOpciones.find(x => x.id === id);
+  if (!opt) return;
+  document.querySelectorAll('.bot-card').forEach(c => {
+    c.classList.toggle('is-selected', c.getAttribute('data-bot-id') === id);
+  });
+  const wrap = document.getElementById('bot-preview-wrap');
+  const ta = document.getElementById('bot-preview');
+  wrap?.classList.remove('hidden');
+  if (ta) ta.value = opt.mensaje_whatsapp || '';
+  wrap?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function copiarBotMensaje(texto) {
+  const msg = texto || document.getElementById('bot-preview')?.value || '';
+  const ok = await copiarTexto(msg);
+  toast(ok ? '📋 Mensaje copiado' : 'No se pudo copiar', ok ? 'ok' : 'error');
+}
+
+function abrirBotWhatsApp(texto) {
+  const msg = texto || document.getElementById('bot-preview')?.value || '';
+  if (!msg.trim()) {
+    toast('No hay mensaje', 'info');
+    return;
+  }
+  // Copia + abre chat (evita rombos de emojis en el enlace)
+  copiarTexto(msg);
+  const num = telefonoCaso();
+  let digits = num;
+  if (digits.startsWith('0')) digits = digits.slice(1);
+  if (digits.length === 9) digits = `593${digits}`;
+  if (!digits) {
+    toast('El caso no tiene teléfono. Mensaje copiado — pégalo en WhatsApp.', 'info');
+    return;
+  }
+  const a = document.createElement('a');
+  a.setAttribute('href', `https://wa.me/${digits}`);
+  a.setAttribute('target', '_blank');
+  a.setAttribute('rel', 'noopener noreferrer');
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  toast('📋 Copiado · WhatsApp abierto — pegue el mensaje (Ctrl+V)', 'ok');
+}
+
+function usarEnGestion() {
+  if (!filaSeleccionada || !gridApi) {
+    toast('Seleccione un caso', 'info');
+    return;
+  }
+  const msg = document.getElementById('bot-preview')?.value || '';
+  if (!msg.trim()) {
+    toast('Genere y seleccione una respuesta primero', 'info');
+    return;
+  }
+  const prev = filaSeleccionada.observacion_gestion || '';
+  const stamp = new Date().toLocaleString('es-EC', { dateStyle: 'short', timeStyle: 'short' });
+  filaSeleccionada.observacion_gestion = prev
+    ? `${prev}\n\n[Bot ${stamp}]\n${msg}`
+    : `[Bot ${stamp}]\n${msg}`;
+  if (!filaSeleccionada.estado_gestion || filaSeleccionada.estado_gestion === 'Sin gestión') {
+    filaSeleccionada.estado_gestion = 'En proceso';
+  }
+  gridApi.applyTransaction({ update: [filaSeleccionada] });
+  toast('✅ Texto guardado en Gestión del caso — pulse Guardar para persistir', 'ok');
+}
+
+async function generarBotRapido() {
+  if (!filaSeleccionada) {
+    toast('Seleccione un caso en la matriz', 'info');
+    return;
+  }
+  const btn = document.getElementById('btn-bot-rapido');
+  const title = btn?.querySelector('.btn-ola__title');
+  const sub = btn?.querySelector('.btn-ola__sub');
+  if (btn) btn.disabled = true;
+  if (title) title.textContent = 'Generando…';
+  if (sub) sub.textContent = 'Claude está escribiendo';
+  try {
+    const res = await fetch('/api/ia/respuestas-rapidas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contexto: contextoIa(filaSeleccionada),
+        titulo_modulo: 'Alertas Telegram — Bot respuesta rápida',
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Error al generar');
+    renderBotCards(data);
+    document.getElementById('panel-ia')?.classList.add('has-case');
+    toast(`⚡ ${data.opciones?.length || 0} respuestas listas`, 'ok');
+  } finally {
+    if (btn) btn.disabled = false;
+    if (title) title.textContent = 'Generar 3 respuestas';
+    if (sub) sub.textContent = 'Empática · Corta · Formal';
+  }
+}
+
 function abrirModalEdicion() {
   if (!filaSeleccionada) { toast('Seleccione una fila', 'info'); return; }
   const f = filaSeleccionada;
@@ -509,12 +703,22 @@ function bindEventos() {
   });
   document.getElementById('btn-procesar-excel')?.addEventListener('click', () =>
     procesarExcel().catch(e => toast(e.message, 'error')));
+  document.getElementById('btn-bot-rapido')?.addEventListener('click', () =>
+    generarBotRapido().catch(e => toast(e.message, 'error')));
+  document.getElementById('btn-bot-copiar')?.addEventListener('click', () =>
+    copiarBotMensaje());
+  document.getElementById('btn-bot-wa')?.addEventListener('click', () =>
+    abrirBotWhatsApp());
+  document.getElementById('btn-bot-usar-en-gestion')?.addEventListener('click', usarEnGestion);
   document.getElementById('btn-generar-dialogo')?.addEventListener('click', () =>
     generarRespuestaIa().catch(e => toast(e.message, 'error')));
   document.getElementById('btn-claude-fila')?.addEventListener('click', () => {
     cerrarMenus();
     document.getElementById('panel-ia')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    generarRespuestaIa().catch(e => toast(e.message, 'error'));
+    generarBotRapido().catch(e => toast(e.message, 'error'));
+  });
+  document.getElementById('modal-claude')?.addEventListener('click', () => {
+    generarBotRapido().catch(e => toast(e.message, 'error'));
   });
   document.getElementById('btn-editar-fila')?.addEventListener('click', () => {
     cerrarMenus();
@@ -526,7 +730,6 @@ function bindEventos() {
   });
   document.getElementById('modal-cerrar')?.addEventListener('click', cerrarModal);
   document.getElementById('modal-guardar')?.addEventListener('click', guardarModalEnGrid);
-  document.getElementById('modal-claude')?.addEventListener('click', () => generarRespuestaIa().catch(e => toast(e.message, 'error')));
   document.getElementById('btn-recargar-excel')?.addEventListener('click', async () => {
     cerrarMenus();
     if (!confirm('¿Recargar datos desde Excel? Se conservan las ediciones guardadas por ID.')) return;

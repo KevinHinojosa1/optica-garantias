@@ -71,3 +71,21 @@ class PlantillaRespuestaIA(BaseModel):
 
 class PlantillasListResponse(BaseModel):
     plantillas: list[PlantillaRespuestaIA]
+
+
+class OpcionRespuestaRapida(BaseModel):
+    id: str
+    titulo: str
+    descripcion: str = ""
+    emoji: str = "💬"
+    mensaje_whatsapp: str
+    wa_link: str = ""
+
+
+class RespuestasRapidasResponse(BaseModel):
+    opciones: list[OpcionRespuestaRapida]
+    nota_asesor: str = ""
+    generado_por: str = "plantilla"
+    cliente: str = ""
+    telefono: str = ""
+    local: str = ""

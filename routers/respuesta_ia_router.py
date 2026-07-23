@@ -6,6 +6,7 @@ from schemas.respuesta_ia import (
     GuardarPlantillaRequest,
     PlantillaRespuestaIA,
     PlantillasListResponse,
+    RespuestasRapidasResponse,
 )
 from services.respuesta_ia_service import RespuestaIAService
 
@@ -30,6 +31,20 @@ async def generar_respuesta(payload: GenerarRespuestaIARequest):
         return GenerarRespuestaIAResponse(**resultado)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Error al generar respuesta IA: {exc}") from exc
+
+
+@router.post("/api/ia/respuestas-rapidas", response_model=RespuestasRapidasResponse)
+async def respuestas_rapidas(payload: GenerarRespuestaIARequest):
+    """Bot de respuesta rápida: 3 tonos (empática, corta, formal) listos para WhatsApp."""
+    try:
+        ctx = payload.contexto.model_dump()
+        resultado = await RespuestaIAService.generar_respuestas_rapidas(
+            ctx,
+            titulo_modulo=payload.titulo_modulo or "Alertas Telegram",
+        )
+        return RespuestasRapidasResponse(**resultado)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Error bot de respuestas: {exc}") from exc
 
 
 @router.get("/api/ia/plantillas", response_model=PlantillasListResponse)
