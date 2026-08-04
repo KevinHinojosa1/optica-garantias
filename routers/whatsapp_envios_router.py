@@ -59,9 +59,20 @@ def _db_info() -> dict:
 
 @router.get("/envios-whatsapp", response_class=HTMLResponse)
 async def pagina_envios_whatsapp(request: Request, db: Session = Depends(get_db)):
+    from services.tiendas_service import TiendasService
     wa_config = WhatsAppBusinessService.info_config()
     mail_config = EmailService.info_config()
     resumen = ReprogramacionLogService.resumen_dia(db=db)
+    # Construir mapa nombre_normalizado -> numero_wa para inyectar en el JS
+    import unicodedata
+    def norm(t):
+        t = unicodedata.normalize('NFKD', t.lower().strip())
+        return ''.join(c for c in t if not unicodedata.combining(c))
+    tiendas_wa_map = {
+        norm(t['nombre']): t['whatsapp_grupo']
+        for t in TiendasService.cargar_tiendas()
+        if t.get('whatsapp_grupo') and t.get('nombre')
+    }
     return templates.TemplateResponse(
         request,
         "whatsapp_envios.html",
@@ -72,6 +83,7 @@ async def pagina_envios_whatsapp(request: Request, db: Session = Depends(get_db)
             "smtp_activo": mail_config["smtp_activo"],
             "resumen_dia": resumen,
             "db_info": _db_info(),
+            "tiendas_wa_map": tiendas_wa_map,
         },
     )
 

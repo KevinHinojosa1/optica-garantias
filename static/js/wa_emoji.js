@@ -32,13 +32,29 @@
   }
 
   /**
+   * Construye el nombre completo (nombre + apellido si existen).
+   * Acepta: nombre_completo, o nombre + apellido/apellidos, o solo nombre.
+   */
+  function nombreCompleto(it) {
+    if (!it) return 'amigo/a';
+    // Si ya viene nombre_completo
+    if (it.nombre_completo && it.nombre_completo.trim()) return it.nombre_completo.trim();
+    const nom = (it.nombre || '').trim();
+    const ape = (it.apellido || it.apellidos || '').trim();
+    if (nom && ape) return `${nom} ${ape}`;
+    if (nom) return nom;
+    if (ape) return ape;
+    return 'amigo/a';
+  }
+
+  /**
    * Mensaje al cliente — script oficial (mismo contenido que el preview).
    */
   function componerMensajeCliente(it, asesor) {
     const producto = (it && it.producto) || 'tu pedido';
     const local = (it && it.local) || 'Óptica Los Andes';
     const factura = (it && (it.factura || it.orden)) || '—';
-    const nombre = (it && it.nombre) || 'amigo/a';
+    const nombre = nombreCompleto(it);
     const as = (asesor || (typeof window !== 'undefined' && window.DEFAULT_ASESOR) || 'Servicio al Cliente').trim();
 
     const cal = emoji(CP.calendar);
@@ -75,7 +91,7 @@
     const producto = (it && it.producto) || '—';
     const local = (it && it.local) || 'Óptica Los Andes';
     const factura = (it && (it.factura || it.orden)) || '—';
-    const nombre = (it && it.nombre) || '—';
+    const nombre = nombreCompleto(it);
     const as = (asesor || (typeof window !== 'undefined' && window.DEFAULT_ASESOR) || 'Servicio al Cliente').trim();
 
     const check = emoji(CP.check);
@@ -166,10 +182,33 @@
     return { ok: true, copiado, modo, url };
   }
 
+  /**
+   * Resuelve el número de WhatsApp del local a partir del nombre.
+   * Busca en window.TIENDAS_WA_MAP (inyectado desde el backend o definido abajo).
+   * Devuelve string con número formato 593XXXXXXXXX o '' si no encuentra.
+   */
+  function resolverWaTienda(localNombre) {
+    if (!localNombre) return '';
+    const mapa = (typeof window !== 'undefined' && window.TIENDAS_WA_MAP) || {};
+    const norm = localNombre.trim().toLowerCase()
+      .replace(/[áàä]/g, 'a').replace(/[éèë]/g, 'e')
+      .replace(/[íìï]/g, 'i').replace(/[óòö]/g, 'o')
+      .replace(/[úùü]/g, 'u').replace(/ñ/g, 'n');
+    // Exacto
+    if (mapa[norm]) return mapa[norm];
+    // Parcial — buscar la clave que más se parezca
+    for (const [clave, num] of Object.entries(mapa)) {
+      if (norm.includes(clave) || clave.includes(norm)) return num;
+    }
+    return '';
+  }
+
   global.WaEmoji = {
     CP,
     emoji,
+    nombreCompleto,
     limpiarTelefonoEC,
+    resolverWaTienda,
     componerMensajeCliente,
     componerMensajeTienda,
     copiarAlPortapapeles,

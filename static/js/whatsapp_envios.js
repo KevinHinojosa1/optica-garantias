@@ -107,7 +107,7 @@ async function abrirWaClienteDesdePreview() {
   await abrirWhatsApp(tel, mensaje);
 }
 
-/** WA tienda: recompone + envío seguro al grupo */
+/** WA tienda: usa el número exacto del local resuelto en el backend */
 async function abrirWaTiendaDesdePreview() {
   const it = itemSeleccionado;
   if (!it) {
@@ -118,25 +118,26 @@ async function abrirWaTiendaDesdePreview() {
   const mensaje = it.mensaje_tienda;
   document.getElementById('preview-tienda').value = mensaje;
 
+  const localNombre = (it.local || '').trim();
   let tel = '';
-  const waTi = it.wa_link_tienda || '';
-  if (waTi) {
-    try {
-      const u = new URL(waTi, 'https://wa.me');
-      tel = u.searchParams.get('phone') || '';
-      if (!tel) {
-        const m = String(u.pathname || waTi).match(/(\d{10,15})/);
-        if (m) tel = m[1];
-      }
-    } catch {
-      const m = String(waTi).match(/(\d{10,15})/);
-      if (m) tel = m[1];
-    }
+
+  // 1) Número ya resuelto por el backend (fuente de verdad)
+  if (it.wa_numero_tienda) {
+    tel = String(it.wa_numero_tienda).replace(/\D/g, '');
   }
+
+  // 2) Resolver desde TIENDAS_WA_MAP en tiempo real (si el backend no lo incluyó)
+  if (!tel && window.WaEmoji && WaEmoji.resolverWaTienda) {
+    const resuelto = WaEmoji.resolverWaTienda(localNombre);
+    tel = resuelto ? String(resuelto).replace(/\D/g, '') : '';
+  }
+
   if (!tel) {
-    toast('No hay WhatsApp de tienda para este local', 'error');
+    toast(`Sin número registrado para: "${localNombre}". Verifica el nombre del local en la matriz.`, 'error');
     return;
   }
+
+  toast(`Abriendo WhatsApp de "${localNombre}" → ${tel}`, 'info');
   await abrirWhatsApp(tel, mensaje);
 }
 

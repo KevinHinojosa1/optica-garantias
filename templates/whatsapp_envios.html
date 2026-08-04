@@ -294,6 +294,7 @@
   window.SMTP_ACTIVO = {{ smtp_activo | tojson }};
   window.RESUMEN_DIA_INICIAL = {{ resumen_dia | tojson }};
   window.DB_INFO = {{ (db_info if db_info is defined else {"motor": "SQLite", "detalle": "data/optica_garantias.db"}) | tojson }};
+  window.TIENDAS_WA_MAP = {{ (tiendas_wa_map if tiendas_wa_map is defined else {}) | tojson }};
 </script>
 <script src="/static/js/wa_emoji.js?v={{ asset_version }}"></script>
 <script src="/static/js/whatsapp_envios.js?v={{ asset_version }}"></script>

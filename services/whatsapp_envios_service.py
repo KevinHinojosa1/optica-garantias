@@ -17,7 +17,9 @@ from services.whatsapp_service import WhatsAppService
 
 # Emojis Unicode estándar (compatibles Android / iOS)
 MAPEO_COLUMNAS: dict[str, tuple[str, ...]] = {
-    "nombre": ("nombre", "cliente", "name", "paciente", "contacto_nombre"),
+    "nombre": ("nombre", "cliente", "name", "paciente", "contacto_nombre", "primer_nombre", "nombres"),
+    "apellido": ("apellido", "apellidos", "segundo_nombre", "primer_apellido", "segundo_apellido"),
+    "nombre_completo": ("nombre_completo", "nombre y apellido", "nombre_apellido"),
     "telefono": (
         "telefono", "teléfono", "telefono_cliente", "celular", "whatsapp",
         "phone", "movil", "móvil", "contacto", "numero", "número",
@@ -275,12 +277,14 @@ class WhatsAppEnviosService:
         return vars_map
 
     @classmethod
-    def _wa_tienda(cls, local: str, mensaje: str) -> str:
+    def _wa_tienda(cls, local: str, mensaje: str) -> tuple[str, str]:
+        """Devuelve (numero_limpio, enlace_wa) del local. Si no encuentra, ('', '')."""
         tienda = TiendasService.resolver_para_cliente(local)
         num = tienda.get("whatsapp_grupo") or ""
         if not num:
-            return ""
-        return WhatsAppService.generar_enlace(num, mensaje)
+            return ("", "")
+        enlace = WhatsAppService.generar_enlace(num, mensaje)
+        return (num, enlace)
 
     @classmethod
     def generar_lote(
@@ -329,12 +333,18 @@ class WhatsAppEnviosService:
                 _aplicar_vars(PLANTILLA_TIENDA, vars_map)
             )
             wa_cliente = WhatsAppService.generar_enlace(tel_limpio, msg_cliente) if valido else ""
-            wa_tienda = cls._wa_tienda(vars_map["local"], msg_tienda)
+            wa_num_tienda, wa_tienda = cls._wa_tienda(vars_map["local"], msg_tienda)
+
+            # Mapeo apellido → nombre_completo
+            apellido = c.get("apellido") or ""
+            nombre_completo = c.get("nombre_completo") or (
+                f"{vars_map['nombre']} {apellido}".strip() if apellido else vars_map["nombre"]
+            )
 
             if registrar_log:
                 ReprogramacionLogService.registrar_envio(
                     local=vars_map["local"],
-                    nombre=vars_map["nombre"],
+                    nombre=nombre_completo,
                     producto=vars_map["producto"],
                     factura=vars_map["factura"],
                     telefono=tel_raw,
@@ -352,6 +362,8 @@ class WhatsAppEnviosService:
             item = {
                 "indice": i,
                 "nombre": vars_map["nombre"],
+                "apellido": apellido,
+                "nombre_completo": nombre_completo,
                 "telefono": tel_raw,
                 "telefono_limpio": tel_limpio,
                 "local": vars_map["local"],
@@ -365,6 +377,7 @@ class WhatsAppEnviosService:
                 "wa_link": wa_cliente,
                 "wa_link_cliente": wa_cliente,
                 "wa_link_tienda": wa_tienda,
+                "wa_numero_tienda": wa_num_tienda,   # ← número limpio sin URL
                 "valido": valido,
                 "error": error,
             }
