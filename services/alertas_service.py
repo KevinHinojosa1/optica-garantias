@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 import json
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any
 
+import httpx
 import pandas as pd
+
+from config import settings
 
 from centro_operaciones.constants import (
     AREAS,
@@ -230,3 +233,162 @@ class AlertasService:
         nuevo = pd.read_csv(io.BytesIO(content))
         guardar_alertas(nuevo)
         return {"ok": True, "importados": len(nuevo)}
+
+    @classmethod
+    def ingresar_alerta(cls, datos: dict) -> dict[str, Any]:
+        """Crea una nueva fila de alerta ingresada manualmente y la persiste."""
+        df = cargar_alertas()
+        nuevo_id = int(df["id"].max() + 1) if len(df) and "id" in df.columns else 1
+        nuevo_n = int(df["n"].max() + 1) if len(df) and "n" in df.columns else 1
+
+        # Fecha de alerta: hoy si no se proporciona
+        fecha_str = datos.get("fecha_alerta") or ""
+        try:
+            fecha_parsed = date.fromisoformat(fecha_str) if fecha_str else date.today()
+        except ValueError:
+            fecha_parsed = date.today()
+
+        mes = datos.get("mes") or fecha_parsed.strftime("%B %Y")
+
+        nueva_fila: dict[str, Any] = {
+            "id": nuevo_id,
+            "n": nuevo_n,
+            "mes": mes,
+            "fecha_alerta": pd.Timestamp(fecha_parsed),
+            "canal": datos.get("canal") or "Manual",
+            "local": datos.get("local") or "",
+            "area": datos.get("area") or "",
+            "optometra": datos.get("optometra") or "",
+            "asesor": datos.get("asesor") or "",
+            "momento": datos.get("momento") or "",
+            "calificacion": datos.get("calificacion") or "",
+            "pregunta": datos.get("pregunta") or "",
+            "responde": datos.get("responde") or "",
+            "comentario": datos.get("comentario") or "",
+            "cliente": datos.get("cliente") or "",
+            "cedula_id": datos.get("cedula_id") or "",
+            "contacto": datos.get("contacto") or "",
+            "correos_disculpa": datos.get("correos_disculpa") or "",
+            "llamada_cliente": datos.get("llamada_cliente") or "Pendiente",
+            "contesto": datos.get("contesto") or "Pendiente",
+            "observacion_gestion": datos.get("observacion_gestion") or "",
+            "solucion": datos.get("solucion") or "",
+            "quien_llama": datos.get("quien_llama") or "",
+            "clasificacion": datos.get("clasificacion") or "",
+            "estado_gestion": datos.get("estado_gestion") or "Sin gestión",
+            "dialogo_ia": "",
+            "canal_dialogo": "",
+            "clasificado_por": "",
+            "justificacion_ia": "",
+            "telefono": datos.get("contacto") or "",
+            "mensaje_telegram": datos.get("comentario") or "",
+            "problema": datos.get("clasificacion") or "",
+            "descripcion": datos.get("comentario") or "",
+        }
+        nueva_df = pd.DataFrame([nueva_fila])
+        df = pd.concat([df, nueva_df], ignore_index=True)
+        guardar_alertas(df)
+        return {"ok": True, "id": nuevo_id, "n": nuevo_n, "fila": _df_a_filas(nueva_df)[0]}
+
+    @classmethod
+    async def generar_reporte_ia(cls, fila: dict, contexto_extra: str = "") -> dict[str, Any]:
+        """Genera un reporte completo con Claude sobre una alerta: hallazgos, acciones, desglose."""
+        cliente = fila.get("cliente") or "No especificado"
+        local = fila.get("local") or "No especificado"
+        area = fila.get("area") or "No especificada"
+        optometra = fila.get("optometra") or "No especificado"
+        asesor = fila.get("asesor") or "No especificado"
+        comentario = fila.get("comentario") or fila.get("mensaje_telegram") or ""
+        clasificacion = fila.get("clasificacion") or "Sin clasificar"
+        estado = fila.get("estado_gestion") or "Sin gestión"
+        calificacion = fila.get("calificacion") or ""
+        solucion = fila.get("solucion") or ""
+        observacion = fila.get("observacion_gestion") or ""
+        fecha = fila.get("fecha_alerta") or str(date.today())
+        contacto = fila.get("contacto") or fila.get("telefono") or ""
+        pregunta = fila.get("pregunta") or ""
+
+        if not settings.anthropic_api_key:
+            return {
+                "ok": False,
+                "error": "API de Claude no configurada. Configure ANTHROPIC_API_KEY en .env",
+                "reporte": None,
+            }
+
+        prompt = f"""Eres el Director de Calidad y Customer Experience de Óptica Los Andes Ecuador.
+Analiza el siguiente caso de alerta operativa y genera un reporte ejecutivo completo.
+
+DATO DEL CASO:
+- Fecha: {fecha}
+- Local/Tienda: {local}
+- Área: {area}
+- Optómetra involucrado: {optometra}
+- Asesor responsable: {asesor}
+- Cliente: {cliente}
+- Contacto: {contacto}
+- Calificación cliente: {calificacion}
+- Pregunta encuesta: {pregunta}
+- Comentario del cliente: {comentario}
+- Clasificación del problema: {clasificacion}
+- Estado actual de gestión: {estado}
+- Solución aplicada: {solucion}
+- Observación de gestión: {observacion}
+- Contexto adicional: {contexto_extra}
+
+Genera un reporte estructurado. Responde SOLO JSON válido:
+{{
+  "resumen_ejecutivo": "Párrafo de 2-3 oraciones resumiendo el caso",
+  "hallazgos": [
+    {{"titulo": "...", "descripcion": "...", "severidad": "alta|media|baja"}}
+  ],
+  "acciones_recomendadas": [
+    {{"responsable": "local|optometra|asesor|call_center", "accion": "...", "plazo": "inmediato|24h|esta_semana"}}
+  ],
+  "analisis_local": "Análisis enfocado en la tienda {local} y qué debe mejorar",
+  "analisis_optometra": "Análisis sobre el rol del optómetra {optometra} en este caso",
+  "analisis_asesor": "Análisis sobre la gestión del asesor {asesor}",
+  "nivel_riesgo": "alto|medio|bajo",
+  "requiere_escalamiento": true|false,
+  "nota_cxd": "Consejo final del Director CX para cerrar este caso correctamente"
+}}"""
+
+        try:
+            payload = {
+                "model": settings.anthropic_model,
+                "max_tokens": 3000,
+                "system": (
+                    "Eres Director de CX de Óptica Los Andes Ecuador. "
+                    "Generas reportes ejecutivos precisos, accionables y en español. "
+                    "Solo JSON válido sin markdown."
+                ),
+                "messages": [{"role": "user", "content": prompt}],
+            }
+            headers = {
+                "x-api-key": settings.anthropic_api_key,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            }
+            async with httpx.AsyncClient(timeout=90.0) as client:
+                resp = await client.post(
+                    f"{settings.anthropic_api_base}/messages",
+                    headers=headers,
+                    json=payload,
+                )
+            if resp.status_code != 200:
+                raise RuntimeError(resp.text[:300])
+
+            raw_text = resp.json()["content"][0]["text"].strip()
+            # Limpiar markdown si Claude lo agrega
+            import re
+            raw_text = re.sub(r"^```(?:json)?\s*", "", raw_text)
+            raw_text = re.sub(r"\s*```$", "", raw_text)
+            match = re.search(r"\{[\s\S]*\}", raw_text)
+            if not match:
+                raise RuntimeError("Sin JSON válido en respuesta")
+            reporte = json.loads(match.group())
+            return {"ok": True, "reporte": reporte, "generado_por": "claude", "caso": {
+                "cliente": cliente, "local": local, "optometra": optometra,
+                "asesor": asesor, "clasificacion": clasificacion, "fecha": fecha,
+            }}
+        except Exception as exc:
+            return {"ok": False, "error": str(exc), "reporte": None}

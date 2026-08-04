@@ -46,38 +46,38 @@ MAPEO_COLUMNAS: dict[str, tuple[str, ...]] = {
 # Scripts oficiales CX — emojis SOLO con escapes \U (archivo ASCII-safe, no se corrompe por encoding)
 # El frontend recompone el mensaje con String.fromCodePoint al enviar (fuente de verdad para WA).
 PLANTILLA_CLIENTE = (
-    "\U0001f4c5 REPROGRAMACI\u00d3N DE ENTREGA\n"
-    "\U0001f4e6 Producto: {producto}\n"
-    "\U0001f3ea Tienda: {local}\n"
-    "\U0001f4c4 Factura: {factura}\n"
+    "REPROGRAMACI\u00d3N DE ENTREGA\n"
+    "Producto: {producto}\n"
+    "Tienda: {local}\n"
+    "Factura: {factura}\n"
     "--------------------\n"
-    "Hola, {nombre} \U0001f44b\n"
+    "Hola, {nombre}\n"
     "\n"
     "Te saluda {asesor}, de Servicio al Cliente de \u00d3ptica Los Andes.\n"
     "Queremos contarte que tu orden no estar\u00e1 lista dentro del plazo que te indicamos inicialmente. "
-    "Lamentamos mucho este cambio y las molestias que pueda ocasionarte. \U0001f64f\n"
+    "Lamentamos mucho este cambio y las molestias que pueda ocasionarte.\n"
     "Te enviaremos otro mensaje apenas tu pedido est\u00e9 disponible.\n"
-    "Gracias por tu comprensi\u00f3n. \U0001f499\n"
+    "Gracias por tu comprensi\u00f3n.\n"
     "--------------------\n"
     "Si tienes alguna duda, escr\u00edbenos con confianza o comun\u00edcate con nosotros al "
-    "1800-678-422 opci\u00f3n 2. \U0001f4ac\U0001f60a"
+    "1800-678-422 opci\u00f3n 2."
 )
 
 PLANTILLA_TIENDA = (
-    "\u2705 MENSAJE ENVIADO AL CLIENTE\n"
+    "MENSAJE ENVIADO AL CLIENTE\n"
     "\n"
-    "Hola, equipo {local} \U0001f44b\n"
+    "Hola, equipo {local}\n"
     "Les saluda {asesor}, de Servicio al Cliente.\n"
     "Les confirmo que el mensaje de reprogramaci\u00f3n de entrega ya fue enviado al cliente.\n"
     "\n"
-    "\U0001f4cd Tienda: {local}\n"
-    "\U0001f4c4 Factura: {factura}\n"
-    "\U0001f4e6 Producto: {producto}\n"
-    "\U0001f464 Cliente: {nombre}\n"
+    "Tienda: {local}\n"
+    "Factura: {factura}\n"
+    "Producto: {producto}\n"
+    "Cliente: {nombre}\n"
     "\n"
     "Por favor, mantenerse pendientes del estado de la orden y, en caso de que el cliente se comunique "
     "o se acerque a la tienda, atenderlo con mucha delicadeza, empat\u00eda y predisposici\u00f3n, "
-    "brind\u00e1ndole toda la informaci\u00f3n disponible. \U0001f64f\U0001f499"
+    "brind\u00e1ndole toda la informaci\u00f3n disponible."
 )
 
 # Alias para UI / restauración

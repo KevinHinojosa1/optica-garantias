@@ -56,3 +56,39 @@ class AlertasSubirExcelResponse(BaseModel):
     nuevas: int
     pendientes: int
     ids_pendientes_ia: list[int] = Field(default_factory=list)
+
+
+class AlertaIngresarRequest(BaseModel):
+    """Nueva alerta ingresada manualmente desde la UI."""
+    mes: Optional[str] = ""
+    fecha_alerta: Optional[str] = None
+    canal: Optional[str] = "Manual"
+    local: str = ""
+    area: Optional[str] = ""
+    optometra: Optional[str] = ""
+    asesor: Optional[str] = ""
+    momento: Optional[str] = ""
+    calificacion: Optional[str] = ""
+    pregunta: Optional[str] = ""
+    responde: Optional[str] = ""
+    comentario: str = ""
+    cliente: Optional[str] = ""
+    cedula_id: Optional[str] = ""
+    contacto: Optional[str] = ""
+    clasificacion: Optional[str] = ""
+    estado_gestion: Optional[str] = "Sin gestión"
+    observacion_gestion: Optional[str] = ""
+    solucion: Optional[str] = ""
+    llamada_cliente: Optional[str] = "Pendiente"
+    contesto: Optional[str] = "Pendiente"
+    quien_llama: Optional[str] = ""
+    correos_disculpa: Optional[str] = ""
+    contexto_extra: Optional[str] = ""
+
+
+class AlertaReporteIARequest(BaseModel):
+    """Solicitud de reporte IA sobre una alerta o conjunto filtrado."""
+    alerta_id: Optional[int] = None
+    fila: Optional[dict[str, Any]] = None
+    filtros: Optional[dict[str, Any]] = None
+    contexto_extra: Optional[str] = ""

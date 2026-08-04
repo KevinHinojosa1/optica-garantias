@@ -52,19 +52,19 @@
     const smile = emoji(CP.smile);
 
     return [
-      `${cal} REPROGRAMACIÓN DE ENTREGA`,
-      `${pack} Producto: ${producto}`,
-      `${store} Tienda: ${local}`,
-      `${page} Factura: ${factura}`,
+      `REPROGRAMACIÓN DE ENTREGA`,
+      `Producto: ${producto}`,
+      `Tienda: ${local}`,
+      `Factura: ${factura}`,
       '--------------------',
-      `Hola, ${nombre} ${wave}`,
+      `Hola, ${nombre}`,
       '',
       `Te saluda ${as}, de Servicio al Cliente de Óptica Los Andes.`,
-      `Queremos contarte que tu orden no estará lista dentro del plazo que te indicamos inicialmente. Lamentamos mucho este cambio y las molestias que pueda ocasionarte. ${pray}`,
+      `Queremos contarte que tu orden no estará lista dentro del plazo que te indicamos inicialmente. Lamentamos mucho este cambio y las molestias que pueda ocasionarte.`,
       'Te enviaremos otro mensaje apenas tu pedido esté disponible.',
-      `Gracias por tu comprensión. ${heart}`,
+      `Gracias por tu comprensión.`,
       '--------------------',
-      `Si tienes alguna duda, escríbenos con confianza o comunícate con nosotros al 1800-678-422 opción 2. ${speech}${smile}`,
+      `Si tienes alguna duda, escríbenos con confianza o comunícate con nosotros al 1800-678-422 opción 2.`,
     ].join('\n');
   }
 
@@ -88,18 +88,18 @@
     const heart = emoji(CP.blueHeart);
 
     return [
-      `${check} MENSAJE ENVIADO AL CLIENTE`,
+      `MENSAJE ENVIADO AL CLIENTE`,
       '',
-      `Hola, equipo ${local} ${wave}`,
+      `Hola, equipo ${local}`,
       `Les saluda ${as}, de Servicio al Cliente.`,
       'Les confirmo que el mensaje de reprogramación de entrega ya fue enviado al cliente.',
       '',
-      `${pin} Tienda: ${local}`,
-      `${page} Factura: ${factura}`,
-      `${pack} Producto: ${producto}`,
-      `${person} Cliente: ${nombre}`,
+      `Tienda: ${local}`,
+      `Factura: ${factura}`,
+      `Producto: ${producto}`,
+      `Cliente: ${nombre}`,
       '',
-      `Por favor, mantenerse pendientes del estado de la orden y, en caso de que el cliente se comunique o se acerque a la tienda, atenderlo con mucha delicadeza, empatía y predisposición, brindándole toda la información disponible. ${pray}${heart}`,
+      `Por favor, mantenerse pendientes del estado de la orden y, en caso de que el cliente se comunique o se acerque a la tienda, atenderlo con mucha delicadeza, empatía y predisposición, brindándole toda la información disponible.`,
     ].join('\n');
   }
 

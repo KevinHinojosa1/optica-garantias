@@ -9,6 +9,8 @@ from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import HTMLResponse, Response
 
 from schemas.alertas import (
+    AlertaIngresarRequest,
+    AlertaReporteIARequest,
     AlertasClasificarRequest,
     AlertasGuardarRequest,
     AlertasGraficosResponse,
@@ -265,3 +267,41 @@ async def api_importar_alertas(archivo: UploadFile = File(...)):
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Error al importar: {exc}") from exc
+
+
+@router.post("/api/alertas/ingresar")
+async def api_ingresar_alerta(payload: AlertaIngresarRequest):
+    """Crea una nueva alerta manualmente (sin necesidad de subir un Excel)."""
+    try:
+        resultado = AlertasService.ingresar_alerta(payload.model_dump())
+        return resultado
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Error al ingresar alerta: {exc}") from exc
+
+
+@router.post("/api/alertas/reporte-ia")
+async def api_reporte_ia(payload: AlertaReporteIARequest):
+    """Genera un reporte ejecutivo completo con Claude sobre una alerta."""
+    try:
+        fila: dict = {}
+        if payload.alerta_id is not None:
+            from centro_operaciones.services.datastore import cargar_alertas
+            df = cargar_alertas()
+            rows = df[df["id"] == payload.alerta_id]
+            if rows.empty:
+                raise HTTPException(status_code=404, detail=f"Alerta {payload.alerta_id} no encontrada.")
+            row = rows.iloc[0]
+            fila = {col: (str(val) if val is not None and str(val) != 'nan' else '') for col, val in row.items()}
+        elif payload.fila:
+            fila = payload.fila
+        else:
+            raise HTTPException(status_code=422, detail="Debe proporcionar alerta_id o fila.")
+
+        resultado = await AlertasService.generar_reporte_ia(
+            fila, contexto_extra=payload.contexto_extra or ""
+        )
+        return resultado
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Error al generar reporte IA: {exc}") from exc

@@ -559,16 +559,87 @@ function copiarTexto(id) {
 }
 
 /* —— Envío masivo clientes —— */
-function abrirModalEnvio() {
+async function abrirModalEnvio() {
   const pendientes = itemsEnvio.filter(i => i.valido && !i._enviado);
   if (!pendientes.length) {
     toast('No hay clientes pendientes con WhatsApp válido', 'info');
     return;
   }
-  colaEnvio = pendientes;
-  indiceCola = 0;
-  document.getElementById('modal-envio').classList.remove('hidden');
-  mostrarContactoCola();
+
+  const esBusiness = modoEnvio() === 'business' && businessApiActiva;
+
+  if (esBusiness) {
+    toast(`Enviando ${pendientes.length} mensajes por Business API...`, 'info');
+    for (let it of pendientes) {
+      const ok = await enviarPorBusiness(it);
+      if (ok) {
+        it._enviado = true;
+        try {
+          await fetch('/api/envios-whatsapp/marcar-enviado', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              local: it.local,
+              nombre: it.nombre,
+              producto: it.producto,
+              factura: it.factura || it.orden,
+              telefono: it.telefono,
+              canal: 'cliente',
+              estado: 'Mensaje enviado',
+            })
+          });
+        } catch (e) {}
+      }
+    }
+    toast('✅ Envío Business completado', 'ok');
+  } else {
+    toast(`Abriendo ${pendientes.length} chats de WhatsApp... (Permite las ventanas emergentes en tu navegador)`, 'info');
+    let bloqueado = false;
+    let abiertos = 0;
+    
+    for (let it of pendientes) {
+      refrescarMensajesItem(it);
+      const tel = it.telefono_limpio || it.telefono || '';
+      const msg = it.mensaje_cliente || it.mensaje || '';
+      const url = `https://wa.me/${tel}?text=${encodeURIComponent(msg)}`;
+      
+      // Intentamos abrir la pestaña
+      const newWin = window.open(url, '_blank');
+      
+      if (!newWin || newWin.closed || typeof newWin.closed == 'undefined') {
+          bloqueado = true;
+          break; // Detener el loop si el navegador bloquea la pestaña
+      }
+      
+      abiertos++;
+      it._enviado = true;
+      try {
+        await fetch('/api/envios-whatsapp/marcar-enviado', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            local: it.local,
+            nombre: it.nombre,
+            producto: it.producto,
+            factura: it.factura || it.orden,
+            telefono: it.telefono,
+            canal: 'cliente',
+            estado: 'Mensaje enviado',
+          })
+        });
+      } catch (e) {}
+    }
+    
+    if (bloqueado) {
+        alert(`⚠️ NAVEGADOR BLOQUEANDO PESTAÑAS\n\nSe abrieron ${abiertos} chats, pero el navegador bloqueó el resto por seguridad.\n\n👉 PARA SOLUCIONARLO: \nVe a la barra de direcciones (arriba a la derecha), haz clic en el icono de "Ventanas bloqueadas", selecciona "Permitir siempre ventanas emergentes de este sitio" y vuelve a intentarlo.`);
+    } else {
+        toast('✅ Pestañas de WhatsApp abiertas', 'ok');
+    }
+  }
+  
+  actualizarKpis();
+  renderTabla();
+  cargarHistorialBd();
 }
 
 function cerrarModalEnvio() {

@@ -5,6 +5,36 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.2/styles/ag-grid.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.2/styles/ag-theme-alpine.css">
 <link rel="stylesheet" href="/static/css/alertas.css?v={{ asset_version }}">
+<style>
+/* ── Nueva Alerta / Reporte IA ── */
+.na-panel { animation: fadeSlideUp .35s ease both; }
+@keyframes fadeSlideUp {
+  from { opacity:0; transform:translateY(16px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.reporte-card {
+  background: linear-gradient(135deg,#f0f9ff 0%,#e0f2fe 100%);
+  border: 1px solid #bae6fd;
+  border-radius: 1rem;
+  padding: 1.25rem;
+}
+.hallazgo-alta  { border-left:4px solid #ef4444; background:#fef2f2; }
+.hallazgo-media { border-left:4px solid #f59e0b; background:#fffbeb; }
+.hallazgo-baja  { border-left:4px solid #22c55e; background:#f0fdf4; }
+.hallazgo-card  { border-radius:.75rem; padding:.9rem 1rem; margin-bottom:.6rem; }
+.accion-card    { display:flex; gap:.75rem; align-items:flex-start; padding:.75rem; border-radius:.75rem; background:#f8fafc; border:1px solid #e2e8f0; margin-bottom:.5rem; }
+.accion-badge   { font-size:.65rem; font-weight:700; padding:.2rem .55rem; border-radius:999px; white-space:nowrap; }
+.accion-inmediato { background:#fee2e2; color:#991b1b; }
+.accion-24h       { background:#fef9c3; color:#854d0e; }
+.accion-semana    { background:#dcfce7; color:#166534; }
+.riesgo-alto   { background:#fee2e2; color:#991b1b; }
+.riesgo-medio  { background:#fef9c3; color:#92400e; }
+.riesgo-bajo   { background:#dcfce7; color:#15803d; }
+.riesgo-badge  { display:inline-flex; align-items:center; gap:.35rem; font-size:.75rem; font-weight:700; padding:.3rem .75rem; border-radius:999px; }
+.analisis-bloque { background:#fff; border:1px solid #e2e8f0; border-radius:.75rem; padding:1rem; margin-bottom:.75rem; }
+.spin { animation: spin 1s linear infinite; display:inline-block; }
+@keyframes spin { to { transform:rotate(360deg); } }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -35,247 +65,476 @@
     </div>
   </div>
 
-  {# ── Barra de acciones principales ── #}
-  <div class="glass-card p-3 sm:p-4">
-    <div class="flex flex-wrap items-center gap-2">
-      <button type="button" id="btn-toggle-carga" class="btn-ola btn-ola--primary" aria-expanded="false">
-        <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">📤</span>
-        <span class="btn-ola__text">
-          <span class="btn-ola__title">Cargar Excel</span>
-          <span class="btn-ola__sub">Matriz diaria GENERAL</span>
-        </span>
-        <span class="btn-ola__chevron" aria-hidden="true">
-          <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
-        </span>
-      </button>
-      <button type="button" id="btn-guardar" class="btn-ola btn-ola--success">
-        <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">💾</span>
-        <span class="btn-ola__text">
-          <span class="btn-ola__title">Guardar</span>
-          <span class="btn-ola__sub">Cambios de la matriz</span>
-        </span>
-      </button>
-      <a id="btn-exportar" href="#" class="btn-ola btn-ola--secondary">
-        <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">📥</span>
-        <span>Exportar</span>
-      </a>
-      <div class="relative">
-        <button type="button" id="btn-mas-acciones" class="btn-ola btn-ola--secondary" aria-expanded="false">
-          Más acciones ▾
-        </button>
-        <div id="menu-mas-acciones" class="hidden alerta-menu absolute left-0 sm:right-0 sm:left-auto top-full mt-1 z-30 min-w-[220px]">
-          <button type="button" id="btn-editar-fila" class="alerta-menu__item">✏️ Editar fila seleccionada</button>
-          <button type="button" id="btn-claude-fila" class="alerta-menu__item">⚡ Bot respuesta rápida</button>
-          <button type="button" id="btn-clasificar-reglas" class="alerta-menu__item">🏷️ Clasificar (reglas)</button>
-          <button type="button" id="btn-clasificar-ia" class="alerta-menu__item">🤖 Clasificar con IA</button>
-          <button type="button" id="btn-recargar-excel" class="alerta-menu__item">🔄 Recargar Excel base</button>
-          <button type="button" id="btn-toggle-charts" class="alerta-menu__item">📊 Mostrar / ocultar gráficos</button>
-        </div>
-      </div>
-      <span class="text-xs text-slate-500 ml-auto" id="grid-resumen">Seleccione un caso</span>
+  {# ── Tabs principales ── #}
+  <div class="glass-card p-0 overflow-hidden">
+    <div class="flex border-b border-slate-200 bg-slate-50">
+      <button type="button" class="main-tab active px-5 py-3 text-sm font-semibold border-b-2 border-optica-600 text-optica-700" data-panel="panel-matriz">📋 Matriz</button>
+      <button type="button" class="main-tab px-5 py-3 text-sm font-semibold text-slate-500 hover:text-slate-800 border-b-2 border-transparent" data-panel="panel-nueva-alerta">➕ Nueva alerta</button>
+      <button type="button" class="main-tab px-5 py-3 text-sm font-semibold text-slate-500 hover:text-slate-800 border-b-2 border-transparent" data-panel="panel-reporte-ia" id="tab-reporte-ia">🤖 Reporte IA</button>
     </div>
 
-    {# Panel carga (colapsable) #}
-    <div id="panel-subir-excel" class="hidden mt-4 pt-4 border-t border-slate-200/80">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-end">
-        <div class="lg:col-span-5">
-          <label class="block text-xs font-medium text-slate-500 mb-1">Archivo .xlsx</label>
-          <input type="file" id="input-excel" accept=".xlsx,.xls"
-            class="glass-input w-full px-3 py-2 text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-optica-600 file:text-white file:text-xs file:font-semibold">
-        </div>
-        <div class="lg:col-span-3">
-          <label class="block text-xs font-medium text-slate-500 mb-1">Modo</label>
-          <select id="upload-modo" class="glass-input w-full px-3 py-2 text-sm">
-            <option value="reemplazar">Reemplazar todo</option>
-            <option value="incremental">Solo filas nuevas</option>
-          </select>
-        </div>
-        <div class="lg:col-span-4 flex flex-wrap items-center gap-3">
-          <label class="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
-            <input type="checkbox" id="upload-auto-ia" checked class="rounded border-optica-300 text-optica-600">
-            Clasificar con IA
-          </label>
-          <button type="button" id="btn-procesar-excel" class="btn-ola btn-ola--primary btn-ola--sm">
-            <span class="btn-ola__icon" style="width:1.75rem;height:1.75rem;font-size:0.85rem">⚡</span>
-            Procesar
-          </button>
-          <span class="text-xs text-slate-500" id="upload-estado">Listo</span>
-        </div>
-      </div>
-      <div id="upload-progreso" class="hidden mt-3">
-        <div class="h-2 rounded-full bg-slate-200 overflow-hidden">
-          <div id="upload-progreso-bar" class="h-full bg-optica-600 transition-all duration-300" style="width:0%"></div>
-        </div>
-        <p class="text-xs text-slate-600 mt-1.5" id="upload-progreso-texto">Clasificando…</p>
-      </div>
-    </div>
-  </div>
+    {# ─── PANEL MATRIZ ─── #}
+    <div id="panel-matriz" class="p-3 sm:p-4 space-y-4">
 
-  {# ── Filtros compactos ── #}
-  <div class="glass-card p-3 sm:p-4">
-    <div class="flex flex-wrap items-end gap-3">
-      <div class="flex-1 min-w-[160px]">
-        <label class="block text-xs font-medium text-slate-500 mb-1">Buscar</label>
-        <input type="search" id="filtro-texto" placeholder="Cliente, local, comentario…" class="glass-input w-full px-3 py-2 text-sm">
-      </div>
-      <div class="w-full sm:w-36">
-        <label class="block text-xs font-medium text-slate-500 mb-1">Desde</label>
-        <input type="date" id="filtro-desde" class="glass-input w-full px-3 py-2 text-sm" value="{{ meta.fecha_min or '' }}">
-      </div>
-      <div class="w-full sm:w-36">
-        <label class="block text-xs font-medium text-slate-500 mb-1">Hasta</label>
-        <input type="date" id="filtro-hasta" class="glass-input w-full px-3 py-2 text-sm" value="{{ meta.fecha_max or '' }}">
-      </div>
-      <label class="flex items-center gap-2 text-sm font-medium text-amber-800 cursor-pointer pb-2 whitespace-nowrap">
-        <input type="checkbox" id="filtro-solo-pendientes" class="rounded border-amber-300 text-optica-600">
-        Solo pendientes
-      </label>
-      <button type="button" id="btn-toggle-filtros" class="btn-ola btn-ola--secondary btn-ola--sm" aria-expanded="false">
-        Filtros ▾
-      </button>
-      <button type="button" id="btn-limpiar-filtros" class="text-xs font-semibold text-optica-600 hover:underline pb-2">Limpiar</button>
-    </div>
-
-    <div id="panel-filtros-extra" class="hidden mt-3 pt-3 border-t border-slate-100">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
-        <div>
-          <label class="block text-xs font-medium text-slate-500 mb-1">Mes</label>
-          <select id="filtro-meses" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[72px]">
-            {% for m in meta.meses %}<option value="{{ m }}">{{ m }}</option>{% endfor %}
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-slate-500 mb-1">Local</label>
-          <select id="filtro-locales" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[72px]">
-            {% for loc in meta.locales %}<option value="{{ loc }}">{{ loc }}</option>{% endfor %}
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-slate-500 mb-1">Área</label>
-          <select id="filtro-areas" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[72px]">
-            {% for a in meta.areas %}<option value="{{ a }}">{{ a }}</option>{% endfor %}
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-slate-500 mb-1">Clasificación</label>
-          <select id="filtro-clasificacion" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[72px]">
-            {% for c in meta.opciones_clasificacion %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-slate-500 mb-1">Estado</label>
-          <select id="filtro-estados" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[72px]">
-            {% for e in meta.opciones_estado %}<option value="{{ e }}">{{ e }}</option>{% endfor %}
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-slate-500 mb-1">Contestó</label>
-          <select id="filtro-contesto" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[72px]">
-            {% for c in meta.opciones_contesto %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
-          </select>
-        </div>
-      </div>
-      <p class="text-xs text-slate-400 mt-2">Ctrl/Cmd + clic para varios. Los filtros se aplican al cambiar.</p>
-    </div>
-    <p class="text-xs text-slate-500 mt-2" id="filtro-resumen">Cargando…</p>
-  </div>
-
-  {# ── Gráficos (ocultos por defecto) ── #}
-  <div id="panel-charts" class="hidden">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-      <div class="glass-card p-3"><div id="chart-tendencia" class="chart-alertas"></div></div>
-      <div class="glass-card p-3"><div id="chart-problemas" class="chart-alertas"></div></div>
-      <div class="glass-card p-3"><div id="chart-donut" class="chart-alertas"></div></div>
-      <div class="glass-card p-3"><div id="chart-heatmap" class="chart-alertas"></div></div>
-      {# heatmap-mes se renderiza solo si el panel está abierto (mismo contenedor opcional) #}
-      <div class="glass-card p-3 lg:col-span-2 hidden" id="wrap-heatmap-mes"><div id="chart-heatmap-mes" class="chart-alertas chart-alertas-tall"></div></div>
-    </div>
-  </div>
-
-  {# ── Matriz (foco principal) ── #}
-  <div class="glass-card p-3 sm:p-4">
-    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-      <h3 class="font-semibold text-slate-800 text-sm sm:text-base">📋 Matriz de seguimiento</h3>
-      <p class="text-xs text-slate-500">Doble clic en una fila para editar · Seleccione para Claude</p>
-    </div>
-    <div id="alertas-grid" class="ag-theme-alpine alertas-ag-grid"></div>
-  </div>
-
-  {# ── Bot de respuesta rápida ── #}
-  <div id="panel-ia" class="glass-card p-4 sm:p-5 border-2 border-violet-100/80">
-    <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
-      <div>
-        <h3 class="font-semibold text-slate-800">🤖 Bot de respuesta rápida</h3>
-        <p class="text-sm text-slate-500 mt-0.5" id="ia-caso-label">Seleccione un caso en la matriz y genere 3 tonos de respuesta en 1 clic.</p>
-      </div>
-      <div class="flex flex-wrap gap-2 items-end">
-        <div class="min-w-[200px]">
-          <label class="block text-xs font-medium text-slate-500 mb-1">Nota extra (opcional)</label>
-          <input type="text" id="ia-contexto-extra" placeholder="Ej: 2.ª llamada, cliente molesto…" class="glass-input w-full px-3 py-2 text-sm">
-        </div>
-        <input type="hidden" id="ia-canal" value="whatsapp">
-        <button type="button" id="btn-bot-rapido" class="btn-ola btn-ola--ai btn-ola--lg">
-          <span class="btn-ola__left">
-            <span class="btn-ola__icon">⚡</span>
-            <span class="btn-ola__text">
-              <span class="btn-ola__title">Generar 3 respuestas</span>
-              <span class="btn-ola__sub">Empática · Corta · Formal</span>
-            </span>
+      <div class="flex flex-wrap items-center gap-2">
+        <button type="button" id="btn-toggle-carga" class="btn-ola btn-ola--primary" aria-expanded="false">
+          <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">📤</span>
+          <span class="btn-ola__text">
+            <span class="btn-ola__title">Cargar Excel</span>
+            <span class="btn-ola__sub">Matriz diaria GENERAL</span>
+          </span>
+          <span class="btn-ola__chevron" aria-hidden="true">
+            <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>
           </span>
         </button>
+        <button type="button" id="btn-guardar" class="btn-ola btn-ola--success">
+          <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">💾</span>
+          <span class="btn-ola__text">
+            <span class="btn-ola__title">Guardar</span>
+            <span class="btn-ola__sub">Cambios de la matriz</span>
+          </span>
+        </button>
+        <a id="btn-exportar" href="#" class="btn-ola btn-ola--secondary">
+          <span class="btn-ola__icon" style="width:2rem;height:2rem;font-size:0.95rem">📥</span>
+          <span>Exportar</span>
+        </a>
+        <div class="relative">
+          <button type="button" id="btn-mas-acciones" class="btn-ola btn-ola--secondary" aria-expanded="false">
+            Más acciones ▾
+          </button>
+          <div id="menu-mas-acciones" class="hidden alerta-menu absolute left-0 sm:right-0 sm:left-auto top-full mt-1 z-30 min-w-[220px]">
+            <button type="button" id="btn-editar-fila" class="alerta-menu__item">✏️ Editar fila seleccionada</button>
+            <button type="button" id="btn-claude-fila" class="alerta-menu__item">⚡ Bot respuesta rápida</button>
+            <button type="button" id="btn-reporte-fila" class="alerta-menu__item">🤖 Reporte IA del caso</button>
+            <button type="button" id="btn-clasificar-reglas" class="alerta-menu__item">🏷️ Clasificar (reglas)</button>
+            <button type="button" id="btn-clasificar-ia" class="alerta-menu__item">🤖 Clasificar con IA</button>
+            <button type="button" id="btn-recargar-excel" class="alerta-menu__item">🔄 Recargar Excel base</button>
+            <button type="button" id="btn-toggle-charts" class="alerta-menu__item">📊 Mostrar / ocultar gráficos</button>
+          </div>
+        </div>
+        <span class="text-xs text-slate-500 ml-auto" id="grid-resumen">Seleccione un caso</span>
       </div>
-    </div>
 
-    <div id="bot-opciones" class="hidden pt-3 border-t border-slate-100">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
-        <p class="text-sm font-medium text-violet-800" id="bot-status">Elija un tono y copie o abra WhatsApp</p>
-        <p class="text-xs text-slate-500" id="ia-nota"></p>
-      </div>
-      <div id="bot-cards" class="grid grid-cols-1 lg:grid-cols-3 gap-3"></div>
-      <div class="mt-4 hidden" id="bot-preview-wrap">
-        <label class="block text-xs font-medium text-slate-500 mb-1">Vista previa / editar antes de enviar</label>
-        <textarea id="bot-preview" rows="7" class="glass-textarea w-full px-3 py-2 text-sm font-mono"></textarea>
-        <div class="flex flex-wrap gap-2 mt-2">
-          <button type="button" id="btn-bot-copiar" class="btn-ola btn-ola--secondary">📋 Copiar</button>
-          <button type="button" id="btn-bot-wa" class="btn-ola btn-ola--wa">💬 Abrir WhatsApp</button>
-          <button type="button" id="btn-bot-usar-en-gestion" class="btn-ola btn-ola--success">✅ Usar en gestión del caso</button>
+      <div id="panel-subir-excel" class="hidden pt-4 border-t border-slate-200/80">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-end">
+          <div class="lg:col-span-5">
+            <label class="block text-xs font-medium text-slate-500 mb-1">Archivo .xlsx</label>
+            <input type="file" id="input-excel" accept=".xlsx,.xls"
+              class="glass-input w-full px-3 py-2 text-sm file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-optica-600 file:text-white file:text-xs file:font-semibold">
+          </div>
+          <div class="lg:col-span-3">
+            <label class="block text-xs font-medium text-slate-500 mb-1">Modo</label>
+            <select id="upload-modo" class="glass-input w-full px-3 py-2 text-sm">
+              <option value="reemplazar">Reemplazar todo</option>
+              <option value="incremental">Solo filas nuevas</option>
+            </select>
+          </div>
+          <div class="lg:col-span-4 flex flex-wrap items-center gap-3">
+            <label class="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
+              <input type="checkbox" id="upload-auto-ia" checked class="rounded border-optica-300 text-optica-600">
+              Clasificar con IA
+            </label>
+            <button type="button" id="btn-procesar-excel" class="btn-ola btn-ola--primary btn-ola--sm">
+              <span class="btn-ola__icon" style="width:1.75rem;height:1.75rem;font-size:0.85rem">⚡</span>
+              Procesar
+            </button>
+            <span class="text-xs text-slate-500" id="upload-estado">Listo</span>
+          </div>
+        </div>
+        <div id="upload-progreso" class="hidden mt-3">
+          <div class="h-2 rounded-full bg-slate-200 overflow-hidden">
+            <div id="upload-progreso-bar" class="h-full bg-optica-600 transition-all duration-300" style="width:0%"></div>
+          </div>
+          <p class="text-xs text-slate-600 mt-1.5" id="upload-progreso-texto">Clasificando…</p>
         </div>
       </div>
-    </div>
 
-    {# Detalle extendido (opcional, colapsable) #}
-    <details class="mt-4 text-sm">
-      <summary class="cursor-pointer font-semibold text-slate-600 hover:text-slate-800">Más opciones · diálogo y correo completo</summary>
-      <div class="mt-3 flex flex-wrap gap-2">
-        <button type="button" id="btn-generar-dialogo" class="btn-ola btn-ola--secondary btn-ola--sm">✨ Generar paquete completo (WA + correo + voz)</button>
+      {# ── Filtros compactos ── #}
+      <div class="pt-3 border-t border-slate-100">
+        <div class="flex flex-wrap items-end gap-3">
+          <div class="flex-1 min-w-[160px]">
+            <label class="block text-xs font-medium text-slate-500 mb-1">Buscar</label>
+            <input type="search" id="filtro-texto" placeholder="Cliente, local, comentario…" class="glass-input w-full px-3 py-2 text-sm">
+          </div>
+          <div class="w-full sm:w-36">
+            <label class="block text-xs font-medium text-slate-500 mb-1">Desde</label>
+            <input type="date" id="filtro-desde" class="glass-input w-full px-3 py-2 text-sm" value="{{ meta.fecha_min or '' }}">
+          </div>
+          <div class="w-full sm:w-36">
+            <label class="block text-xs font-medium text-slate-500 mb-1">Hasta</label>
+            <input type="date" id="filtro-hasta" class="glass-input w-full px-3 py-2 text-sm" value="{{ meta.fecha_max or '' }}">
+          </div>
+          <label class="flex items-center gap-2 text-sm font-medium text-amber-800 cursor-pointer pb-2 whitespace-nowrap">
+            <input type="checkbox" id="filtro-solo-pendientes" class="rounded border-amber-300 text-optica-600">
+            Solo pendientes
+          </label>
+          <button type="button" id="btn-toggle-filtros" class="btn-ola btn-ola--secondary btn-ola--sm" aria-expanded="false">
+            Filtros ▾
+          </button>
+          <button type="button" id="btn-limpiar-filtros" class="text-xs font-semibold text-optica-600 hover:underline pb-2">Limpiar</button>
+        </div>
+        <div id="panel-filtros-extra" class="hidden mt-3 pt-3 border-t border-slate-100">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1">Mes</label>
+              <select id="filtro-meses" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[72px]">
+                {% for m in meta.meses %}<option value="{{ m }}">{{ m }}</option>{% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1">Local</label>
+              <select id="filtro-locales" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[72px]">
+                {% for loc in meta.locales %}<option value="{{ loc }}">{{ loc }}</option>{% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1">Área</label>
+              <select id="filtro-areas" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[72px]">
+                {% for a in meta.areas %}<option value="{{ a }}">{{ a }}</option>{% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1">Clasificación</label>
+              <select id="filtro-clasificacion" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[72px]">
+                {% for c in meta.opciones_clasificacion %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1">Estado</label>
+              <select id="filtro-estados" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[72px]">
+                {% for e in meta.opciones_estado %}<option value="{{ e }}">{{ e }}</option>{% endfor %}
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1">Contestó</label>
+              <select id="filtro-contesto" multiple class="glass-input w-full px-3 py-2 text-sm min-h-[72px]">
+                {% for c in meta.opciones_contesto %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+              </select>
+            </div>
+          </div>
+          <p class="text-xs text-slate-400 mt-2">Ctrl/Cmd + clic para varios. Los filtros se aplican al cambiar.</p>
+        </div>
+        <p class="text-xs text-slate-500 mt-2" id="filtro-resumen">Cargando…</p>
       </div>
-      <div id="ia-resultado" class="hidden space-y-3 mt-3 pt-3 border-t border-slate-100">
-        <p class="text-sm font-medium text-emerald-700" id="ia-generado-por"></p>
-        <div id="ia-dialogo" class="glass-card-inner p-3 text-sm space-y-2 hidden"></div>
+
+      {# Gráficos #}
+      <div id="panel-charts" class="hidden">
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div class="glass-card p-3"><div id="chart-tendencia" class="chart-alertas"></div></div>
+          <div class="glass-card p-3"><div id="chart-problemas" class="chart-alertas"></div></div>
+          <div class="glass-card p-3"><div id="chart-donut" class="chart-alertas"></div></div>
+          <div class="glass-card p-3"><div id="chart-heatmap" class="chart-alertas"></div></div>
+          <div class="glass-card p-3 lg:col-span-2 hidden" id="wrap-heatmap-mes"><div id="chart-heatmap-mes" class="chart-alertas chart-alertas-tall"></div></div>
+        </div>
+      </div>
+
+      {# Matriz #}
+      <div>
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h3 class="font-semibold text-slate-800 text-sm sm:text-base">📋 Matriz de seguimiento</h3>
+          <p class="text-xs text-slate-500">Doble clic en una fila para editar · Seleccione para Reporte IA</p>
+        </div>
+        <div id="alertas-grid" class="ag-theme-alpine alertas-ag-grid"></div>
+      </div>
+
+      {# Bot de respuesta rápida #}
+      <div id="panel-ia" class="glass-card p-4 sm:p-5 border-2 border-violet-100/80">
+        <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
           <div>
-            <div class="flex items-center justify-between mb-1">
-              <label class="text-xs font-medium text-slate-500">WhatsApp</label>
-              <div class="flex gap-2">
-                <button type="button" id="btn-copiar-wa" class="text-xs font-semibold text-optica-600">📋 Copiar</button>
-                <a id="btn-wa-link" href="#" target="_blank" rel="noopener" class="text-xs font-semibold text-emerald-600 hidden">💬 Abrir WA</a>
+            <h3 class="font-semibold text-slate-800">🤖 Bot de respuesta rápida</h3>
+            <p class="text-sm text-slate-500 mt-0.5" id="ia-caso-label">Seleccione un caso en la matriz y genere 3 tonos de respuesta en 1 clic.</p>
+          </div>
+          <div class="flex flex-wrap gap-2 items-end">
+            <div class="min-w-[200px]">
+              <label class="block text-xs font-medium text-slate-500 mb-1">Nota extra (opcional)</label>
+              <input type="text" id="ia-contexto-extra" placeholder="Ej: 2.ª llamada, cliente molesto…" class="glass-input w-full px-3 py-2 text-sm">
+            </div>
+            <input type="hidden" id="ia-canal" value="whatsapp">
+            <button type="button" id="btn-bot-rapido" class="btn-ola btn-ola--ai btn-ola--lg">
+              <span class="btn-ola__left">
+                <span class="btn-ola__icon">⚡</span>
+                <span class="btn-ola__text">
+                  <span class="btn-ola__title">Generar 3 respuestas</span>
+                  <span class="btn-ola__sub">Empática · Corta · Formal</span>
+                </span>
+              </span>
+            </button>
+          </div>
+        </div>
+        <div id="bot-opciones" class="hidden pt-3 border-t border-slate-100">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <p class="text-sm font-medium text-violet-800" id="bot-status">Elija un tono y copie o abra WhatsApp</p>
+            <p class="text-xs text-slate-500" id="ia-nota"></p>
+          </div>
+          <div id="bot-cards" class="grid grid-cols-1 lg:grid-cols-3 gap-3"></div>
+          <div class="mt-4 hidden" id="bot-preview-wrap">
+            <label class="block text-xs font-medium text-slate-500 mb-1">Vista previa / editar antes de enviar</label>
+            <textarea id="bot-preview" rows="7" class="glass-textarea w-full px-3 py-2 text-sm font-mono"></textarea>
+            <div class="flex flex-wrap gap-2 mt-2">
+              <button type="button" id="btn-bot-copiar" class="btn-ola btn-ola--secondary">📋 Copiar</button>
+              <button type="button" id="btn-bot-wa" class="btn-ola btn-ola--wa">💬 Abrir WhatsApp</button>
+              <button type="button" id="btn-bot-usar-en-gestion" class="btn-ola btn-ola--success">✅ Usar en gestión del caso</button>
+            </div>
+          </div>
+        </div>
+        <details class="mt-4 text-sm">
+          <summary class="cursor-pointer font-semibold text-slate-600 hover:text-slate-800">Más opciones · diálogo y correo completo</summary>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button type="button" id="btn-generar-dialogo" class="btn-ola btn-ola--secondary btn-ola--sm">✨ Generar paquete completo (WA + correo + voz)</button>
+          </div>
+          <div id="ia-resultado" class="hidden space-y-3 mt-3 pt-3 border-t border-slate-100">
+            <p class="text-sm font-medium text-emerald-700" id="ia-generado-por"></p>
+            <div id="ia-dialogo" class="glass-card-inner p-3 text-sm space-y-2 hidden"></div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="text-xs font-medium text-slate-500">WhatsApp</label>
+                  <div class="flex gap-2">
+                    <button type="button" id="btn-copiar-wa" class="text-xs font-semibold text-optica-600">📋 Copiar</button>
+                    <a id="btn-wa-link" href="#" target="_blank" rel="noopener" class="text-xs font-semibold text-emerald-600 hidden">💬 Abrir WA</a>
+                  </div>
+                </div>
+                <textarea id="ia-whatsapp" rows="5" class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-slate-500 mb-1">Correo</label>
+                <input type="text" id="ia-asunto" placeholder="Asunto" class="glass-input w-full px-3 py-2 text-sm mb-2">
+                <textarea id="ia-correo" rows="4" class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
               </div>
             </div>
-            <textarea id="ia-whatsapp" rows="5" class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
+            <div>
+              <label class="block text-xs font-medium text-slate-500 mb-1">Guión de voz</label>
+              <textarea id="ia-voz" rows="3" class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
+            </div>
+          </div>
+        </details>
+      </div>
+    </div><!-- /panel-matriz -->
+
+    {# ─── PANEL NUEVA ALERTA ─── #}
+    <div id="panel-nueva-alerta" class="hidden p-4 sm:p-6 na-panel">
+      <div class="max-w-3xl mx-auto">
+        <div class="mb-6">
+          <h3 class="text-lg font-bold text-slate-800">➕ Ingresar nueva alerta</h3>
+          <p class="text-sm text-slate-500 mt-1">Registra manualmente un caso sin necesidad de cargar un Excel. Al guardar puedes generar el Reporte IA automáticamente.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Local / Tienda <span class="text-red-500">*</span></label>
+            <select id="na-local" class="glass-input w-full px-3 py-2 text-sm">
+              <option value="">— Seleccione local —</option>
+              {% for loc in meta.locales %}
+              <option value="{{ loc }}">{{ loc }}</option>
+              {% endfor %}
+            </select>
           </div>
           <div>
-            <label class="block text-xs font-medium text-slate-500 mb-1">Correo</label>
-            <input type="text" id="ia-asunto" placeholder="Asunto" class="glass-input w-full px-3 py-2 text-sm mb-2">
-            <textarea id="ia-correo" rows="4" class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Área</label>
+            <select id="na-area" class="glass-input w-full px-3 py-2 text-sm">
+              <option value="">— Seleccione área —</option>
+              <option>Ventas</option>
+              <option>Optometría</option>
+              <option>Laboratorio</option>
+              <option>Postventa</option>
+              <option>Logística</option>
+              <option>Administración</option>
+              <option>Call Center</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha de la alerta</label>
+            <input type="date" id="na-fecha" class="glass-input w-full px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Canal</label>
+            <select id="na-canal" class="glass-input w-full px-3 py-2 text-sm">
+              <option value="Manual">Manual</option>
+              <option value="Telegram">Telegram</option>
+              <option value="WhatsApp">WhatsApp</option>
+              <option value="Correo">Correo</option>
+              <option value="Llamada">Llamada</option>
+              <option value="Encuesta">Encuesta</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Cliente</label>
+            <input type="text" id="na-cliente" placeholder="Nombre del cliente" class="glass-input w-full px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Contacto / Teléfono</label>
+            <input type="text" id="na-contacto" placeholder="0991234567" class="glass-input w-full px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Optómetra</label>
+            <input type="text" id="na-optometra" placeholder="Nombre del optómetra" class="glass-input w-full px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Asesor responsable</label>
+            <input type="text" id="na-asesor" placeholder="Nombre del asesor" class="glass-input w-full px-3 py-2 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Calificación del cliente</label>
+            <select id="na-calificacion" class="glass-input w-full px-3 py-2 text-sm">
+              <option value="">— Sin calificación —</option>
+              <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+              <option>6</option><option>7</option><option>8</option><option>9</option><option>10</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Clasificación del problema</label>
+            <select id="na-clasificacion" class="glass-input w-full px-3 py-2 text-sm">
+              <option value="">— Seleccione clasificación —</option>
+              {% for c in meta.opciones_clasificacion %}
+              <option value="{{ c }}">{{ c }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Estado de gestión</label>
+            <select id="na-estado" class="glass-input w-full px-3 py-2 text-sm">
+              {% for e in meta.opciones_estado %}
+              <option value="{{ e }}" {% if e == 'Sin gestión' %}selected{% endif %}>{{ e }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Llamada cliente</label>
+            <select id="na-llamada" class="glass-input w-full px-3 py-2 text-sm">
+              {% for l in meta.opciones_llamada %}
+              <option value="{{ l }}" {% if l == 'Pendiente' %}selected{% endif %}>{{ l }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Comentario del cliente <span class="text-red-500">*</span></label>
+            <textarea id="na-comentario" rows="3" placeholder="Describe el caso o pega el comentario del cliente..." class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Observación / Gestión</label>
+            <textarea id="na-observacion" rows="2" placeholder="Qué acciones se han tomado..." class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Solución aplicada</label>
+            <textarea id="na-solucion" rows="2" placeholder="Cómo se resolvió o planea resolver..." class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Contexto extra para el Reporte IA (opcional)</label>
+            <input type="text" id="na-contexto-ia" placeholder="Ej: cliente reincidente, caso escalado a gerencia..." class="glass-input w-full px-3 py-2 text-sm">
           </div>
         </div>
+
+        <div class="flex flex-wrap gap-3 mt-6 pt-4 border-t border-slate-200">
+          <button type="button" id="btn-na-guardar" class="btn-ola btn-ola--success btn-ola--lg">
+            <span class="btn-ola__icon" style="width:2rem;height:2rem">💾</span>
+            <span class="btn-ola__text">
+              <span class="btn-ola__title">Guardar alerta</span>
+              <span class="btn-ola__sub">Sin reporte IA</span>
+            </span>
+          </button>
+          <button type="button" id="btn-na-guardar-reporte" class="btn-ola btn-ola--ai btn-ola--lg">
+            <span class="btn-ola__icon" style="width:2rem;height:2rem">🤖</span>
+            <span class="btn-ola__text">
+              <span class="btn-ola__title">Guardar + Reporte IA</span>
+              <span class="btn-ola__sub">Claude analiza el caso completo</span>
+            </span>
+          </button>
+          <button type="button" id="btn-na-limpiar" class="btn-ola btn-ola--secondary">
+            🗑️ Limpiar
+          </button>
+        </div>
+
+        <div id="na-estado" class="hidden mt-4 p-3 rounded-xl text-sm font-medium"></div>
+      </div>
+    </div><!-- /panel-nueva-alerta -->
+
+    {# ─── PANEL REPORTE IA ─── #}
+    <div id="panel-reporte-ia" class="hidden p-4 sm:p-6 na-panel">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div>
-          <label class="block text-xs font-medium text-slate-500 mb-1">Guión de voz</label>
-          <textarea id="ia-voz" rows="3" class="glass-textarea w-full px-3 py-2 text-sm"></textarea>
+          <h3 class="text-lg font-bold text-slate-800">🤖 Reporte IA del caso</h3>
+          <p class="text-sm text-slate-500" id="reporte-caso-label">Selecciona un caso en la matriz y usa "Reporte IA del caso" para analizarlo.</p>
+        </div>
+        <div class="flex gap-2">
+          <button type="button" id="btn-reporte-generar" class="btn-ola btn-ola--ai">
+            <span class="btn-ola__icon" style="width:2rem;height:2rem">🤖</span>
+            <span class="btn-ola__text">
+              <span class="btn-ola__title">Generar reporte</span>
+              <span class="btn-ola__sub">Análisis completo con Claude</span>
+            </span>
+          </button>
         </div>
       </div>
-    </details>
-  </div>
+
+      {# Estado cargando #}
+      <div id="reporte-cargando" class="hidden text-center py-12">
+        <div class="text-4xl spin mb-3">⚙️</div>
+        <p class="text-slate-600 font-medium">Claude está analizando el caso...</p>
+        <p class="text-slate-400 text-sm mt-1">Esto puede tardar unos segundos</p>
+      </div>
+
+      {# Resultado #}
+      <div id="reporte-resultado" class="hidden space-y-5">
+
+        {# Cabecera del caso #}
+        <div class="reporte-card">
+          <div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+            <div>
+              <p class="text-xs font-semibold text-sky-600 uppercase tracking-wide mb-1">Reporte ejecutivo</p>
+              <h4 class="font-bold text-slate-800 text-base" id="rpt-titulo">—</h4>
+            </div>
+            <div class="flex flex-wrap gap-2" id="rpt-badges"></div>
+          </div>
+          <p class="text-sm text-slate-700 leading-relaxed" id="rpt-resumen"></p>
+        </div>
+
+        {# Grid: hallazgos + acciones #}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div>
+            <h5 class="font-bold text-slate-700 mb-3 flex items-center gap-2">🔍 Hallazgos</h5>
+            <div id="rpt-hallazgos"></div>
+          </div>
+          <div>
+            <h5 class="font-bold text-slate-700 mb-3 flex items-center gap-2">⚡ Acciones recomendadas</h5>
+            <div id="rpt-acciones"></div>
+          </div>
+        </div>
+
+        {# Análisis por actor #}
+        <div>
+          <h5 class="font-bold text-slate-700 mb-3">📊 Análisis por responsable</h5>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="analisis-bloque">
+              <p class="text-xs font-bold text-slate-500 uppercase mb-2 flex items-center gap-1">🏪 Local</p>
+              <p class="text-sm text-slate-700 leading-relaxed" id="rpt-local"></p>
+            </div>
+            <div class="analisis-bloque">
+              <p class="text-xs font-bold text-slate-500 uppercase mb-2 flex items-center gap-1">👓 Optómetra</p>
+              <p class="text-sm text-slate-700 leading-relaxed" id="rpt-optometra"></p>
+            </div>
+            <div class="analisis-bloque">
+              <p class="text-xs font-bold text-slate-500 uppercase mb-2 flex items-center gap-1">👤 Asesor</p>
+              <p class="text-sm text-slate-700 leading-relaxed" id="rpt-asesor"></p>
+            </div>
+          </div>
+        </div>
+
+        {# Nota CXD #}
+        <div class="bg-violet-50 border border-violet-200 rounded-xl p-4">
+          <p class="text-xs font-bold text-violet-600 uppercase mb-2">💡 Nota del Director CX</p>
+          <p class="text-sm text-violet-900 leading-relaxed" id="rpt-nota-cxd"></p>
+        </div>
+
+        <div class="text-xs text-slate-400" id="rpt-meta"></div>
+      </div>
+
+      <div id="reporte-vacio" class="text-center py-16 text-slate-400">
+        <div class="text-5xl mb-3">🤖</div>
+        <p class="font-medium">Sin reporte generado</p>
+        <p class="text-sm mt-1">Selecciona un caso en la Matriz y pulsa "Reporte IA del caso" en Más acciones,<br>o ingresa una nueva alerta con "Guardar + Reporte IA".</p>
+      </div>
+    </div><!-- /panel-reporte-ia -->
+  </div><!-- /tabs -->
 
   <div id="toast-alertas" class="hidden fixed bottom-4 right-4 z-50 glass-card px-4 py-3 text-sm font-medium shadow-lg"></div>
 </div>
@@ -292,6 +551,7 @@
     <div class="flex flex-wrap gap-2 mt-5">
       <button type="button" id="modal-guardar" class="btn-ola btn-ola--success">💾 Guardar en matriz</button>
       <button type="button" id="modal-claude" class="btn-ola btn-ola--ai">⚡ Bot respuestas</button>
+      <button type="button" id="modal-reporte-ia" class="btn-ola btn-ola--secondary">🤖 Reporte IA</button>
     </div>
   </div>
 </div>
@@ -302,4 +562,5 @@
 <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.2/dist/ag-grid-community.min.js"></script>
 <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <script src="/static/js/alertas.js?v={{ asset_version }}"></script>
+<script src="/static/js/alertas_nueva.js?v={{ asset_version }}"></script>
 {% endblock %}
