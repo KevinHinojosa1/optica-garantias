@@ -85,37 +85,33 @@
   }
 
   /**
-   * Mensaje a tienda — script oficial.
+   * Mensaje a tienda — script oficial actualizado.
    */
   function componerMensajeTienda(it, asesor) {
     const producto = (it && it.producto) || '—';
     const local = (it && it.local) || 'Óptica Los Andes';
-    const factura = (it && (it.factura || it.orden)) || '—';
-    const nombre = nombreCompleto(it);
+    const orden = (it && (it.orden || it.factura)) || '—';
+    const proceso = (it && it.proceso) || '—';
+    const motivo = (it && it.motivo) || 'Reprogramación por quiebre o rectificación de lentes';
+    const fecha = (it && (it.fecha_reprogramada || it.fecha_indicada)) || 'te confirmamos pronto';
     const as = (asesor || (typeof window !== 'undefined' && window.DEFAULT_ASESOR) || 'Servicio al Cliente').trim();
 
-    const check = emoji(CP.check);
-    const wave = emoji(CP.wave);
-    const pin = emoji(CP.pin);
-    const page = emoji(CP.page);
-    const pack = emoji(CP.package);
-    const person = emoji(CP.person);
-    const pray = emoji(CP.pray);
-    const heart = emoji(CP.blueHeart);
-
     return [
-      `MENSAJE ENVIADO AL CLIENTE`,
+      `Buenas tardes, Equipo ${local.toUpperCase()}:`,
       '',
-      `Hola, equipo ${local}`,
-      `Les saluda ${as}, de Servicio al Cliente.`,
-      'Les confirmo que el mensaje de reprogramación de entrega ya fue enviado al cliente.',
+      `Les saluda ${as} de Servicio al Cliente.`,
       '',
-      `Tienda: ${local}`,
-      `Factura: ${factura}`,
+      'Por favor, estar pendientes de la llegada del siguiente producto:',
+      '',
+      `OT: ${orden}`,
+      `Proceso: ${proceso}`,
       `Producto: ${producto}`,
-      `Cliente: ${nombre}`,
+      `Motivo: ${motivo}`,
+      `Fecha indicada: ${fecha}`,
       '',
-      `Por favor, mantenerse pendientes del estado de la orden y, en caso de que el cliente se comunique o se acerque a la tienda, atenderlo con mucha delicadeza, empatía y predisposición, brindándole toda la información disponible.`,
+      'Si el producto ya llegó a la tienda, por favor comunicarse con el cliente para informarle y coordinar la entrega. Asimismo, agradeceré confirmar por este medio la gestión realizada.',
+      '',
+      'Muchas gracias por su apoyo.',
     ].join('\n');
   }
 

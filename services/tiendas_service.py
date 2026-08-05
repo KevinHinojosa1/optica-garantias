@@ -9,6 +9,15 @@ TIENDAS_FILE = Path(__file__).parent.parent / "data" / "tiendas.json"
 class TiendasService:
     _cache: list[dict] | None = None
 
+    ALIAS_MAP: dict[str, str] = {
+        "cci": "Cci 1",
+        "recreo": "Recreo 1",
+        "bosque": "Bosque 1",
+        "scala": "Scala Shopping",
+        "condado": "Condado Shopping",
+        "el jardin osh": "Mall el Jardin Sgh",
+    }
+
     @classmethod
     def _normalizar(cls, texto: str) -> str:
         texto = unicodedata.normalize("NFKD", texto.lower().strip())
@@ -25,17 +34,76 @@ class TiendasService:
     def listar(cls) -> list[dict]:
         return cls.cargar_tiendas()
 
+
     @classmethod
     def buscar_por_nombre(cls, nombre: str) -> dict | None:
-        if not nombre:
+        if not nombre or not nombre.strip():
             return None
-        norm = cls._normalizar(nombre)
-        for tienda in cls.cargar_tiendas():
-            if cls._normalizar(tienda["nombre"]) == norm:
+
+        norm_query = cls._normalizar(nombre)
+
+        # 0. Check ALIAS_MAP for known abbreviations/shortcuts
+        if norm_query in cls.ALIAS_MAP:
+            target_norm = cls._normalizar(cls.ALIAS_MAP[norm_query])
+            for tienda in cls.cargar_tiendas():
+                if cls._normalizar(tienda["nombre"]) == target_norm:
+                    return tienda
+
+        common_words = {"mall", "paseo", "shopping", "centro", "ola", "sgh", "osh"}
+
+        def get_tokens(text: str) -> list[str]:
+            norm = cls._normalizar(text)
+            return [t for t in "".join(c if c.isalnum() else " " for c in norm).split() if t]
+
+        def get_meaningful_tokens(tokens: list[str]) -> list[str]:
+            meaningful = [t for t in tokens if t not in common_words]
+            return meaningful if meaningful else tokens
+
+        query_tokens = get_tokens(nombre)
+        if not query_tokens:
+            return None
+
+        tiendas = cls.cargar_tiendas()
+
+        # b. Check exact match first
+        for tienda in tiendas:
+            if cls._normalizar(tienda["nombre"]) == norm_query:
                 return tienda
-            if norm in cls._normalizar(tienda["nombre"]) or cls._normalizar(tienda["nombre"]) in norm:
-                return tienda
-        return None
+
+        # c. Check if all words of the query appear in the store name (or vice versa)
+        query_set = set(query_tokens)
+        for tienda in tiendas:
+            store_tokens = get_tokens(tienda["nombre"])
+            store_set = set(store_tokens)
+            if query_set and store_set:
+                if query_set.issubset(store_set) or store_set.issubset(query_set):
+                    if len(query_set & store_set) / len(query_set) >= 0.5:
+                        return tienda
+
+        # d & e. Token-overlap score with meaningful words and >= 50% match requirement
+        query_meaningful = get_meaningful_tokens(query_tokens)
+        query_m_set = set(query_meaningful)
+
+        best_tienda = None
+        max_overlap = 0
+        best_match_ratio = 0.0
+
+        for tienda in tiendas:
+            store_tokens = get_tokens(tienda["nombre"])
+            store_meaningful = get_meaningful_tokens(store_tokens)
+            store_m_set = set(store_meaningful)
+
+            overlap = len(query_m_set & store_m_set)
+            match_ratio = overlap / len(query_m_set) if query_m_set else 0
+
+            if match_ratio >= 0.5:
+                if overlap > max_overlap or (overlap == max_overlap and match_ratio > best_match_ratio):
+                    max_overlap = overlap
+                    best_match_ratio = match_ratio
+                    best_tienda = tienda
+
+        return best_tienda
+
 
     @classmethod
     def obtener(cls, tienda_id: str) -> dict | None:

@@ -26,16 +26,17 @@ MAPEO_COLUMNAS: dict[str, tuple[str, ...]] = {
     ),
     "local": ("local", "tienda", "sucursal", "tienda_compra"),
     "producto": ("producto", "articulo", "artículo", "lente", "descripcion", "item"),
-    "orden": ("orden", "numero_orden", "n_orden", "no_orden", "pedido", "numero_pedido", "n_pedido"),
+    "orden": ("orden", "numero_orden", "n_orden", "no_orden", "pedido", "numero_pedido", "n_pedido", "ot"),
     "cedula": ("cedula", "cédula", "id", "cedula_id", "documento"),
     "factura": ("factura", "numero_factura", "n_factura", "nº_factura", "no_factura"),
+    "proceso": ("proceso", "tipo_proceso", "tipo", "servicio"),
     "email_tienda": (
         "email_tienda", "correo_tienda", "email_local", "correo_local",
         "email", "correo", "mail_tienda",
     ),
     "fecha_reprogramada": (
         "fecha_reprogramada", "nueva_fecha", "fecha_nueva", "fecha_entrega_nueva",
-        "nueva_fecha_entrega", "fecha_entrega", "fecha_prometida_nueva", "reprogramacion",
+        "nueva_fecha_entrega", "fecha_entrega", "fecha_prometida_nueva", "reprogramacion", "fecha_indicada",
     ),
     "fecha_anterior": (
         "fecha_anterior", "fecha_original", "fecha_previa", "fecha_prometida",
@@ -66,20 +67,23 @@ PLANTILLA_CLIENTE = (
 )
 
 PLANTILLA_TIENDA = (
-    "MENSAJE ENVIADO AL CLIENTE\n"
+    "Buenas tardes, Equipo {local_upper}:\n"
     "\n"
-    "Hola, equipo {local}\n"
-    "Les saluda {asesor}, de Servicio al Cliente.\n"
-    "Les confirmo que el mensaje de reprogramaci\u00f3n de entrega ya fue enviado al cliente.\n"
+    "Les saluda {asesor} de Servicio al Cliente.\n"
     "\n"
-    "Tienda: {local}\n"
-    "Factura: {factura}\n"
+    "Por favor, estar pendientes de la llegada del siguiente producto:\n"
+    "\n"
+    "OT: {orden}\n"
+    "Proceso: {proceso}\n"
     "Producto: {producto}\n"
-    "Cliente: {nombre}\n"
+    "Motivo: {motivo}\n"
+    "Fecha indicada: {fecha_reprogramada}\n"
     "\n"
-    "Por favor, mantenerse pendientes del estado de la orden y, en caso de que el cliente se comunique "
-    "o se acerque a la tienda, atenderlo con mucha delicadeza, empat\u00eda y predisposici\u00f3n, "
-    "brind\u00e1ndole toda la informaci\u00f3n disponible."
+    "Si el producto ya lleg\u00f3 a la tienda, por favor comunicarse con el cliente "
+    "para informarle y coordinar la entrega. Asimismo, agradecer\u00e9 confirmar "
+    "por este medio la gesti\u00f3n realizada.\n"
+    "\n"
+    "Muchas gracias por su apoyo."
 )
 
 # Alias para UI / restauración
@@ -199,6 +203,9 @@ class WhatsAppEnviosService:
                 ),
                 "hora": _limpiar_celda(row.get(mapeo["hora"], "")) if mapeo.get("hora") else "",
                 "motivo": _limpiar_celda(row.get(mapeo["motivo"], "")) if mapeo.get("motivo") else "",
+                "proceso": _limpiar_celda(row.get(mapeo["proceso"], "")) if mapeo.get("proceso") else "",
+                "apellido": _limpiar_celda(row.get(mapeo["apellido"], "")) if mapeo.get("apellido") else "",
+                "nombre_completo": _limpiar_celda(row.get(mapeo["nombre_completo"], "")) if mapeo.get("nombre_completo") else "",
                 "extra": {},
             }
             for col in cols:
@@ -231,16 +238,19 @@ class WhatsAppEnviosService:
         producto = contacto.get("producto") or "Pedido óptico"
         orden = contacto.get("orden") or contacto.get("factura") or "—"
         factura = contacto.get("factura") or contacto.get("orden") or orden
+        proceso = contacto.get("proceso") or "—"
         vars_map = {
             "nombre": contacto.get("nombre") or "amigo/a",
             "telefono": contacto.get("telefono") or "",
             "local": local,
+            "local_upper": local.upper(),
             "tienda": local,
             "producto": producto,
             "orden": orden,
             "pedido": producto,
             "cedula": contacto.get("cedula") or "",
             "factura": factura,
+            "proceso": proceso,
             "asesor": asesor or settings.default_asesor,
             "n": str(indice),
             "fecha_reprogramada": (
@@ -267,7 +277,7 @@ class WhatsAppEnviosService:
             "motivo": (
                 contacto.get("motivo")
                 or globales.get("motivo")
-                or "retraso en la producción del laboratorio"
+                or "Reprogramación por quiebre o rectificación de lentes"
             ),
             "email_tienda": contacto.get("email_tienda") or "",
         }

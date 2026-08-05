@@ -65,27 +65,18 @@ async function abrirWhatsApp(telefono, mensaje) {
     toast('Error: no se cargó el módulo de emojis. Recargue la página (Cmd+Shift+R).', 'error');
     return false;
   }
-  const modo = modoPrefillActivo() ? 'prefill' : 'seguro';
-  const result = await WaEmoji.abrirWhatsAppSeguro(telefono, mensaje, { modo });
+  // Siempre prellenar el texto en el enlace para enviar más rápido
+  const result = await WaEmoji.abrirWhatsAppSeguro(telefono, mensaje, { modo: 'prefill' });
   if (!result.ok) {
     toast(result.error || 'No se pudo abrir WhatsApp', 'error');
     return false;
   }
-  if (modo === 'seguro') {
-    toast(
-      result.copiado
-        ? '📋 Mensaje copiado. En WhatsApp: pega con Ctrl+V (o mantener → Pegar). Los emojis saldrán bien.'
-        : 'WhatsApp abierto. Copia el mensaje del recuadro y pégalo en el chat.',
-      'ok',
-    );
-  } else {
-    toast(
-      result.copiado
-        ? 'WhatsApp abierto (texto en enlace). Si ves rombos, desmarca prellenar y vuelve a intentar.'
-        : 'WhatsApp abierto.',
-      'ok',
-    );
-  }
+  toast(
+    result.copiado
+      ? 'WhatsApp abierto con texto prellenado. Solo pulsa Enviar en el chat.'
+      : 'WhatsApp abierto.',
+    'ok',
+  );
   return true;
 }
 
@@ -306,37 +297,112 @@ function renderTabla() {
     <table class="wa-tabla">
       <thead>
         <tr>
-          <th>#</th><th>Cliente</th><th>Local</th><th>Producto</th><th>Factura</th><th>Estado</th>
+          <th>#</th><th>Cliente</th><th>Local</th><th>Producto</th><th>OT / Factura</th><th>Estado</th><th>Acciones</th>
         </tr>
       </thead>
       <tbody>
         ${itemsEnvio.map(it => {
           let estado = '<span class="wa-badge wa-badge-pendiente">Pendiente</span>';
           let rowClass = itemSeleccionado?.indice === it.indice ? 'seleccionado' : '';
+          const nombreDisplay = it.nombre_completo || it.nombre || '\u2014';
           if (!it.valido) {
             estado = `<span class="wa-badge wa-badge-error">${escapeHtml(it.error || 'Sin WA')}</span>`;
             rowClass += ' invalido';
           } else if (it._enviado) {
-            estado = '<span class="wa-badge wa-badge-enviado">Enviado</span>';
+            estado = '<span class="wa-badge wa-badge-enviado">\u2705 Enviado</span>';
             rowClass += ' enviado';
           }
+
+          const btnCliente = it.valido && !it._enviado
+            ? `<button class="wa-btn-mini wa-btn-send-cli" data-idx="${it.indice}" title="Enviar al cliente">\ud83d\udcf1 Cliente</button>`
+            : (it._enviado ? '<span class="text-xs" style="color:#059669">\u2705</span>' : '');
+          const btnTienda = it.wa_numero_tienda
+            ? `<button class="wa-btn-mini wa-btn-send-ti" data-idx="${it.indice}" title="Enviar a tienda">\ud83c\udfea Tienda</button>`
+            : '';
+          const btnMark = it.valido && !it._enviado
+            ? `<button class="wa-btn-mini wa-btn-mark" data-idx="${it.indice}" title="Marcar como enviado">\u2705</button>`
+            : '';
+
           return `<tr class="${rowClass.trim()}" data-idx="${it.indice}" style="cursor:pointer">
             <td>${it.indice}</td>
-            <td><strong>${escapeHtml(it.nombre)}</strong><br><span class="text-xs text-slate-500">${escapeHtml(it.telefono || '—')}</span></td>
-            <td>${escapeHtml(it.local || '—')}</td>
-            <td>${escapeHtml(it.producto || '—')}</td>
-            <td>${escapeHtml(it.factura || it.orden || '—')}</td>
+            <td><strong>${escapeHtml(nombreDisplay)}</strong><br><span class="text-xs text-slate-500">${escapeHtml(it.telefono || '\u2014')}</span></td>
+            <td>${escapeHtml(it.local || '\u2014')}</td>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${escapeHtml(it.producto || '\u2014')}</td>
+            <td>${escapeHtml(it.orden || it.factura || '\u2014')}</td>
             <td>${estado}</td>
+            <td style="white-space:nowrap">${btnCliente} ${btnTienda} ${btnMark}</td>
           </tr>`;
         }).join('')}
       </tbody>
     </table>`;
 
+  // Evento: seleccionar fila
   cont.querySelectorAll('tr[data-idx]').forEach(tr => {
-    tr.addEventListener('click', () => {
+    tr.addEventListener('click', (e) => {
+      if (e.target.closest('button')) return;
       const idx = Number(tr.dataset.idx);
       const it = itemsEnvio.find(x => x.indice === idx);
       if (it) seleccionarItem(it);
+    });
+  });
+
+  // Evento: botón enviar a cliente
+  cont.querySelectorAll('.wa-btn-send-cli').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const idx = Number(btn.dataset.idx);
+      const it = itemsEnvio.find(x => x.indice === idx);
+      if (!it) return;
+      refrescarMensajesItem(it);
+      const tel = it.telefono_limpio || it.telefono || '';
+      const ok = await abrirWhatsApp(tel, it.mensaje_cliente || it.mensaje);
+      if (ok) {
+        btn.textContent = '\u2705';
+        btn.disabled = true;
+      }
+    });
+  });
+
+  // Evento: botón enviar a tienda
+  cont.querySelectorAll('.wa-btn-send-ti').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const idx = Number(btn.dataset.idx);
+      const it = itemsEnvio.find(x => x.indice === idx);
+      if (!it) return;
+      refrescarMensajesItem(it);
+      const tel = it.wa_numero_tienda || '';
+      if (!tel) { toast('Sin número de tienda', 'error'); return; }
+      const ok = await abrirWhatsApp(tel, it.mensaje_tienda);
+      if (ok) {
+        btn.textContent = '\u2705';
+        btn.disabled = true;
+      }
+    });
+  });
+
+  // Evento: marcar como enviado
+  cont.querySelectorAll('.wa-btn-mark').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const idx = Number(btn.dataset.idx);
+      const it = itemsEnvio.find(x => x.indice === idx);
+      if (!it) return;
+      it._enviado = true;
+      try {
+        await fetch('/api/envios-whatsapp/marcar-enviado', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            local: it.local, nombre: it.nombre_completo || it.nombre,
+            producto: it.producto, factura: it.factura || it.orden,
+            telefono: it.telefono, canal: 'cliente', estado: 'Mensaje enviado',
+          }),
+        });
+      } catch {}
+      actualizarKpis();
+      renderTabla();
+      toast(`\u2705 #${it.indice} marcado como enviado`, 'ok');
     });
   });
 }
@@ -580,13 +646,9 @@ async function abrirModalEnvio() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              local: it.local,
-              nombre: it.nombre,
-              producto: it.producto,
-              factura: it.factura || it.orden,
-              telefono: it.telefono,
-              canal: 'cliente',
-              estado: 'Mensaje enviado',
+              local: it.local, nombre: it.nombre_completo || it.nombre,
+              producto: it.producto, factura: it.factura || it.orden,
+              telefono: it.telefono, canal: 'cliente', estado: 'Mensaje enviado',
             })
           });
         } catch (e) {}
@@ -594,50 +656,14 @@ async function abrirModalEnvio() {
     }
     toast('✅ Envío Business completado', 'ok');
   } else {
-    toast(`Abriendo ${pendientes.length} chats de WhatsApp... (Permite las ventanas emergentes en tu navegador)`, 'info');
-    let bloqueado = false;
-    let abiertos = 0;
-    
-    for (let it of pendientes) {
-      refrescarMensajesItem(it);
-      const tel = it.telefono_limpio || it.telefono || '';
-      const msg = it.mensaje_cliente || it.mensaje || '';
-      const url = `https://wa.me/${tel}?text=${encodeURIComponent(msg)}`;
-      
-      // Intentamos abrir la pestaña
-      const newWin = window.open(url, '_blank');
-      
-      if (!newWin || newWin.closed || typeof newWin.closed == 'undefined') {
-          bloqueado = true;
-          break; // Detener el loop si el navegador bloquea la pestaña
-      }
-      
-      abiertos++;
-      it._enviado = true;
-      try {
-        await fetch('/api/envios-whatsapp/marcar-enviado', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            local: it.local,
-            nombre: it.nombre,
-            producto: it.producto,
-            factura: it.factura || it.orden,
-            telefono: it.telefono,
-            canal: 'cliente',
-            estado: 'Mensaje enviado',
-          })
-        });
-      } catch (e) {}
-    }
-    
-    if (bloqueado) {
-        alert(`⚠️ NAVEGADOR BLOQUEANDO PESTAÑAS\n\nSe abrieron ${abiertos} chats, pero el navegador bloqueó el resto por seguridad.\n\n👉 PARA SOLUCIONARLO: \nVe a la barra de direcciones (arriba a la derecha), haz clic en el icono de "Ventanas bloqueadas", selecciona "Permitir siempre ventanas emergentes de este sitio" y vuelve a intentarlo.`);
-    } else {
-        toast('✅ Pestañas de WhatsApp abiertas', 'ok');
-    }
+    // Desplegar panel de envío: muestra cada item con botones inline
+    toast(`📤 ${pendientes.length} mensajes pendientes. Use los botones de cada fila para enviar y marcar como enviado.`, 'info');
+    // Scroll al primer pendiente
+    const firstRow = document.querySelector(`tr[data-idx="${pendientes[0].indice}"]`);
+    if (firstRow) firstRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    seleccionarItem(pendientes[0]);
   }
-  
+
   actualizarKpis();
   renderTabla();
   cargarHistorialBd();

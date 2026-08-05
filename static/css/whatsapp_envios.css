@@ -64,8 +64,44 @@
 }
 
 .wa-badge-pendiente { background: #fef3c7; color: #92400e; }
-.wa-badge-enviado { background: #dbeafe; color: #1e40af; }
+.wa-badge-enviado { background: #dcfce7; color: #166534; font-weight: 800; }
 .wa-badge-error { background: #fee2e2; color: #991b1b; }
+
+/* Mini action buttons in table rows */
+.wa-btn-mini {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  margin: 1px;
+}
+.wa-btn-mini:hover {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.wa-btn-mini:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+.wa-btn-send-cli { background: #ecfdf5; border-color: #a7f3d0; color: #065f46; }
+.wa-btn-send-cli:hover { background: #d1fae5; }
+.wa-btn-send-ti { background: #eff6ff; border-color: #bfdbfe; color: #1e40af; }
+.wa-btn-send-ti:hover { background: #dbeafe; }
+.wa-btn-mark { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+.wa-btn-mark:hover { background: #dcfce7; }
+
+.wa-tabla tr.enviado td { opacity: 0.6; }
+.wa-tabla tr.enviado:hover td { opacity: 0.85; }
 
 #toast-wa.toast-ok { border-left: 4px solid #16a34a; color: #166534; }
 #toast-wa.toast-error { border-left: 4px solid #dc2626; color: #991b1b; }
