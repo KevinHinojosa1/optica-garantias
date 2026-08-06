@@ -99,6 +99,17 @@
 .wa-btn-send-ti:hover { background: #dbeafe; }
 .wa-btn-mark { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
 .wa-btn-mark:hover { background: #dcfce7; }
+.wa-btn-combo {
+  background: linear-gradient(135deg, #059669, #10b981);
+  border-color: #059669;
+  color: #fff;
+  font-size: 0.7rem;
+  padding: 0.25rem 0.55rem;
+}
+.wa-btn-combo:hover {
+  background: linear-gradient(135deg, #047857, #059669);
+  box-shadow: 0 2px 6px rgba(5,150,105,0.3);
+}
 
 .wa-tabla tr.enviado td { opacity: 0.6; }
 .wa-tabla tr.enviado:hover td { opacity: 0.85; }

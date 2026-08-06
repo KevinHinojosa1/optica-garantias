@@ -322,6 +322,9 @@ function renderTabla() {
           const btnMark = it.valido && !it._enviado
             ? `<button class="wa-btn-mini wa-btn-mark" data-idx="${it.indice}" title="Marcar como enviado">\u2705</button>`
             : '';
+          const btnCombo = it.valido && !it._enviado
+            ? `<button class="wa-btn-mini wa-btn-combo" data-idx="${it.indice}" title="Enviar + Marcar enviado">\ud83d\ude80</button>`
+            : '';
 
           return `<tr class="${rowClass.trim()}" data-idx="${it.indice}" style="cursor:pointer">
             <td>${it.indice}</td>
@@ -330,7 +333,7 @@ function renderTabla() {
             <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis">${escapeHtml(it.producto || '\u2014')}</td>
             <td>${escapeHtml(it.orden || it.factura || '\u2014')}</td>
             <td>${estado}</td>
-            <td style="white-space:nowrap">${btnCliente} ${btnTienda} ${btnMark}</td>
+            <td style="white-space:nowrap">${btnCombo} ${btnCliente} ${btnTienda} ${btnMark}</td>
           </tr>`;
         }).join('')}
       </tbody>
@@ -381,28 +384,31 @@ function renderTabla() {
     });
   });
 
-  // Evento: marcar como enviado
+  // Evento: marcar como enviado (y avanzar si envío rápido activo)
   cont.querySelectorAll('.wa-btn-mark').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
       const idx = Number(btn.dataset.idx);
       const it = itemsEnvio.find(x => x.indice === idx);
       if (!it) return;
-      it._enviado = true;
-      try {
-        await fetch('/api/envios-whatsapp/marcar-enviado', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            local: it.local, nombre: it.nombre_completo || it.nombre,
-            producto: it.producto, factura: it.factura || it.orden,
-            telefono: it.telefono, canal: 'cliente', estado: 'Mensaje enviado',
-          }),
-        });
-      } catch {}
-      actualizarKpis();
-      renderTabla();
-      toast(`\u2705 #${it.indice} marcado como enviado`, 'ok');
+      toast(`✅ #${it.indice} marcado como enviado`, 'ok');
+      await marcarYSiguiente(it);
+    });
+  });
+
+  // Evento: combo enviar cliente + marcar como enviado en un solo clic
+  cont.querySelectorAll('.wa-btn-combo').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const idx = Number(btn.dataset.idx);
+      const it = itemsEnvio.find(x => x.indice === idx);
+      if (!it) return;
+      refrescarMensajesItem(it);
+      const tel = it.telefono_limpio || it.telefono || '';
+      const ok = await abrirWhatsApp(tel, it.mensaje_cliente || it.mensaje);
+      if (ok) {
+        await marcarYSiguiente(it);
+      }
     });
   });
 }
@@ -625,7 +631,9 @@ function copiarTexto(id) {
   );
 }
 
-/* —— Envío masivo clientes —— */
+/* —— Envío masivo clientes (secuencial rápido) —— */
+let envioRapidoActivo = false;
+
 async function abrirModalEnvio() {
   const pendientes = itemsEnvio.filter(i => i.valido && !i._enviado);
   if (!pendientes.length) {
@@ -656,17 +664,66 @@ async function abrirModalEnvio() {
     }
     toast('✅ Envío Business completado', 'ok');
   } else {
-    // Desplegar panel de envío: muestra cada item con botones inline
-    toast(`📤 ${pendientes.length} mensajes pendientes. Use los botones de cada fila para enviar y marcar como enviado.`, 'info');
-    // Scroll al primer pendiente
-    const firstRow = document.querySelector(`tr[data-idx="${pendientes[0].indice}"]`);
-    if (firstRow) firstRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    seleccionarItem(pendientes[0]);
+    // Activar modo envío rápido secuencial
+    envioRapidoActivo = true;
+    toast(`🚀 Envío rápido activado: ${pendientes.length} pendientes. Abriendo primer chat...`, 'info');
+    await enviarYAvanzar(pendientes[0]);
   }
 
   actualizarKpis();
   renderTabla();
   cargarHistorialBd();
+}
+
+/** Abre WA del cliente, lo selecciona, hace scroll, y queda listo para marcar */
+async function enviarYAvanzar(it) {
+  if (!it) {
+    envioRapidoActivo = false;
+    toast('🎉 ¡Todos los mensajes enviados!', 'ok');
+    actualizarKpis();
+    renderTabla();
+    return;
+  }
+  seleccionarItem(it);
+  renderTabla();
+  // Scroll a la fila
+  const row = document.querySelector(`tr[data-idx="${it.indice}"]`);
+  if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // Abrir WA con texto prellenado
+  refrescarMensajesItem(it);
+  const tel = it.telefono_limpio || it.telefono || '';
+  await abrirWhatsApp(tel, it.mensaje_cliente || it.mensaje);
+}
+
+/** Marca como enviado + avanza al siguiente automáticamente */
+async function marcarYSiguiente(it) {
+  it._enviado = true;
+  // Guardar en BD en background
+  fetch('/api/envios-whatsapp/marcar-enviado', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      local: it.local, nombre: it.nombre_completo || it.nombre,
+      producto: it.producto, factura: it.factura || it.orden,
+      telefono: it.telefono, canal: 'cliente', estado: 'Mensaje enviado',
+    }),
+  }).catch(() => {});
+
+  actualizarKpis();
+  renderTabla();
+
+  if (envioRapidoActivo) {
+    // Buscar siguiente pendiente
+    const siguiente = itemsEnvio.find(i => i.valido && !i._enviado);
+    const restantes = itemsEnvio.filter(i => i.valido && !i._enviado).length;
+    if (siguiente) {
+      toast(`✅ Enviado. Siguiente (${restantes} restantes)...`, 'ok');
+      await enviarYAvanzar(siguiente);
+    } else {
+      envioRapidoActivo = false;
+      toast('🎉 ¡Todos los mensajes enviados!', 'ok');
+    }
+  }
 }
 
 function cerrarModalEnvio() {

@@ -29,14 +29,15 @@ MAPEO_COLUMNAS: dict[str, tuple[str, ...]] = {
     "orden": ("orden", "numero_orden", "n_orden", "no_orden", "pedido", "numero_pedido", "n_pedido", "ot"),
     "cedula": ("cedula", "cédula", "id", "cedula_id", "documento"),
     "factura": ("factura", "numero_factura", "n_factura", "nº_factura", "no_factura"),
-    "proceso": ("proceso", "tipo_proceso", "tipo", "servicio"),
+    "proceso": ("proceso", "tipo_proceso", "tipo", "servicio", "tipoot", "tipo_ot", "tiposervicio", "tipo_servicio"),
     "email_tienda": (
         "email_tienda", "correo_tienda", "email_local", "correo_local",
         "email", "correo", "mail_tienda",
     ),
     "fecha_reprogramada": (
         "fecha_reprogramada", "nueva_fecha", "fecha_nueva", "fecha_entrega_nueva",
-        "nueva_fecha_entrega", "fecha_entrega", "fecha_prometida_nueva", "reprogramacion", "fecha_indicada",
+        "nueva_fecha_entrega", "fecha_entrega", "fecha_prometida_nueva", "reprogramacion",
+        "fecha_indicada", "fechan", "fecha_n", "fechanueva", "fecha_compromiso",
     ),
     "fecha_anterior": (
         "fecha_anterior", "fecha_original", "fecha_previa", "fecha_prometida",
