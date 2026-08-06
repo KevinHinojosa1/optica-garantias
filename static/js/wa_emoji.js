@@ -55,7 +55,7 @@
     const local = (it && it.local) || 'Óptica Los Andes';
     const factura = (it && (it.factura || it.orden)) || '—';
     const nombre = nombreCompleto(it);
-    const as = (asesor || (typeof window !== 'undefined' && window.DEFAULT_ASESOR) || 'Servicio al Cliente').trim();
+    const as = (asesor || (typeof window !== 'undefined' && window.DEFAULT_ASESOR) || 'Kevin Hinojosa').trim();
 
     const cal = emoji(CP.calendar);
     const pack = emoji(CP.package);
@@ -94,7 +94,7 @@
     const proceso = (it && it.proceso) || 'N/D';
     const motivo = (it && it.motivo) || 'N/D';
     const fecha = (it && (it.fecha_reprogramada || it.fecha_indicada)) || 'te confirmamos pronto';
-    const as = (asesor || (typeof window !== 'undefined' && window.DEFAULT_ASESOR) || 'Servicio al Cliente').trim();
+    const as = (asesor || (typeof window !== 'undefined' && window.DEFAULT_ASESOR) || 'Kevin Hinojosa').trim();
 
     return [
       `Buenas tardes, Equipo ${local.toUpperCase()}:`,

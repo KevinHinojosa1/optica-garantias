@@ -55,7 +55,7 @@ PLANTILLA_CLIENTE = (
     "Tienda: {local}\n"
     "Factura: {factura}\n"
     "--------------------\n"
-    "Hola, {nombre}\n"
+    "Hola, {nombre_completo}\n"
     "\n"
     "Te saluda {asesor}, de Servicio al Cliente de \u00d3ptica Los Andes.\n"
     "Queremos contarte que tu orden no estar\u00e1 lista dentro del plazo que te indicamos inicialmente. "
@@ -260,8 +260,12 @@ class WhatsAppEnviosService:
         orden = contacto.get("orden") or contacto.get("factura") or "N/D"
         factura = contacto.get("factura") or contacto.get("orden") or orden
         proceso = contacto.get("proceso") or "N/D"
+        apellido = contacto.get("apellido") or ""
+        nombre_completo = contacto.get("nombre_completo") or (f"{contacto.get('nombre', '')} {apellido}".strip() if apellido else contacto.get("nombre", "amigo/a"))
         vars_map = {
             "nombre": contacto.get("nombre") or "amigo/a",
+            "apellido": apellido,
+            "nombre_completo": nombre_completo,
             "telefono": contacto.get("telefono") or "",
             "local": local,
             "local_upper": local.upper(),
@@ -272,7 +276,7 @@ class WhatsAppEnviosService:
             "cedula": contacto.get("cedula") or "",
             "factura": factura,
             "proceso": proceso,
-            "asesor": asesor or settings.default_asesor,
+            "asesor": asesor or "Kevin Hinojosa",
             "n": str(indice),
             "fecha_reprogramada": (
                 contacto.get("fecha_reprogramada")

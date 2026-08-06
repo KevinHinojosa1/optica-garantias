@@ -7,6 +7,8 @@ from pydantic import BaseModel, Field
 
 class ContactoEnvio(BaseModel):
     nombre: str = ""
+    apellido: str = ""
+    nombre_completo: str = ""
     telefono: str = ""
     local: str = ""
     producto: str = ""
