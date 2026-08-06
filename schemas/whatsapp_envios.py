@@ -36,12 +36,17 @@ class GenerarEnviosRequest(BaseModel):
 class EnvioGenerado(BaseModel):
     indice: int
     nombre: str
+    apellido: str = ""
+    nombre_completo: str = ""
     telefono: str
     telefono_limpio: str = ""
     local: str = ""
     producto: str = ""
     factura: str = ""
     orden: str = ""
+    proceso: str = ""
+    motivo: str = ""
+    fecha_reprogramada: str = ""
     email_tienda: str = ""
     mensaje: str = ""
     mensaje_cliente: str = ""
@@ -49,6 +54,7 @@ class EnvioGenerado(BaseModel):
     wa_link: str = ""
     wa_link_cliente: str = ""
     wa_link_tienda: str = ""
+    wa_numero_tienda: str = ""
     valido: bool
     error: Optional[str] = None
 

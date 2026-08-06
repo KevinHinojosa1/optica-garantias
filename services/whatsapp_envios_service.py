@@ -381,6 +381,9 @@ class WhatsAppEnviosService:
                 "producto": vars_map["producto"],
                 "factura": vars_map["factura"],
                 "orden": vars_map["orden"],
+                "proceso": vars_map.get("proceso", ""),
+                "motivo": vars_map.get("motivo", ""),
+                "fecha_reprogramada": vars_map.get("fecha_reprogramada", ""),
                 "email_tienda": c.get("email_tienda") or "",
                 "mensaje": msg_cliente,
                 "mensaje_cliente": msg_cliente,
@@ -388,7 +391,7 @@ class WhatsAppEnviosService:
                 "wa_link": wa_cliente,
                 "wa_link_cliente": wa_cliente,
                 "wa_link_tienda": wa_tienda,
-                "wa_numero_tienda": wa_num_tienda,   # ← número limpio sin URL
+                "wa_numero_tienda": wa_num_tienda,
                 "valido": valido,
                 "error": error,
             }
