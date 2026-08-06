@@ -18,6 +18,7 @@ class ContactoEnvio(BaseModel):
     fecha_anterior: str = ""
     hora: str = ""
     motivo: str = ""
+    proceso: str = ""
     extra: dict[str, Any] = Field(default_factory=dict)
 
 

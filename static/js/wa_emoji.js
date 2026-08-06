@@ -88,11 +88,11 @@
    * Mensaje a tienda — script oficial actualizado.
    */
   function componerMensajeTienda(it, asesor) {
-    const producto = (it && it.producto) || '—';
+    const producto = (it && it.producto) || 'N/D';
     const local = (it && it.local) || 'Óptica Los Andes';
-    const orden = (it && (it.orden || it.factura)) || '—';
-    const proceso = (it && it.proceso) || '—';
-    const motivo = (it && it.motivo) || 'Reprogramación por quiebre o rectificación de lentes';
+    const orden = (it && (it.orden || it.factura)) || 'N/D';
+    const proceso = (it && it.proceso) || 'N/D';
+    const motivo = (it && it.motivo) || 'N/D';
     const fecha = (it && (it.fecha_reprogramada || it.fecha_indicada)) || 'te confirmamos pronto';
     const as = (asesor || (typeof window !== 'undefined' && window.DEFAULT_ASESOR) || 'Servicio al Cliente').trim();
 

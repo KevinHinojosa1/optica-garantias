@@ -29,14 +29,14 @@ MAPEO_COLUMNAS: dict[str, tuple[str, ...]] = {
     "orden": ("orden", "numero_orden", "n_orden", "no_orden", "pedido", "numero_pedido", "n_pedido", "ot"),
     "cedula": ("cedula", "cédula", "id", "cedula_id", "documento"),
     "factura": ("factura", "numero_factura", "n_factura", "nº_factura", "no_factura"),
-    "proceso": ("proceso", "tipo_proceso", "tipo", "servicio", "tipoot", "tipo_ot", "tiposervicio", "tipo_servicio"),
+    "proceso": ("proceso", "tipo_proceso", "tipo", "servicio", "tipoot", "tipo_ot", "tiposervicio", "tipo_servicio", "tipo__ot", "tipo_de_ot", "tarea", "trabajo"),
     "email_tienda": (
         "email_tienda", "correo_tienda", "email_local", "correo_local",
         "email", "correo", "mail_tienda",
     ),
     "fecha_reprogramada": (
         "fecha_reprogramada", "nueva_fecha", "fecha_nueva", "fecha_entrega_nueva",
-        "nueva_fecha_entrega", "fecha_entrega", "fecha_prometida_nueva", "reprogramacion",
+        "nueva_fecha_entrega", "fecha_entrega", "fecha_prometida_nueva",
         "fecha_indicada", "fechan", "fecha_n", "fechanueva", "fecha_compromiso",
     ),
     "fecha_anterior": (
@@ -44,7 +44,7 @@ MAPEO_COLUMNAS: dict[str, tuple[str, ...]] = {
         "fecha_entrega_prometida", "fecha_prometida_entrega", "entrega_prometida",
     ),
     "hora": ("hora", "horario", "hora_entrega", "hora_retiro", "time"),
-    "motivo": ("motivo", "razon", "razón", "causa", "detalle", "observacion", "observación"),
+    "motivo": ("motivo", "razon", "razón", "causa", "detalle", "observacion", "observación", "reprogramacion", "reprogramación"),
 }
 
 # Scripts oficiales CX — emojis SOLO con escapes \U (archivo ASCII-safe, no se corrompe por encoding)
@@ -110,14 +110,26 @@ def _limpiar_celda(val) -> str:
     s = str(val).strip()
     if s.endswith(".0") and s[:-2].replace(".", "").isdigit():
         s = s[:-2]
+    s = s.replace(" 00:00:00", "")
     return "" if s.lower() in ("nan", "none", "nat") else s
 
 
+import re
+
 def _resolver_columna(columnas: list[str], claves: tuple[str, ...]) -> str | None:
+    # Intento 1: match exacto o casi exacto
     for col in columnas:
         norm = col.replace("á", "a").replace("é", "e").replace("í", "i").replace("ó", "o").replace("ú", "u")
         if norm in claves or col in claves:
             return col
+
+    # Intento 2: ignorando TODO caracter que no sea alfanumerico (espacios invisibles, saltos de linea, BOMs)
+    claves_limpias = {re.sub(r'[^a-z0-9]', '', c) for c in claves}
+    for col in columnas:
+        norm_clean = re.sub(r'[^a-z0-9]', '', col.lower())
+        if norm_clean in claves_limpias:
+            return col
+            
     return None
 
 
@@ -152,6 +164,11 @@ class WhatsAppEnviosService:
         advertencias: list[str] = []
 
         mapeo = {campo: _resolver_columna(cols, aliases) for campo, aliases in MAPEO_COLUMNAS.items()}
+        print("=== DEBUG MAPEO ===")
+        print(mapeo)
+        print("=== DEBUG COLS ===")
+        print(cols)
+        
         col_tel = mapeo.get("telefono")
         if not col_tel and not mapeo.get("nombre"):
             raise ValueError(
@@ -168,6 +185,9 @@ class WhatsAppEnviosService:
         vistos: set[str] = set()
 
         for i, row in df.iterrows():
+            print(f"=== ROW {i} ===")
+            print(f"OT: {row.get('orden')}")
+            print(f"TipoOT RAW: {row.get('tipoot')}")
             tel = _limpiar_celda(row.get(col_tel)) if col_tel else ""
             nombre = _limpiar_celda(row.get(mapeo["nombre"], "")) if mapeo.get("nombre") else ""
             if not tel and not nombre:
@@ -237,9 +257,9 @@ class WhatsAppEnviosService:
     ) -> dict[str, str]:
         local = contacto.get("local") or contacto.get("tienda") or "Óptica Los Andes"
         producto = contacto.get("producto") or "Pedido óptico"
-        orden = contacto.get("orden") or contacto.get("factura") or "—"
+        orden = contacto.get("orden") or contacto.get("factura") or "N/D"
         factura = contacto.get("factura") or contacto.get("orden") or orden
-        proceso = contacto.get("proceso") or "—"
+        proceso = contacto.get("proceso") or "N/D"
         vars_map = {
             "nombre": contacto.get("nombre") or "amigo/a",
             "telefono": contacto.get("telefono") or "",
