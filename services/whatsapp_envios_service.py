@@ -185,7 +185,20 @@ class WhatsAppEnviosService:
                     if has_headers(row.values):
                         print(f"Found headers in row {i}!")
                         new_df = df_sheet.iloc[i+1:].copy()
-                        new_df.columns = row.values
+                        
+                        # Deduplicar nombres de columnas y manejar NaNs para evitar el error de "Reindexing"
+                        import collections
+                        counts = collections.defaultdict(int)
+                        unique_cols = []
+                        for c in row.values:
+                            s = str(c).strip() if pd.notna(c) else "unnamed"
+                            counts[s] += 1
+                            if counts[s] > 1:
+                                unique_cols.append(f"{s}_{counts[s]}")
+                            else:
+                                unique_cols.append(s)
+                                
+                        new_df.columns = unique_cols
                         cleaned_dfs.append(new_df)
                         found = True
                         break
