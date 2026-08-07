@@ -156,7 +156,37 @@ class WhatsAppEnviosService:
                 raise ValueError("No se pudo leer el CSV. Use UTF-8.")
         elif lower.endswith((".xlsx", ".xls")):
             dfs = pd.read_excel(io.BytesIO(content), sheet_name=None, dtype=str)
-            df = pd.concat(dfs.values(), ignore_index=True)
+            
+            def has_headers(cols) -> bool:
+                s = " ".join(str(c).lower() for c in cols)
+                return "telefon" in s or "nombre" in s or "tienda" in s or "local" in s
+                
+            cleaned_dfs = []
+            for sheet_name, df_sheet in dfs.items():
+                if has_headers(df_sheet.columns):
+                    cleaned_dfs.append(df_sheet)
+                    continue
+                    
+                # Buscar encabezados en las primeras 20 filas
+                found = False
+                for i, row in df_sheet.head(20).iterrows():
+                    if has_headers(row.values):
+                        new_df = df_sheet.iloc[i+1:].copy()
+                        new_df.columns = row.values
+                        cleaned_dfs.append(new_df)
+                        found = True
+                        break
+                        
+                if not found:
+                    # Si no encuentra nada, igual la metemos por si acaso (aunque casi seguro no servirá)
+                    # Pero mejor ignorarla para no ensuciar las columnas finales
+                    pass
+            
+            if not cleaned_dfs:
+                # Si ninguna hoja tiene los encabezados, concatenamos todo para que el error de validación actúe normal
+                df = pd.concat(dfs.values(), ignore_index=True)
+            else:
+                df = pd.concat(cleaned_dfs, ignore_index=True)
         else:
             raise ValueError("Formato no soportado. Suba Excel (.xlsx) o CSV.")
 
