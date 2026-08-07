@@ -155,7 +155,8 @@ class WhatsAppEnviosService:
             if df is None:
                 raise ValueError("No se pudo leer el CSV. Use UTF-8.")
         elif lower.endswith((".xlsx", ".xls")):
-            df = pd.read_excel(io.BytesIO(content), dtype=str)
+            dfs = pd.read_excel(io.BytesIO(content), sheet_name=None, dtype=str)
+            df = pd.concat(dfs.values(), ignore_index=True)
         else:
             raise ValueError("Formato no soportado. Suba Excel (.xlsx) o CSV.")
 
