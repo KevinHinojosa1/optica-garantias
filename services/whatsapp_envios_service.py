@@ -176,6 +176,19 @@ class WhatsAppEnviosService:
                 print(f"=== PROCESSING SHEET: {sheet_name} ===")
                 if has_headers(df_sheet.columns):
                     print("Found headers in top columns!")
+                    
+                    import collections
+                    counts = collections.defaultdict(int)
+                    unique_cols = []
+                    for c in df_sheet.columns:
+                        s = str(c).strip() if pd.notna(c) else "unnamed"
+                        counts[s] += 1
+                        if counts[s] > 1:
+                            unique_cols.append(f"{s}_{counts[s]}")
+                        else:
+                            unique_cols.append(s)
+                            
+                    df_sheet.columns = unique_cols
                     cleaned_dfs.append(df_sheet)
                     continue
                     
