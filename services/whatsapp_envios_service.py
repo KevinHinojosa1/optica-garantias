@@ -159,11 +159,23 @@ class WhatsAppEnviosService:
             
             def has_headers(cols) -> bool:
                 s = " ".join(str(c).lower() for c in cols)
-                return "telefon" in s or "nombre" in s or "tienda" in s or "local" in s
+                
+                # Buscar si hay alguna coincidencia con los alias de teléfono o nombre
+                alias_tel = ["telefono", "celular", "movil", "telf", "cel", "numero"]
+                alias_nom = ["nombre", "cliente", "paciente", "contacto", "nombres"]
+                alias_loc = ["local", "tienda", "sucursal", "agencia", "punto"]
+                
+                found_tel = any(a in s for a in alias_tel)
+                found_nom = any(a in s for a in alias_nom)
+                found_loc = any(a in s for a in alias_loc)
+                
+                return found_tel or found_nom or found_loc
                 
             cleaned_dfs = []
             for sheet_name, df_sheet in dfs.items():
+                print(f"=== PROCESSING SHEET: {sheet_name} ===")
                 if has_headers(df_sheet.columns):
+                    print("Found headers in top columns!")
                     cleaned_dfs.append(df_sheet)
                     continue
                     
@@ -171,6 +183,7 @@ class WhatsAppEnviosService:
                 found = False
                 for i, row in df_sheet.head(20).iterrows():
                     if has_headers(row.values):
+                        print(f"Found headers in row {i}!")
                         new_df = df_sheet.iloc[i+1:].copy()
                         new_df.columns = row.values
                         cleaned_dfs.append(new_df)
@@ -178,12 +191,10 @@ class WhatsAppEnviosService:
                         break
                         
                 if not found:
-                    # Si no encuentra nada, igual la metemos por si acaso (aunque casi seguro no servirá)
-                    # Pero mejor ignorarla para no ensuciar las columnas finales
-                    pass
+                    print(f"No valid headers found in sheet {sheet_name}")
             
             if not cleaned_dfs:
-                # Si ninguna hoja tiene los encabezados, concatenamos todo para que el error de validación actúe normal
+                print("WARNING: No sheets had valid headers!")
                 df = pd.concat(dfs.values(), ignore_index=True)
             else:
                 df = pd.concat(cleaned_dfs, ignore_index=True)
