@@ -1,7 +1,7 @@
 /**
  * Reprogramación de entregas — cliente / tienda / correo + contador diario
  */
-
+let contactosGlobales = [];
 let contactos = [];
 let itemsEnvio = [];
 let correosPorLocal = [];
@@ -504,12 +504,10 @@ async function cargarExcel() {
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || 'Error al leer Excel');
 
-  contactos = data.contactos || [];
-  itemsEnvio = [];
-  correosPorLocal = [];
-  itemSeleccionado = null;
+  contactosGlobales = data.contactos || [];
+  
   document.getElementById('wa-resumen-contactos').innerHTML =
-    `✅ <strong>${data.total}</strong> fila(s) · Columnas: ${escapeHtml((data.columnas_detectadas || []).join(', '))}`;
+    `✅ <strong>${data.total}</strong> fila(s) maestras leídas · Columnas: ${escapeHtml((data.columnas_detectadas || []).join(', '))}`;
 
   const adv = document.getElementById('wa-advertencias');
   if (data.advertencias?.length) {
@@ -519,11 +517,41 @@ async function cargarExcel() {
     adv.classList.add('hidden');
   }
 
-  document.getElementById('wa-estado').textContent = `${data.total} filas`;
+  // Extract unique dates for the filter
+  const fechasUnicas = [...new Set(contactosGlobales.map(c => c.fecha_reprogramada).filter(Boolean))].sort();
+  const filtroContainer = document.getElementById('wa-filtro-container');
+  const selectFecha = document.getElementById('wa-filtro-fecha');
+  
+  if (fechasUnicas.length > 0) {
+    selectFecha.innerHTML = '<option value="">Todas las fechas</option>' + 
+      fechasUnicas.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('');
+    filtroContainer.classList.remove('hidden');
+  } else {
+    filtroContainer.classList.add('hidden');
+    selectFecha.innerHTML = '';
+  }
+
+  aplicarFiltroFecha(); // This will populate `contactos`
+  
+  toast(`${data.total} filas cargadas de la matriz`, 'ok');
+}
+
+function aplicarFiltroFecha() {
+  const fechaSelect = document.getElementById('wa-filtro-fecha')?.value || '';
+  if (fechaSelect) {
+    contactos = contactosGlobales.filter(c => c.fecha_reprogramada === fechaSelect);
+  } else {
+    contactos = [...contactosGlobales];
+  }
+  
+  itemsEnvio = [];
+  correosPorLocal = [];
+  itemSeleccionado = null;
+  
+  document.getElementById('wa-estado').textContent = `${contactos.length} filas`;
   actualizarBotones();
   actualizarKpis();
   renderTabla();
-  toast(`${data.total} filas cargadas de la matriz`, 'ok');
 }
 
 async function generarMensajes() {
@@ -869,6 +897,7 @@ document.getElementById('btn-recargar-historial')?.addEventListener('click', () 
   cargarHistorialBd().catch(e => toast(e.message, 'error')));
 document.getElementById('btn-cargar-excel')?.addEventListener('click', () =>
   cargarExcel().catch(e => toast(e.message, 'error')));
+document.getElementById('wa-filtro-fecha')?.addEventListener('change', aplicarFiltroFecha);
 document.getElementById('btn-generar')?.addEventListener('click', () =>
   generarMensajes().catch(e => toast(e.message, 'error')));
 document.getElementById('btn-exportar')?.addEventListener('click', () =>
