@@ -599,27 +599,21 @@ function inicializarValidadorOTs() {
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: 'array', cellDates: true });
         
-        // Buscar la hoja "CONTROL OT" o similar
-        let sheetName = workbook.SheetNames.find(n => n.trim().toUpperCase() === 'CONTROL OT');
-        if (!sheetName) {
+        // Buscar la hoja "CONTROL OT"
+        let sheetName = 'CONTROL OT';
+        if (!workbook.SheetNames.includes(sheetName)) {
           sheetName = workbook.SheetNames.find(n => n.toUpperCase().includes('CONTROL') || n.toUpperCase().includes('OT')) || workbook.SheetNames[0];
         }
 
         if (!sheetName) {
-          toast('No se encontró ninguna hoja válida en el archivo Excel.', 'error');
+          toast('No se encontró la hoja "CONTROL OT" en el archivo.', 'error');
           return;
         }
 
         const worksheet = workbook.Sheets[sheetName];
+        // Según el análisis previo, los datos reales comienzan en la fila 7 (índice 6)
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { range: 6, raw: false, dateNF: 'yyyy-mm-dd' });
         
-        // Intentar leer con range: 6 (fila 7) y si no, desde range: 0
-        let jsonData = XLSX.utils.sheet_to_json(worksheet, { range: 6, raw: false, dateNF: 'yyyy-mm-dd' });
-        
-        // Si no hay datos en fila 7, intentar desde la fila 0
-        if (!jsonData || jsonData.length === 0) {
-          jsonData = XLSX.utils.sheet_to_json(worksheet, { range: 0, raw: false, dateNF: 'yyyy-mm-dd' });
-        }
-
         procesarDatosValidador(jsonData, file.name);
 
       } catch (error) {
@@ -632,38 +626,14 @@ function inicializarValidadorOTs() {
 }
 
 function procesarDatosValidador(data, fileName = '') {
-  const uploadStatus = document.getElementById('validador-upload-status');
-  const uploadStatusText = document.getElementById('validador-upload-status-text');
-  const resultadoSection = document.getElementById('validador-resultado-section');
-
   const otMap = new Map();
-
-  const findKey = (row, keywords) => {
-    const keys = Object.keys(row);
-    for (const kw of (Array.isArray(keywords) ? keywords : [keywords])) {
-      const cleanKw = kw.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const found = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '').includes(cleanKw));
-      if (found) return found;
-    }
-    return null;
-  };
-
-  const formatearFecha = (val) => {
-    if (!val) return null;
-    if (val instanceof Date) {
-      return val.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    }
-    let s = String(val).trim().split('T')[0].replace(' 00:00:00', '');
-    if (s.endsWith('.0')) s = s.slice(0, -2);
-    return (s.length >= 8 && s.toLowerCase() !== 'nan' && s.toLowerCase() !== 'none') ? s : null;
-  };
 
   // Paso 1: Agrupar todas las filas por su número de OT
   data.forEach(row => {
-    const otKey = findKey(row, ['ot', 'orden', 'factura']);
+    const otKey = Object.keys(row).find(key => key.trim().toUpperCase() === 'OT');
     if (otKey && row[otKey]) {
       const otValue = String(row[otKey]).trim();
-      if (otValue && otValue !== '' && otValue.toLowerCase() !== 'nan' && otValue.toLowerCase() !== 'none') {
+      if (otValue !== "") {
         if (!otMap.has(otValue)) {
           otMap.set(otValue, []);
         }
@@ -675,26 +645,28 @@ function procesarDatosValidador(data, fileName = '') {
   // Paso 2: Filtrar analizando LA FECHA DE ENTREGA PROGRAMADA
   reprogramacionesValidadorData = [];
 
+  // Función auxiliar para formatear fechas (idéntica a la tuya)
+  const formatearFecha = (val) => {
+    if (!val) return null;
+    if (val instanceof Date) {
+      return val.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+    return String(val).split('T')[0].trim();
+  };
+
   otMap.forEach((records, ot) => {
     if (records.length > 1) {
+      const findKey = (row, keyword) => Object.keys(row).find(k => k.toLowerCase().includes(keyword.toLowerCase()));
+
       let fechasUnicas = [];
 
       // Extraer todas las fechas programadas de esta OT en orden
       records.forEach(rec => {
-        const colFechaProg = findKey(rec, [
-          'programada por indulentes',
-          'programadaporindulentes',
-          'fechan',
-          'fecha_reprogramada',
-          'fecha reprogramada',
-          'fechaprogramada',
-          'reprogramacion',
-          'fecha de entrega'
-        ]);
-
+        const colFechaProg = findKey(rec, 'programada por indulentes') || findKey(rec, 'programada') || findKey(rec, 'fechan');
         if (colFechaProg && rec[colFechaProg]) {
           const fechaFmt = formatearFecha(rec[colFechaProg]);
           // Solo agregamos la fecha si es diferente a la última registrada en nuestro array
+          // (Esto detecta cuando la fecha realmente CAMBIA)
           if (fechaFmt && (fechasUnicas.length === 0 || fechasUnicas[fechasUnicas.length - 1] !== fechaFmt)) {
             fechasUnicas.push(fechaFmt);
           }
@@ -703,21 +675,11 @@ function procesarDatosValidador(data, fileName = '') {
 
       // Si hay MÁS DE UNA fecha diferente en el historial de esta OT, es una reprogramación real
       if (fechasUnicas.length > 1) {
-        const rec = records[records.length - 1] || records[0];
-        const colNom = findKey(rec, ['nombre_completo', 'nombre', 'cliente', 'paciente']);
-        const colTel = findKey(rec, ['telefono', 'celular', 'telf', 'movil']);
-        const colProd = findKey(rec, ['producto', 'luna', 'armazon']);
-        const colLoc = findKey(rec, ['local', 'tienda', 'sucursal']);
-
         reprogramacionesValidadorData.push({
           ot: ot,
           cambiosTotales: fechasUnicas.length - 1,
-          fechaAnterior: fechasUnicas[fechasUnicas.length - 2],
-          fechaNueva: fechasUnicas[fechasUnicas.length - 1],
-          nombre: colNom ? String(rec[colNom]).trim() : 'Cliente',
-          telefono: colTel ? String(rec[colTel]).trim() : '',
-          producto: colProd ? String(rec[colProd]).trim() : 'Gafas/Lunas',
-          local: colLoc ? String(rec[colLoc]).trim() : 'Local',
+          fechaAnterior: fechasUnicas[fechasUnicas.length - 2], // La penúltima fecha
+          fechaNueva: fechasUnicas[fechasUnicas.length - 1],    // La última fecha
           records: records
         });
       }
@@ -727,19 +689,23 @@ function procesarDatosValidador(data, fileName = '') {
   // Ordenar para mostrar primero las que tienen más cambios de fecha
   reprogramacionesValidadorData.sort((a, b) => b.cambiosTotales - a.cambiosTotales);
 
-  // Renderizar tabla
+  // Renderizar la tabla de reprogramaciones
   renderTablaValidador();
+
+  const uploadStatus = document.getElementById('validador-upload-status');
+  const uploadStatusText = document.getElementById('validador-upload-status-text');
+  const resultadoSection = document.getElementById('validador-resultado-section');
 
   if (uploadStatus && uploadStatusText) {
     uploadStatus.classList.remove('hidden');
-    uploadStatusText.textContent = `Archivo analizado: ${fileName || 'Matriz de control'} (${data.length} registros analizados, ${reprogramacionesValidadorData.length} reprogramaciones con cambio de fecha).`;
+    uploadStatusText.textContent = `Archivo cargado: ${fileName || 'Matriz_Control_OT_Reprogramaciones_ACTUALIZACION_AUTOMATICA.xlsx'} (${data.length} registros analizados)`;
   }
 
   if (resultadoSection) {
     resultadoSection.classList.remove('hidden');
   }
 
-  toast(`Análisis completo: ${reprogramacionesValidadorData.length} OTs con cambio de fecha detectadas.`, 'ok');
+  toast(`Análisis completo. ${reprogramacionesValidadorData.length} OTs con cambio de fecha detectadas.`, 'ok');
 }
 
 function renderTablaValidador() {
@@ -752,8 +718,8 @@ function renderTablaValidador() {
 
   if (reprogramacionesValidadorData.length === 0) {
     if (totalBadge) {
-      totalBadge.textContent = '0 encontradas';
-      totalBadge.className = 'glass-pill text-xs font-bold px-3 py-1 rounded-full bg-green-100 text-green-800 shrink-0';
+      totalBadge.textContent = "0 encontradas";
+      totalBadge.className = "bg-green-100 text-green-800 text-sm font-bold px-4 py-1.5 rounded-full shadow-sm";
     }
     tbody.parentElement.classList.add('hidden');
     if (emptyBox) emptyBox.classList.remove('hidden');
@@ -762,45 +728,39 @@ function renderTablaValidador() {
 
   if (totalBadge) {
     totalBadge.textContent = `${reprogramacionesValidadorData.length} alertas`;
-    totalBadge.className = 'glass-pill text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800 shrink-0';
+    totalBadge.className = "bg-amber-100 text-amber-800 text-sm font-bold px-4 py-1.5 rounded-full shadow-sm";
   }
   tbody.parentElement.classList.remove('hidden');
   if (emptyBox) emptyBox.classList.add('hidden');
 
-  reprogramacionesValidadorData.forEach((item, index) => {
+  reprogramacionesValidadorData.forEach(item => {
     const tr = document.createElement('tr');
-    tr.className = 'hover:bg-amber-50/60 transition-colors';
+    tr.className = "hover:bg-amber-50 transition-colors";
 
+    // Determinar el nivel de alerta visual
     let alertaBadge = '';
     if (item.cambiosTotales > 1) {
-      alertaBadge = `<span class="inline-flex items-center gap-1 bg-red-100 text-red-700 font-bold px-2.5 py-0.5 rounded-md text-xs border border-red-200">🔥 ¡${item.cambiosTotales + 1}ra Reprogramación!</span>`;
+      alertaBadge = `<span class="bg-red-100 text-red-700 font-bold px-3 py-1 rounded border border-red-200 text-xs"><i class="fas fa-fire mr-1"></i> ¡${item.cambiosTotales + 1}ra Reprogramación!</span>`;
     } else {
-      alertaBadge = `<span class="inline-flex items-center gap-1 bg-amber-100 text-amber-800 font-bold px-2.5 py-0.5 rounded-md text-xs border border-amber-200">⏱️ Fecha Modificada</span>`;
+      alertaBadge = `<span class="bg-amber-100 text-amber-700 font-bold px-3 py-1 rounded border border-amber-200 text-xs"><i class="fas fa-clock mr-1"></i> Fecha Modificada</span>`;
     }
 
+    // Generar mensaje para WhatsApp dinámicamente
+    const msj = `Estimado cliente, le informamos que la entrega de su OT ${item.ot} ha sido reprogramada. La nueva fecha estimada es el ${item.fechaNueva}.`;
+    const msjUrl = `https://wa.me/?text=${encodeURIComponent(msj)}`;
+
     tr.innerHTML = `
-      <td class="px-4 py-3 whitespace-nowrap font-mono font-bold text-blue-900 text-sm">${escapeHtml(item.ot)}</td>
-      <td class="px-4 py-3 whitespace-nowrap">${alertaBadge}</td>
-      <td class="px-4 py-3 whitespace-nowrap text-slate-400 line-through text-xs font-medium">${escapeHtml(item.fechaAnterior)}</td>
-      <td class="px-4 py-3 whitespace-nowrap font-bold text-blue-700 bg-blue-50/60 text-sm">${escapeHtml(item.fechaNueva)}</td>
-      <td class="px-4 py-3 whitespace-nowrap">
-        <button type="button" class="btn-notificar-ot-validador inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all" data-idx="${index}">
+      <td class="px-6 py-4 whitespace-nowrap font-mono font-bold text-blue-800 text-sm">${escapeHtml(item.ot)}</td>
+      <td class="px-6 py-4 whitespace-nowrap">${alertaBadge}</td>
+      <td class="px-6 py-4 whitespace-nowrap text-gray-500 line-through text-sm">${escapeHtml(item.fechaAnterior)}</td>
+      <td class="px-6 py-4 whitespace-nowrap font-bold text-blue-700 bg-blue-50 text-sm">${escapeHtml(item.fechaNueva)}</td>
+      <td class="px-6 py-4 whitespace-nowrap">
+        <a href="${msjUrl}" target="_blank" class="inline-flex items-center justify-center bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm gap-1">
           💬 Notificar
-        </button>
+        </a>
       </td>
     `;
     tbody.appendChild(tr);
-  });
-
-  tbody.querySelectorAll('.btn-notificar-ot-validador').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const idx = Number(btn.dataset.idx);
-      const item = reprogramacionesValidadorData[idx];
-      if (!item) return;
-      const asesor = asesorActual();
-      const msj = `Estimado/a cliente, le informamos que la entrega de su orden de trabajo OT ${item.ot} ha sido actualizada. La nueva fecha estimada de entrega es el *${item.fechaNueva}*.`;
-      abrirWhatsApp(item.telefono, msj);
-    });
   });
 }
 
