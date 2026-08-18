@@ -533,7 +533,196 @@ async function cargarExcel() {
 
   aplicarFiltroFecha(); // This will populate `contactos`
   
+  if (file && window.XLSX) {
+    ejecutarValidadorOTsConArchivo(file);
+  } else {
+    procesarYRenderizarValidador(contactosGlobales);
+  }
+
   toast(`${data.total} filas cargadas de la matriz`, 'ok');
+}
+
+// Variables globales para Validador de OTs
+let reprogramacionesValidador = [];
+
+function ejecutarValidadorOTsConArchivo(file) {
+  if (!file || !window.XLSX) {
+    procesarYRenderizarValidador(contactosGlobales);
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+      let allRows = [];
+      workbook.SheetNames.forEach(sName => {
+        const ws = workbook.Sheets[sName];
+        if (!ws) return;
+        const json = XLSX.utils.sheet_to_json(ws, { raw: false, dateNF: 'yyyy-mm-dd' });
+        if (json && json.length) {
+          allRows.push(...json);
+        }
+      });
+      procesarYRenderizarValidador(allRows.length ? allRows : contactosGlobales);
+    } catch (err) {
+      console.warn("Validador SheetJS fallback:", err);
+      procesarYRenderizarValidador(contactosGlobales);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function procesarYRenderizarValidador(rawData) {
+  const section = document.getElementById('validador-ots-section');
+  const tbody = document.getElementById('reprogramaciones-table-body');
+  const totalBadge = document.getElementById('total-reprogramaciones');
+  const emptyState = document.getElementById('validador-empty-state');
+  if (!section || !tbody) return;
+
+  if (!rawData || !rawData.length) {
+    section.classList.add('hidden');
+    return;
+  }
+
+  const otMap = new Map();
+  const findKey = (row, keywords) => {
+    const keys = Object.keys(row);
+    for (const kw of keywords) {
+      const cleanKw = kw.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const found = keys.find(k => k.toLowerCase().replace(/[^a-z0-9]/g, '').includes(cleanKw));
+      if (found) return found;
+    }
+    return null;
+  };
+
+  const formatearFecha = (val) => {
+    if (!val) return null;
+    if (val instanceof Date) {
+      return val.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+    let s = String(val).trim().split('T')[0].replace(' 00:00:00', '');
+    if (s.endsWith('.0')) s = s.slice(0, -2);
+    return (s.length >= 8 && s.toLowerCase() !== 'nan' && s.toLowerCase() !== 'none') ? s : null;
+  };
+
+  // Paso 1: Agrupar todas las filas por su número de OT
+  rawData.forEach(row => {
+    const otKey = findKey(row, ['ot', 'orden', 'factura']);
+    if (otKey && row[otKey]) {
+      const otValue = String(row[otKey]).trim();
+      if (otValue && otValue !== '' && otValue.toLowerCase() !== 'nan' && otValue.toLowerCase() !== 'none') {
+        if (!otMap.has(otValue)) otMap.set(otValue, []);
+        otMap.get(otValue).push(row);
+      }
+    }
+  });
+
+  // Paso 2: Filtrar analizando LA FECHA DE ENTREGA PROGRAMADA
+  reprogramacionesValidador = [];
+
+  otMap.forEach((records, ot) => {
+    let fechasUnicas = [];
+    records.forEach(rec => {
+      const colFechaProg = findKey(rec, [
+        'programada por indulentes',
+        'programadaporindulentes',
+        'fechan',
+        'fecha_reprogramada',
+        'fecha reprogramada',
+        'fechaprogramada',
+        'reprogramacion',
+        'fecha de entrega'
+      ]);
+      if (colFechaProg && rec[colFechaProg]) {
+        const fechaFmt = formatearFecha(rec[colFechaProg]);
+        if (fechaFmt && (fechasUnicas.length === 0 || fechasUnicas[fechasUnicas.length - 1] !== fechaFmt)) {
+          fechasUnicas.push(fechaFmt);
+        }
+      }
+    });
+
+    if (fechasUnicas.length > 1) {
+      const rec = records[records.length - 1] || records[0];
+      const colNom = findKey(rec, ['nombre_completo', 'nombre', 'cliente', 'paciente']);
+      const colTel = findKey(rec, ['telefono', 'celular', 'telf', 'movil']);
+      const colProd = findKey(rec, ['producto', 'luna', 'armazon']);
+      const colLoc = findKey(rec, ['local', 'tienda', 'sucursal']);
+
+      reprogramacionesValidador.push({
+        ot: ot,
+        cambiosTotales: fechasUnicas.length - 1,
+        fechaAnterior: fechasUnicas[fechasUnicas.length - 2],
+        fechaNueva: fechasUnicas[fechasUnicas.length - 1],
+        nombre: colNom ? String(rec[colNom]).trim() : 'Cliente',
+        telefono: colTel ? String(rec[colTel]).trim() : '',
+        producto: colProd ? String(rec[colProd]).trim() : 'Gafas/Lunas',
+        local: colLoc ? String(rec[colLoc]).trim() : 'Local',
+        records: records
+      });
+    }
+  });
+
+  // Ordenar para mostrar primero las que tienen más cambios de fecha
+  reprogramacionesValidador.sort((a, b) => b.cambiosTotales - a.cambiosTotales);
+
+  // Renderizar la tabla de reprogramaciones
+  tbody.innerHTML = '';
+  section.classList.remove('hidden');
+
+  if (reprogramacionesValidador.length === 0) {
+    if (totalBadge) {
+      totalBadge.innerText = '0 encontradas';
+      totalBadge.className = 'glass-pill text-xs font-bold px-3.5 py-1.5 rounded-full bg-green-100 text-green-800 shrink-0';
+    }
+    tbody.parentElement.classList.add('hidden');
+    if (emptyState) emptyState.classList.remove('hidden');
+    return;
+  }
+
+  if (totalBadge) {
+    totalBadge.innerText = `${reprogramacionesValidador.length} alertas`;
+    totalBadge.className = 'glass-pill text-xs font-bold px-3.5 py-1.5 rounded-full bg-amber-100 text-amber-800 shrink-0';
+  }
+  tbody.parentElement.classList.remove('hidden');
+  if (emptyState) emptyState.classList.add('hidden');
+
+  reprogramacionesValidador.forEach((item, index) => {
+    const tr = document.createElement('tr');
+    tr.className = 'hover:bg-amber-50/60 transition-colors';
+
+    let alertaBadge = '';
+    if (item.cambiosTotales > 1) {
+      alertaBadge = `<span class="inline-flex items-center gap-1 bg-red-100 text-red-700 font-bold px-2.5 py-0.5 rounded-md text-xs border border-red-200">🔥 ¡${item.cambiosTotales + 1}ra Reprogramación!</span>`;
+    } else {
+      alertaBadge = `<span class="inline-flex items-center gap-1 bg-amber-100 text-amber-800 font-bold px-2.5 py-0.5 rounded-md text-xs border border-amber-200">⏱️ Fecha Modificada</span>`;
+    }
+
+    tr.innerHTML = `
+      <td class="px-4 py-3 whitespace-nowrap font-mono font-bold text-blue-900 text-sm">${escapeHtml(item.ot)}</td>
+      <td class="px-4 py-3 whitespace-nowrap">${alertaBadge}</td>
+      <td class="px-4 py-3 whitespace-nowrap text-slate-400 line-through text-xs font-medium">${escapeHtml(item.fechaAnterior)}</td>
+      <td class="px-4 py-3 whitespace-nowrap font-bold text-blue-700 bg-blue-50/60 text-sm">${escapeHtml(item.fechaNueva)}</td>
+      <td class="px-4 py-3 whitespace-nowrap">
+        <button type="button" class="btn-notificar-ot inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all" data-idx="${index}">
+          💬 Notificar
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Event listener para botones de notificación
+  tbody.querySelectorAll('.btn-notificar-ot').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = Number(btn.dataset.idx);
+      const item = reprogramacionesValidador[idx];
+      if (!item) return;
+      const asesor = asesorActual();
+      const msj = `Buenas tardes estimado/a ${item.nombre}, le saluda ${asesor} de Servicio al Cliente de Óptica Los Andes.\n\nLe informamos que la entrega de su orden de trabajo OT ${item.ot} ha sido actualizada. La nueva fecha estimada de llegada al local ${item.local.toUpperCase()} es el *${item.fechaNueva}*.\n\nCualquier consulta estamos a su entera disposición.`;
+      abrirWhatsApp(item.telefono, msj);
+    });
+  });
 }
 
 async function cargarUltimaMatriz() {
@@ -570,6 +759,7 @@ async function cargarUltimaMatriz() {
     }
 
     aplicarFiltroFecha();
+    procesarYRenderizarValidador(contactosGlobales);
   } catch (e) {
     console.error("No se pudo cargar la ultima matriz", e);
   }
