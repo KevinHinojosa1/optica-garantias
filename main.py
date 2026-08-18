@@ -10,7 +10,6 @@ from fastapi.staticfiles import StaticFiles
 from config import settings
 from database import SessionLocal, init_db
 from routers import (
-    alertas_router,
     analisis_router,
     clientes_router,
     cuaderno_router,
@@ -95,7 +94,6 @@ class NoCacheMiddleware(BaseHTTPMiddleware):
 app.add_middleware(NoCacheMiddleware)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-app.include_router(alertas_router)
 app.include_router(import_router)
 app.include_router(clientes_router)
 app.include_router(analisis_router)
