@@ -89,47 +89,6 @@
     </div>
   </div>
 
-  <!-- Validador de OTs — Cambios de Fecha Detectados -->
-  <div id="validador-ots-section" class="glass-card p-5 hidden space-y-4 border border-amber-200/60 bg-amber-50/20">
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b border-slate-200 pb-3">
-      <div>
-        <h3 class="font-bold text-slate-800 flex items-center gap-2 text-base">
-          <span class="text-amber-500 text-lg">⚠️</span> Validador de OTs — Cambios de Fecha Detectados
-        </h3>
-        <p class="text-xs text-slate-500 mt-0.5">
-          El sistema verificó el historial de cada OT en la matriz. Se muestran <b>solo</b> aquellas donde la fecha programada de entrega volvió a cambiar.
-        </p>
-      </div>
-      <span id="total-reprogramaciones" class="glass-pill text-xs font-bold px-3.5 py-1.5 rounded-full bg-amber-100 text-amber-800 shrink-0">
-        0 encontradas
-      </span>
-    </div>
-
-    <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm bg-white">
-      <table class="min-w-full divide-y divide-slate-200 text-sm">
-        <thead class="bg-slate-50">
-          <tr>
-            <th class="px-4 py-3 text-left font-bold text-slate-700 uppercase tracking-wider text-xs">OT</th>
-            <th class="px-4 py-3 text-left font-bold text-slate-700 uppercase tracking-wider text-xs">Nivel de Alerta</th>
-            <th class="px-4 py-3 text-left font-bold text-slate-700 uppercase tracking-wider text-xs">Fecha Anterior</th>
-            <th class="px-4 py-3 text-left font-bold text-blue-700 uppercase tracking-wider text-xs bg-blue-50/80">Nueva Fecha</th>
-            <th class="px-4 py-3 text-left font-bold text-slate-700 uppercase tracking-wider text-xs">Acción</th>
-          </tr>
-        </thead>
-        <tbody id="reprogramaciones-table-body" class="divide-y divide-slate-100 bg-white">
-          <!-- Filas inyectadas por JS -->
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Estado vacío (sin reprogramaciones) -->
-    <div id="validador-empty-state" class="hidden flex flex-col items-center justify-center py-6 text-center">
-      <span class="text-3xl mb-2">✅</span>
-      <h4 class="text-sm font-bold text-slate-700">¡Todo al día!</h4>
-      <p class="text-xs text-slate-400 mt-0.5">No hay OTs con nuevas fechas de reprogramación pendientes de notificar.</p>
-    </div>
-  </div>
-
   <div class="glass-card p-5">
     <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
       <h3 class="font-semibold text-slate-800">3️⃣ Generar y enviar</h3>
@@ -305,6 +264,78 @@
       </p>
       <div id="wa-historial-bd" class="text-xs text-slate-600 max-h-48 overflow-y-auto rounded-xl border border-slate-100 bg-white/60 p-3">
         Cargando historial…
+      </div>
+    </div>
+  </div>
+
+  <!-- MÓDULO INDEPENDIENTE: CONTROL DE OT Y VALIDADOR DE REPROGRAMACIONES -->
+  <div class="glass-card p-6 space-y-6 border border-blue-200/80 shadow-sm mt-8">
+    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl">📋</span>
+        <div>
+          <h3 class="text-lg font-bold text-slate-800 tracking-tight">Control de OT y Validador de Reprogramaciones</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Sube tu matriz de control de OTs para verificar y detectar cambios de fecha en el historial.</p>
+        </div>
+      </div>
+      <span class="text-xs font-semibold bg-blue-100 text-blue-800 px-3 py-1 rounded-full border border-blue-200">
+        🔍 Verificador Activo
+      </span>
+    </div>
+
+    <!-- Dropzone / Input de archivo independiente -->
+    <div class="flex flex-col sm:flex-row gap-4 items-center">
+      <div class="flex-1 w-full relative border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-2xl p-6 text-center bg-slate-50/50 hover:bg-blue-50/20 transition-all cursor-pointer">
+        <input type="file" id="validador-excel-file" accept=".xlsx, .xls" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+        <div class="flex flex-col items-center justify-center">
+          <span class="text-3xl mb-2">📊</span>
+          <p class="text-sm font-semibold text-slate-700">Haz clic o arrastra aquí tu matriz de control de OTs</p>
+          <p class="text-xs text-slate-400 mt-1 font-mono">Matriz_Control_OT_Reprogramaciones_ACTUALIZACION_AUTOMATICA.xlsx (.xlsx, .xls)</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="validador-upload-status" class="hidden text-xs bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl p-3 flex items-center gap-2">
+      <span>✅</span>
+      <span id="validador-upload-status-text">Archivo cargado correctamente.</span>
+    </div>
+
+    <!-- Tabla de Detección de Cambios de Fecha -->
+    <div id="validador-resultado-section" class="hidden space-y-4 pt-2">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div>
+          <h4 class="font-bold text-slate-800 flex items-center gap-2 text-sm">
+            <span class="text-amber-500">⚠️</span> Cambios de Fecha Detectados
+          </h4>
+          <p class="text-xs text-slate-500 mt-0.5">El sistema verificó el historial de cada OT. Se muestran <b>solo</b> aquellas donde la fecha programada de entrega cambió.</p>
+        </div>
+        <span id="total-validador-reprog" class="glass-pill text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800 shrink-0">
+          0 encontradas
+        </span>
+      </div>
+
+      <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <table class="min-w-full divide-y divide-slate-200 text-sm">
+          <thead class="bg-slate-50">
+            <tr>
+              <th class="px-4 py-3 text-left font-bold text-slate-700 uppercase tracking-wider text-xs">OT</th>
+              <th class="px-4 py-3 text-left font-bold text-slate-700 uppercase tracking-wider text-xs">Nivel de Alerta</th>
+              <th class="px-4 py-3 text-left font-bold text-slate-700 uppercase tracking-wider text-xs">Fecha Anterior</th>
+              <th class="px-4 py-3 text-left font-bold text-blue-700 uppercase tracking-wider text-xs bg-blue-50/80">Nueva Fecha</th>
+              <th class="px-4 py-3 text-left font-bold text-slate-700 uppercase tracking-wider text-xs">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="validador-table-body" class="divide-y divide-slate-100 bg-white">
+            <!-- Filas inyectadas por JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Estado vacío (sin reprogramaciones) -->
+      <div id="validador-empty-box" class="hidden flex flex-col items-center justify-center py-8 text-center bg-white rounded-xl border border-slate-200">
+        <span class="text-3xl mb-2">🎉</span>
+        <h4 class="text-sm font-bold text-slate-700">¡Todo al día!</h4>
+        <p class="text-xs text-slate-400 mt-0.5">No hay OTs con nuevas fechas de reprogramación pendientes de notificar.</p>
       </div>
     </div>
   </div>
