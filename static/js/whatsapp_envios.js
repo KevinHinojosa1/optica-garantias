@@ -536,6 +536,45 @@ async function cargarExcel() {
   toast(`${data.total} filas cargadas de la matriz`, 'ok');
 }
 
+async function cargarUltimaMatriz() {
+  try {
+    const res = await fetch('/api/envios-whatsapp/ultima-matriz');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data || !data.contactos) return;
+    
+    contactosGlobales = data.contactos || [];
+    
+    document.getElementById('wa-resumen-contactos').innerHTML =
+      `✅ <strong>${data.total}</strong> fila(s) maestras recuperadas · Columnas: ${escapeHtml((data.columnas_detectadas || []).join(', '))}`;
+
+    const adv = document.getElementById('wa-advertencias');
+    if (data.advertencias?.length) {
+      adv.classList.remove('hidden');
+      adv.innerHTML = '⚠️ ' + data.advertencias.map(escapeHtml).join('<br>');
+    } else {
+      adv.classList.add('hidden');
+    }
+
+    const fechasUnicas = [...new Set(contactosGlobales.map(c => c.fecha_reprogramada).filter(Boolean))].sort();
+    const filtroContainer = document.getElementById('wa-filtro-container');
+    const selectFecha = document.getElementById('wa-filtro-fecha');
+    
+    if (fechasUnicas.length > 0) {
+      selectFecha.innerHTML = '<option value="">Todas las fechas</option>' + 
+        fechasUnicas.map(f => `<option value="${escapeHtml(f)}">${escapeHtml(f)}</option>`).join('');
+      filtroContainer.classList.remove('hidden');
+    } else {
+      filtroContainer.classList.add('hidden');
+      selectFecha.innerHTML = '';
+    }
+
+    aplicarFiltroFecha();
+  } catch (e) {
+    console.error("No se pudo cargar la ultima matriz", e);
+  }
+}
+
 function aplicarFiltroFecha() {
   const fechaSelect = document.getElementById('wa-filtro-fecha')?.value || '';
   if (fechaSelect) {
@@ -946,3 +985,4 @@ actualizarKpis();
 cargarConfigApi();
 if (window.RESUMEN_DIA_INICIAL) pintarResumenDia(window.RESUMEN_DIA_INICIAL);
 cargarHistorialBd();
+cargarUltimaMatriz();

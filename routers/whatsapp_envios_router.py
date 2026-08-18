@@ -107,6 +107,11 @@ async def api_resumen_dia(fecha: str | None = None, db: Session = Depends(get_db
     return ReprogramacionLogService.resumen_dia(fecha, db=db)
 
 
+import json
+import os
+
+ULTIMA_MATRIZ_PATH = "data/ultima_matriz_envios.json"
+
 @router.get("/api/envios-whatsapp/historial")
 async def api_historial_reprogramaciones(
     fecha: str | None = None,
@@ -118,6 +123,16 @@ async def api_historial_reprogramaciones(
     data["db"] = _db_info()
     return data
 
+@router.get("/api/envios-whatsapp/ultima-matriz")
+async def api_get_ultima_matriz():
+    if os.path.exists(ULTIMA_MATRIZ_PATH):
+        try:
+            with open(ULTIMA_MATRIZ_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return None
+
 
 @router.post("/api/envios-whatsapp/subir-excel", response_model=SubirExcelEnviosResponse)
 async def api_subir_excel_envios(archivo: UploadFile = File(...)):
@@ -128,6 +143,12 @@ async def api_subir_excel_envios(archivo: UploadFile = File(...)):
         if not content:
             raise HTTPException(status_code=400, detail="El archivo está vacío.")
         data = WhatsAppEnviosService.parsear_excel(content, archivo.filename)
+        
+        # Guardar la última matriz subida
+        os.makedirs("data", exist_ok=True)
+        with open(ULTIMA_MATRIZ_PATH, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+            
         return SubirExcelEnviosResponse(**data)
     except HTTPException:
         raise
