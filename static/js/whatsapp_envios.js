@@ -719,7 +719,7 @@ function renderTablaValidador() {
   if (reprogramacionesValidadorData.length === 0) {
     if (totalBadge) {
       totalBadge.textContent = "0 encontradas";
-      totalBadge.className = "bg-green-100 text-green-800 text-sm font-bold px-4 py-1.5 rounded-full shadow-sm";
+      totalBadge.className = "glass-pill text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0";
     }
     tbody.parentElement.classList.add('hidden');
     if (emptyBox) emptyBox.classList.remove('hidden');
@@ -728,21 +728,20 @@ function renderTablaValidador() {
 
   if (totalBadge) {
     totalBadge.textContent = `${reprogramacionesValidadorData.length} alertas`;
-    totalBadge.className = "bg-amber-100 text-amber-800 text-sm font-bold px-4 py-1.5 rounded-full shadow-sm";
+    totalBadge.className = "glass-pill text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-200 shrink-0";
   }
   tbody.parentElement.classList.remove('hidden');
   if (emptyBox) emptyBox.classList.add('hidden');
 
   reprogramacionesValidadorData.forEach(item => {
     const tr = document.createElement('tr');
-    tr.className = "hover:bg-amber-50 transition-colors";
 
-    // Determinar el nivel de alerta visual
+    // Determinar el nivel de alerta visual con badges estilo glass
     let alertaBadge = '';
     if (item.cambiosTotales > 1) {
-      alertaBadge = `<span class="bg-red-100 text-red-700 font-bold px-3 py-1 rounded border border-red-200 text-xs"><i class="fas fa-fire mr-1"></i> ¡${item.cambiosTotales + 1}ra Reprogramación!</span>`;
+      alertaBadge = `<span class="inline-flex items-center gap-1 bg-rose-50 text-rose-700 font-bold px-2.5 py-0.5 rounded-full border border-rose-200 text-xs">🔥 ¡${item.cambiosTotales + 1}ra Reprogramación!</span>`;
     } else {
-      alertaBadge = `<span class="bg-amber-100 text-amber-700 font-bold px-3 py-1 rounded border border-amber-200 text-xs"><i class="fas fa-clock mr-1"></i> Fecha Modificada</span>`;
+      alertaBadge = `<span class="inline-flex items-center gap-1 bg-amber-50 text-amber-800 font-bold px-2.5 py-0.5 rounded-full border border-amber-200 text-xs">⏱️ Fecha Modificada</span>`;
     }
 
     // Generar mensaje para WhatsApp dinámicamente
@@ -750,13 +749,14 @@ function renderTablaValidador() {
     const msjUrl = `https://wa.me/?text=${encodeURIComponent(msj)}`;
 
     tr.innerHTML = `
-      <td class="px-6 py-4 whitespace-nowrap font-mono font-bold text-blue-800 text-sm">${escapeHtml(item.ot)}</td>
-      <td class="px-6 py-4 whitespace-nowrap">${alertaBadge}</td>
-      <td class="px-6 py-4 whitespace-nowrap text-gray-500 line-through text-sm">${escapeHtml(item.fechaAnterior)}</td>
-      <td class="px-6 py-4 whitespace-nowrap font-bold text-blue-700 bg-blue-50 text-sm">${escapeHtml(item.fechaNueva)}</td>
-      <td class="px-6 py-4 whitespace-nowrap">
-        <a href="${msjUrl}" target="_blank" class="inline-flex items-center justify-center bg-green-500 hover:bg-green-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm gap-1">
-          💬 Notificar
+      <td><strong class="font-mono text-slate-800 text-sm font-bold tracking-tight">${escapeHtml(item.ot)}</strong></td>
+      <td>${alertaBadge}</td>
+      <td><span class="text-slate-400 line-through text-xs font-medium">${escapeHtml(item.fechaAnterior)}</span></td>
+      <td><span class="font-bold text-blue-700 bg-blue-50/80 px-2.5 py-1 rounded-lg text-xs border border-blue-100/80 inline-block font-mono">${escapeHtml(item.fechaNueva)}</span></td>
+      <td style="white-space:nowrap">
+        <a href="${msjUrl}" target="_blank" class="btn-ola btn-ola--wa text-xs py-1 px-2.5 inline-flex items-center gap-1.5 shadow-sm">
+          <span class="btn-ola__icon" style="width:1.25rem;height:1.25rem;font-size:0.75rem">💬</span>
+          <span>Notificar</span>
         </a>
       </td>
     `;
