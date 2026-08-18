@@ -80,9 +80,9 @@ PLANTILLA_TIENDA = (
     "Motivo: {motivo}\n"
     "Fecha indicada: {fecha_reprogramada}\n"
     "\n"
-    "Si el producto ya lleg\u00f3 a la tienda, por favor comunicarse con el cliente "
-    "para informarle y coordinar la entrega. Asimismo, agradecer\u00e9 confirmar "
-    "por este medio la gesti\u00f3n realizada.\n"
+    "Cuando el producto llegue al local, por favor comunicarse con el cliente "
+    "para informarle y coordinar la entrega. Asimismo, agradeceré confirmar "
+    "por este medio la gestión realizada.\n"
     "\n"
     "Muchas gracias por su apoyo."
 )

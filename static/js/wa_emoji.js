@@ -109,7 +109,7 @@
       `Motivo: ${motivo}`,
       `Fecha indicada: ${fecha}`,
       '',
-      'Si el producto ya llegó a la tienda, por favor comunicarse con el cliente para informarle y coordinar la entrega. Asimismo, agradeceré confirmar por este medio la gestión realizada.',
+      'Cuando el producto llegue al local, por favor comunicarse con el cliente para informarle y coordinar la entrega. Asimismo, agradeceré confirmar por este medio la gestión realizada.',
       '',
       'Muchas gracias por su apoyo.',
     ].join('\n');
