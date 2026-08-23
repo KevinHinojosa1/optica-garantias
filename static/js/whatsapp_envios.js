@@ -625,6 +625,39 @@ function inicializarValidadorOTs() {
   });
 }
 
+function parseDateValidador(val) {
+  if (!val) return null;
+  if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+  let str = String(val).trim().split('T')[0].replace(' 00:00:00', '');
+  if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(str)) {
+    const [y, m, d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+  if (str.includes('/')) {
+    const parts = str.split('/').map(Number);
+    if (parts.length === 3) {
+      let [p1, p2, p3] = parts;
+      if (p3 < 100) p3 += 2000;
+      if (p1 > 12) {
+        return new Date(p3, p2 - 1, p1);
+      } else if (p2 > 12) {
+        return new Date(p3, p1 - 1, p2);
+      }
+      return new Date(p3, p1 - 1, p2);
+    }
+  }
+  const ts = Date.parse(str);
+  return isNaN(ts) ? null : new Date(ts);
+}
+
+function calcularDiasEntreFechas(fechaIniStr, fechaFinStr) {
+  const d1 = parseDateValidador(fechaIniStr);
+  const d2 = parseDateValidador(fechaFinStr);
+  if (!d1 || !d2) return null;
+  const diffTime = d2.getTime() - d1.getTime();
+  return Math.round(diffTime / (1000 * 60 * 60 * 24));
+}
+
 function procesarDatosValidador(data, fileName = '') {
   const otMap = new Map();
 
@@ -645,7 +678,7 @@ function procesarDatosValidador(data, fileName = '') {
   // Paso 2: Filtrar analizando LA FECHA DE ENTREGA PROGRAMADA
   reprogramacionesValidadorData = [];
 
-  // Función auxiliar para formatear fechas (idéntica a la tuya)
+  // Función auxiliar para formatear fechas
   const formatearFecha = (val) => {
     if (!val) return null;
     if (val instanceof Date) {
@@ -675,11 +708,18 @@ function procesarDatosValidador(data, fileName = '') {
 
       // Si hay MÁS DE UNA fecha diferente en el historial de esta OT, es una reprogramación real
       if (fechasUnicas.length > 1) {
+        const primeraFecha = fechasUnicas[0];
+        const fechasAnteriores = fechasUnicas.slice(0, -1);
+        const fechaNueva = fechasUnicas[fechasUnicas.length - 1];
+        const diasRetraso = calcularDiasEntreFechas(primeraFecha, fechaNueva);
+
         reprogramacionesValidadorData.push({
           ot: ot,
           cambiosTotales: fechasUnicas.length - 1,
-          fechaAnterior: fechasUnicas[fechasUnicas.length - 2], // La penúltima fecha
-          fechaNueva: fechasUnicas[fechasUnicas.length - 1],    // La última fecha
+          primeraFecha: primeraFecha,
+          fechasAnteriores: fechasAnteriores,
+          fechaNueva: fechaNueva,
+          diasRetraso: diasRetraso,
           records: records
         });
       }
@@ -744,6 +784,34 @@ function renderTablaValidador() {
       alertaBadge = `<span class="inline-flex items-center gap-1 bg-amber-50 text-amber-800 font-bold px-2.5 py-0.5 rounded-full border border-amber-200 text-xs">⏱️ Fecha Modificada</span>`;
     }
 
+    // Historial completo de fechas anteriores con flechas
+    const fechasAnterioresHtml = `
+      <div class="flex flex-wrap items-center gap-1.5">
+        ${item.fechasAnteriores.map((f, i) => `
+          <span class="inline-flex items-center text-slate-400 line-through text-xs font-medium" title="Fecha ${i + 1} del historial">
+            ${escapeHtml(f)}
+          </span>
+        `).join('<span class="text-slate-300 text-xs font-bold">→</span>')}
+      </div>
+    `;
+
+    // Badge con contador de días acumulados desde la primera fecha
+    let diasBadge = '';
+    if (item.diasRetraso !== null && item.diasRetraso !== undefined) {
+      if (item.diasRetraso > 0) {
+        const colorClass = item.diasRetraso > 10 
+          ? 'bg-rose-50 text-rose-700 border-rose-200' 
+          : (item.diasRetraso > 5 ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-blue-50 text-blue-700 border-blue-200');
+        diasBadge = `<span class="inline-flex items-center gap-1 font-bold text-xs px-2.5 py-1 rounded-lg border ${colorClass}">⏳ +${item.diasRetraso} ${item.diasRetraso === 1 ? 'día' : 'días'}</span>`;
+      } else if (item.diasRetraso === 0) {
+        diasBadge = `<span class="inline-flex items-center text-xs text-slate-500 px-2 py-0.5 rounded bg-slate-100">0 días</span>`;
+      } else {
+        diasBadge = `<span class="inline-flex items-center text-xs text-emerald-700 px-2 py-0.5 rounded bg-emerald-50">${item.diasRetraso} días</span>`;
+      }
+    } else {
+      diasBadge = `<span class="text-xs text-slate-400">—</span>`;
+    }
+
     // Generar mensaje para WhatsApp dinámicamente
     const msj = `Estimado cliente, le informamos que la entrega de su OT ${item.ot} ha sido reprogramada. La nueva fecha estimada es el ${item.fechaNueva}.`;
     const msjUrl = `https://wa.me/?text=${encodeURIComponent(msj)}`;
@@ -751,8 +819,9 @@ function renderTablaValidador() {
     tr.innerHTML = `
       <td><strong class="font-mono text-slate-800 text-sm font-bold tracking-tight">${escapeHtml(item.ot)}</strong></td>
       <td>${alertaBadge}</td>
-      <td><span class="text-slate-400 line-through text-xs font-medium">${escapeHtml(item.fechaAnterior)}</span></td>
+      <td>${fechasAnterioresHtml}</td>
       <td><span class="font-bold text-blue-700 bg-blue-50/80 px-2.5 py-1 rounded-lg text-xs border border-blue-100/80 inline-block font-mono">${escapeHtml(item.fechaNueva)}</span></td>
+      <td>${diasBadge}</td>
       <td style="white-space:nowrap">
         <a href="${msjUrl}" target="_blank" class="btn-ola btn-ola--wa text-xs py-1 px-2.5 inline-flex items-center gap-1.5 shadow-sm">
           <span class="btn-ola__icon" style="width:1.25rem;height:1.25rem;font-size:0.75rem">💬</span>
