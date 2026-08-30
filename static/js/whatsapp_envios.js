@@ -956,8 +956,105 @@ function copiarTexto(id) {
   );
 }
 
-/* —— Envío masivo clientes (secuencial rápido) —— */
+/* —— Envío masivo clientes (secuencial mejorado) —— */
 let envioRapidoActivo = false;
+let envioRapidoPausado = false;
+let envioRapidoTimer = null;
+let envioRapidoEnviados = 0;
+let envioRapidoTotal = 0;
+
+function getDelaySegundos() {
+  const el = document.getElementById('wa-delay-envio');
+  const val = el ? parseInt(el.value, 10) : 4;
+  return isNaN(val) || val < 2 ? 3 : Math.min(val, 15);
+}
+
+function mostrarPanelEnvioRapido(visible) {
+  const panel = document.getElementById('panel-envio-rapido');
+  if (panel) panel.classList.toggle('hidden', !visible);
+}
+
+function actualizarPanelEnvioRapido(item, enviados, total) {
+  const nombre = document.getElementById('er-nombre');
+  const telefono = document.getElementById('er-telefono');
+  const progreso = document.getElementById('er-progreso');
+  const barra = document.getElementById('er-barra');
+  const contador = document.getElementById('er-contador');
+  const preview = document.getElementById('er-preview');
+
+  if (nombre) nombre.textContent = item ? (item.nombre_completo || item.nombre || '—') : '—';
+  if (telefono) telefono.textContent = item ? (item.telefono || '—') : '—';
+  if (progreso) progreso.textContent = `Contacto ${enviados + 1} de ${total}`;
+  if (barra) barra.style.width = `${total ? Math.round((enviados / total) * 100) : 0}%`;
+  if (contador) contador.textContent = `${enviados}/${total}`;
+  if (preview && item) {
+    refrescarMensajesItem(item);
+    preview.textContent = item.mensaje_cliente || item.mensaje || '';
+  }
+
+  // Actualizar botones de pausa/reanudar
+  const btnPausa = document.getElementById('er-btn-pausa');
+  if (btnPausa) {
+    if (envioRapidoPausado) {
+      btnPausa.innerHTML = '▶️ Reanudar';
+      btnPausa.className = 'btn-ola btn-ola--success text-xs py-1.5 px-3';
+    } else {
+      btnPausa.innerHTML = '⏸️ Pausar';
+      btnPausa.className = 'btn-ola btn-ola--secondary text-xs py-1.5 px-3';
+    }
+  }
+}
+
+function envioRapidoCompletado() {
+  envioRapidoActivo = false;
+  envioRapidoPausado = false;
+  clearTimeout(envioRapidoTimer);
+
+  const barra = document.getElementById('er-barra');
+  if (barra) barra.style.width = '100%';
+  const progreso = document.getElementById('er-progreso');
+  if (progreso) progreso.textContent = '🎉 ¡Todos los mensajes enviados!';
+  const nombre = document.getElementById('er-nombre');
+  if (nombre) nombre.textContent = 'Envío completado';
+  const preview = document.getElementById('er-preview');
+  if (preview) preview.textContent = `Se abrieron ${envioRapidoEnviados} chats de WhatsApp con el texto prellenado.`;
+
+  // Ocultar botones de control, dejar solo cerrar
+  const btnPausa = document.getElementById('er-btn-pausa');
+  if (btnPausa) btnPausa.classList.add('hidden');
+
+  toast(`🎉 ¡Envío completado! ${envioRapidoEnviados} mensajes abiertos en WhatsApp.`, 'ok');
+  actualizarKpis();
+  renderTabla();
+  cargarHistorialBd();
+}
+
+function detenerEnvioRapido() {
+  envioRapidoActivo = false;
+  envioRapidoPausado = false;
+  clearTimeout(envioRapidoTimer);
+  mostrarPanelEnvioRapido(false);
+  toast(`⏹️ Envío detenido. ${envioRapidoEnviados} de ${envioRapidoTotal} enviados.`, 'info');
+  actualizarKpis();
+  renderTabla();
+}
+
+function pausarReanudarEnvioRapido() {
+  if (!envioRapidoActivo) return;
+  if (envioRapidoPausado) {
+    // Reanudar
+    envioRapidoPausado = false;
+    toast('▶️ Envío reanudado', 'info');
+    procesarSiguienteEnvioRapido();
+  } else {
+    // Pausar
+    envioRapidoPausado = true;
+    clearTimeout(envioRapidoTimer);
+    toast('⏸️ Envío pausado. Pulse Reanudar para continuar.', 'info');
+  }
+  // Actualizar botón
+  actualizarPanelEnvioRapido(itemSeleccionado, envioRapidoEnviados, envioRapidoTotal);
+}
 
 async function abrirModalEnvio() {
   const pendientes = itemsEnvio.filter(i => i.valido && !i._enviado);
@@ -969,6 +1066,7 @@ async function abrirModalEnvio() {
   const esBusiness = modoEnvio() === 'business' && businessApiActiva;
 
   if (esBusiness) {
+    // Business API: enviar todos de una vez
     toast(`Enviando ${pendientes.length} mensajes por Business API...`, 'info');
     for (let it of pendientes) {
       const ok = await enviarPorBusiness(it);
@@ -988,39 +1086,92 @@ async function abrirModalEnvio() {
       }
     }
     toast('✅ Envío Business completado', 'ok');
-  } else {
-    // Activar modo envío rápido secuencial
-    envioRapidoActivo = true;
-    toast(`🚀 Envío rápido activado: ${pendientes.length} pendientes. Abriendo primer chat...`, 'info');
-    await enviarYAvanzar(pendientes[0]);
-  }
-
-  actualizarKpis();
-  renderTabla();
-  cargarHistorialBd();
-}
-
-/** Abre WA del cliente, lo selecciona, hace scroll, y queda listo para marcar */
-async function enviarYAvanzar(it) {
-  if (!it) {
-    envioRapidoActivo = false;
-    toast('🎉 ¡Todos los mensajes enviados!', 'ok');
     actualizarKpis();
     renderTabla();
+    cargarHistorialBd();
     return;
   }
-  seleccionarItem(it);
-  renderTabla();
-  // Scroll a la fila
-  const row = document.querySelector(`tr[data-idx="${it.indice}"]`);
-  if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  // Abrir WA con texto prellenado
-  refrescarMensajesItem(it);
-  const tel = it.telefono_limpio || it.telefono || '';
-  await abrirWhatsApp(tel, it.mensaje_cliente || it.mensaje);
+
+  // Modo wa.me: iniciar flujo secuencial mejorado
+  envioRapidoActivo = true;
+  envioRapidoPausado = false;
+  envioRapidoEnviados = 0;
+  envioRapidoTotal = pendientes.length;
+
+  // Mostrar panel de progreso
+  mostrarPanelEnvioRapido(true);
+  const btnPausa = document.getElementById('er-btn-pausa');
+  if (btnPausa) btnPausa.classList.remove('hidden');
+
+  toast(`🚀 Envío iniciado: ${pendientes.length} mensajes. Se abrirá WhatsApp uno por uno.`, 'info');
+
+  // Iniciar con el primer contacto
+  await procesarSiguienteEnvioRapido();
 }
 
-/** Marca como enviado + avanza al siguiente automáticamente */
+async function procesarSiguienteEnvioRapido() {
+  if (!envioRapidoActivo || envioRapidoPausado) return;
+
+  const pendiente = itemsEnvio.find(i => i.valido && !i._enviado);
+  if (!pendiente) {
+    envioRapidoCompletado();
+    return;
+  }
+
+  // Actualizar panel visual
+  actualizarPanelEnvioRapido(pendiente, envioRapidoEnviados, envioRapidoTotal);
+
+  // Seleccionar y hacer scroll a la fila
+  seleccionarItem(pendiente);
+  renderTabla();
+  const row = document.querySelector(`tr[data-idx="${pendiente.indice}"]`);
+  if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  // Abrir WhatsApp con texto prellenado
+  refrescarMensajesItem(pendiente);
+  const tel = pendiente.telefono_limpio || pendiente.telefono || '';
+  const ok = await abrirWhatsApp(tel, pendiente.mensaje_cliente || pendiente.mensaje);
+
+  if (ok) {
+    // Marcar como enviado automáticamente (el texto ya va prellenado)
+    pendiente._enviado = true;
+    envioRapidoEnviados++;
+
+    // Registrar en BD en background
+    fetch('/api/envios-whatsapp/marcar-enviado', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        local: pendiente.local, nombre: pendiente.nombre_completo || pendiente.nombre,
+        producto: pendiente.producto, factura: pendiente.factura || pendiente.orden,
+        telefono: pendiente.telefono, canal: 'cliente', estado: 'Mensaje enviado',
+      }),
+    }).catch(() => {});
+
+    actualizarKpis();
+    renderTabla();
+
+    // Actualizar panel con progreso
+    actualizarPanelEnvioRapido(pendiente, envioRapidoEnviados, envioRapidoTotal);
+
+    // Programar siguiente después del delay
+    const restantes = itemsEnvio.filter(i => i.valido && !i._enviado).length;
+    if (restantes > 0 && envioRapidoActivo && !envioRapidoPausado) {
+      const delay = getDelaySegundos() * 1000;
+      toast(`✅ ${pendiente.nombre_completo || pendiente.nombre} enviado. Siguiente en ${getDelaySegundos()}s... (${restantes} restantes)`, 'ok');
+      envioRapidoTimer = setTimeout(() => procesarSiguienteEnvioRapido(), delay);
+    } else if (restantes === 0) {
+      envioRapidoCompletado();
+    }
+  } else {
+    // Si fallo al abrir, saltar al siguiente
+    toast(`⚠️ No se pudo abrir WA para ${pendiente.nombre_completo || pendiente.nombre}. Saltando...`, 'error');
+    const delay = getDelaySegundos() * 1000;
+    envioRapidoTimer = setTimeout(() => procesarSiguienteEnvioRapido(), delay);
+  }
+}
+
+/** Marca manual + avanza al siguiente (para uso individual desde la tabla) */
 async function marcarYSiguiente(it) {
   it._enviado = true;
   // Guardar en BD en background
@@ -1036,19 +1187,6 @@ async function marcarYSiguiente(it) {
 
   actualizarKpis();
   renderTabla();
-
-  if (envioRapidoActivo) {
-    // Buscar siguiente pendiente
-    const siguiente = itemsEnvio.find(i => i.valido && !i._enviado);
-    const restantes = itemsEnvio.filter(i => i.valido && !i._enviado).length;
-    if (siguiente) {
-      toast(`✅ Enviado. Siguiente (${restantes} restantes)...`, 'ok');
-      await enviarYAvanzar(siguiente);
-    } else {
-      envioRapidoActivo = false;
-      toast('🎉 ¡Todos los mensajes enviados!', 'ok');
-    }
-  }
 }
 
 function cerrarModalEnvio() {
