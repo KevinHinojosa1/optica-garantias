@@ -172,29 +172,31 @@ class VisionService:
     @classmethod
     async def _analizar_claude(
         cls,
-        image_bytes: bytes,
-        mime_type: str,
+        imagenes: list[tuple[bytes, str]],
         contexto_cliente: dict,
         conocimiento: list[ConocimientoItem] | None = None,
         bloque_kb: str = "",
     ) -> dict:
         from services.conocimiento_service import ConocimientoService
 
-        b64 = base64.b64encode(image_bytes).decode("utf-8")
-        media_type = cls._normalizar_mime(mime_type)
         items = conocimiento or []
         if not bloque_kb and items:
             bloque_kb = ConocimientoService.construir_bloque_prompt(items)
 
         contenido: list[dict] = []
         contenido.extend(cls._bloques_imagen_referencia(items))
-        contenido.append({
-            "type": "image",
-            "source": {"type": "base64", "media_type": media_type, "data": b64},
-        })
+        
+        for image_bytes, mime_type in imagenes:
+            b64 = base64.b64encode(image_bytes).decode("utf-8")
+            media_type = cls._normalizar_mime(mime_type)
+            contenido.append({
+                "type": "image",
+                "source": {"type": "base64", "media_type": media_type, "data": b64},
+            })
+
         contenido.append({
             "type": "text",
-            "text": cls._contexto_texto(contexto_cliente) + "\n\nAnalice la foto del cliente y emita el veredicto.",
+            "text": cls._contexto_texto(contexto_cliente) + "\n\nAnalice las fotos del cliente y emita el veredicto.",
         })
 
         payload = {
@@ -231,38 +233,44 @@ class VisionService:
         return cls._post_procesar(result)
 
     @classmethod
+    @classmethod
     async def _analizar_xai(
         cls,
-        image_bytes: bytes,
-        mime_type: str,
+        imagenes: list[tuple[bytes, str]],
         contexto_cliente: dict,
-        conocimiento: list[ConocimientoItem] | None = None,
+        conocimiento: list | None = None,
         bloque_kb: str = "",
     ) -> dict:
         from services.conocimiento_service import ConocimientoService
+        import base64
 
-        b64 = base64.b64encode(image_bytes).decode("utf-8")
-        data_url = f"data:{mime_type};base64,{b64}"
         items = conocimiento or []
         if not bloque_kb and items:
             bloque_kb = ConocimientoService.construir_bloque_prompt(items)
-        texto = cls._contexto_texto(contexto_cliente)
-        if bloque_kb:
-            texto = f"{bloque_kb}\n\n{texto}"
+
+        contenido: list[dict] = []
+        contenido.extend(cls._bloques_imagen_referencia(items))
+        
+        for image_bytes, mime_type in imagenes:
+            b64 = base64.b64encode(image_bytes).decode("utf-8")
+            data_url = f"data:{mime_type};base64,{b64}"
+            contenido.append({
+                "type": "image_url",
+                "image_url": {"url": data_url, "detail": "high"},
+            })
+
+        contenido.append({
+            "type": "text",
+            "text": cls._contexto_texto(contexto_cliente) + "\n\nAnalice las fotos del cliente y emita el veredicto.",
+        })
 
         payload = {
-            "model": settings.xai_vision_model,
+            "model": settings.xai_vision_model or "grok-2-vision-1212",
             "messages": [
-                {"role": "system", "content": cls._system_con_conocimiento("")},
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": texto},
-                        {"type": "image_url", "image_url": {"url": data_url, "detail": "high"}},
-                    ],
-                },
+                {"role": "system", "content": cls._system_con_conocimiento(bloque_kb)},
+                {"role": "user", "content": contenido},
             ],
-            "temperature": 0.2,
+            "temperature": 0.0,
         }
 
         headers = {
@@ -270,6 +278,7 @@ class VisionService:
             "Content-Type": "application/json",
         }
 
+        import httpx
         async with httpx.AsyncClient(timeout=120.0) as client:
             response = await client.post(
                 f"{settings.xai_api_base}/chat/completions",
@@ -284,7 +293,8 @@ class VisionService:
         content = data["choices"][0]["message"]["content"]
         result = cls._extract_json(content)
         result["proveedor"] = "xai"
-        result["potenciado_por"] = "xAI"
+        result["modelo"] = payload["model"]
+        result["potenciado_por"] = "Grok"
         if items:
             result["fuentes_conocimiento"] = ConocimientoService.fuentes_resumen(items)
         return cls._post_procesar(result)
@@ -292,21 +302,15 @@ class VisionService:
     @classmethod
     async def analizar_imagen(
         cls,
-        image_bytes: bytes,
-        mime_type: str,
+        imagenes: list[tuple[bytes, str]],
         contexto_cliente: dict,
-        conocimiento: list[ConocimientoItem] | None = None,
+        conocimiento: list | None = None,
     ) -> dict:
-        proveedor = cls._resolver_proveedor()
-        if not proveedor:
-            demo = cls._analisis_demo(contexto_cliente)
-            demo["potenciado_por"] = "modo demo"
-            return demo
-
-        if proveedor == "claude":
-            return await cls._analizar_claude(
-                image_bytes, mime_type, contexto_cliente, conocimiento=conocimiento
-            )
-        return await cls._analizar_xai(
-            image_bytes, mime_type, contexto_cliente, conocimiento=conocimiento
-        )
+        if settings.vision_provider == "xai" and settings.xai_api_key:
+            try:
+                return await cls._analizar_xai(imagenes, contexto_cliente, conocimiento)
+            except Exception as e:
+                print(f"Fallback a Claude tras fallo en xAI: {e}")
+                return await cls._analizar_claude(imagenes, contexto_cliente, conocimiento)
+        else:
+            return await cls._analizar_claude(imagenes, contexto_cliente, conocimiento)

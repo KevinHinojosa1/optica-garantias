@@ -37,18 +37,36 @@ if (ultimoAnalisis) {
   actualizarBadgeVeredicto(ultimoAnalisis.veredicto);
 }
 
+const previewsContainer = document.getElementById('previews-container');
 dropImagen.addEventListener('click', () => imagenInput.click());
 imagenInput.addEventListener('change', () => {
   if (imagenInput.files.length) {
-    preview.src = URL.createObjectURL(imagenInput.files[0]);
-    preview.classList.remove('hidden');
+    if (imagenInput.files.length > 3) {
+        alert("Máximo 3 imágenes permitidas");
+        imagenInput.value = "";
+        return;
+    }
+    const textEls = dropImagen.querySelectorAll('p');
+    textEls.forEach(p => p.classList.add('hidden'));
+    previewsContainer.innerHTML = '';
+    previewsContainer.classList.remove('hidden');
+    Array.from(imagenInput.files).forEach(file => {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.className = 'w-full h-24 object-cover rounded shadow';
+        previewsContainer.appendChild(img);
+    });
   }
 });
 
 formAnalisis.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!imagenInput.files.length) {
-    alert('Seleccione una imagen del daño.');
+    alert('Seleccione al menos una foto del daño.');
+    return;
+  }
+  if (imagenInput.files.length > 3) {
+    alert('Puede subir máximo 3 fotos.');
     return;
   }
 
@@ -62,7 +80,7 @@ formAnalisis.addEventListener('submit', async (e) => {
   resultadoAnalisis.classList.add('hidden');
 
   const formData = new FormData();
-  formData.append('imagen', imagenInput.files[0]);
+  Array.from(imagenInput.files).forEach(file => formData.append('imagenes', file));
   const asesor = document.getElementById('asesor').value.trim() || window.DEFAULT_ASESOR || '';
   formData.append('asesor', asesor);
   formData.append('modo_analisis', modo);

@@ -138,10 +138,10 @@
           </label>
         </div>
         <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center cursor-pointer hover:border-optica-500 transition" id="drop-imagen">
-          <input type="file" id="imagen" accept="image/*" class="hidden">
+          <input type="file" id="imagen" accept="image/*" class="hidden" multiple>
           <p class="text-3xl mb-2">📷</p>
-          <p class="text-slate-600">Seleccionar imagen del daño</p>
-          <img id="preview" class="hidden max-h-48 mx-auto mt-4 rounded-lg shadow" alt="Preview">
+          <p class="text-slate-600">Seleccionar fotos del daño<br><span class="text-xs text-slate-400">(Frontal, Lado Izquierdo, Lado Derecho - Max 3)</span></p>
+          <div id="previews-container" class="hidden grid grid-cols-3 gap-2 mt-4"></div>
         </div>
         <button type="submit" id="btn-analizar" class="btn-ola btn-ola--ai btn-ola--block btn-ola--lg">
           <span class="btn-ola__left">

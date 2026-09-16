@@ -40,7 +40,7 @@ def _guardar_imagen(historial_id: int, image_bytes: bytes, mime_type: str) -> st
 @router.post("/api/analizar/{cliente_id}")
 async def analizar_dano(
     cliente_id: int,
-    imagen: UploadFile = File(...),
+    imagenes: list[UploadFile] = File(...)  # Permite múltiples,
     asesor: str = Form(default=None),
     codigo_descuento: str = Form(default=""),
     porcentaje_descuento: str = Form(default=""),
@@ -51,17 +51,29 @@ async def analizar_dano(
     if not cliente:
         raise HTTPException(status_code=404, detail="Cliente no encontrado.")
 
-    if not imagen.content_type or not imagen.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="El archivo debe ser una imagen (JPG, PNG, WEBP).")
+    if not imagenes:
+        raise HTTPException(status_code=400, detail="Debe subir al menos una imagen.")
+        
+    for img in imagenes:
+        if not img.content_type or not img.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Todos los archivos deben ser imágenes (JPG, PNG, WEBP).")
+    
+    if len(imagenes) > 3:
+        raise HTTPException(status_code=400, detail="Máximo 3 imágenes permitidas.")
 
     modo = (modo_analisis or "conocimiento").strip().lower()
     if modo not in ("conocimiento", "claude_total"):
         modo = "conocimiento"
 
     try:
-        image_bytes = await imagen.read()
-        if not image_bytes:
-            raise HTTPException(status_code=400, detail="La imagen está vacía.")
+        imagenes_data = []
+        for img in imagenes:
+            bts = await img.read()
+            if bts:
+                imagenes_data.append((bts, img.content_type))
+                
+        if not imagenes_data:
+            raise HTTPException(status_code=400, detail="Las imágenes están vacías.")
 
         codigo_int = int(codigo_descuento) if codigo_descuento.strip() else cliente.codigo_descuento
         pct_int = int(porcentaje_descuento) if porcentaje_descuento.strip() else cliente.porcentaje_descuento
@@ -80,8 +92,7 @@ async def analizar_dano(
             conocimiento = ConocimientoService.buscar_relevantes(db, cliente_data)
 
         analisis = await VisionService.analizar_imagen(
-            image_bytes,
-            imagen.content_type,
+            imagenes_data,
             cliente_data,
             conocimiento=conocimiento,
         )
@@ -115,7 +126,19 @@ async def analizar_dano(
             ),
         )
 
-        imagen_rel = _guardar_imagen(registro.id, image_bytes, imagen.content_type)
+        rutas = []
+        for i, (bts, mime) in enumerate(imagenes_data):
+            # Hack to allow multiple names if needed, but the original _guardar_imagen uses just id.
+            # Let's write custom logic here inline or just append index.
+            directorio = settings.base_dir / settings.consultas_imagenes_dir
+            directorio.mkdir(parents=True, exist_ok=True)
+            ext = _extension_mime(mime)
+            nombre = f"consulta_{registro.id}_{i+1}{ext}" if len(imagenes_data) > 1 else f"consulta_{registro.id}{ext}"
+            ruta = directorio / nombre
+            ruta.write_bytes(bts)
+            rutas.append(str(Path(settings.consultas_imagenes_dir) / nombre))
+            
+        imagen_rel = "|".join(rutas)
         HistorialService.actualizar_imagen(db, registro.id, imagen_rel)
 
         return {
