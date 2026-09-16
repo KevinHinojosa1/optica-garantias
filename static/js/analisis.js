@@ -1,7 +1,4 @@
 const formAnalisis = document.getElementById('form-analisis');
-const dropImagen = document.getElementById('drop-imagen');
-const imagenInput = document.getElementById('imagen');
-const preview = document.getElementById('preview');
 const resultadoAnalisis = document.getElementById('resultado-analisis');
 const mensajeWhatsapp = document.getElementById('mensaje-whatsapp');
 const btnRegenerar = document.getElementById('btn-regenerar');
@@ -37,36 +34,36 @@ if (ultimoAnalisis) {
   actualizarBadgeVeredicto(ultimoAnalisis.veredicto);
 }
 
-const previewsContainer = document.getElementById('previews-container');
-dropImagen.addEventListener('click', () => imagenInput.click());
-imagenInput.addEventListener('change', () => {
-  if (imagenInput.files.length) {
-    if (imagenInput.files.length > 3) {
-        alert("Máximo 3 imágenes permitidas");
-        imagenInput.value = "";
-        return;
-    }
-    const textEls = dropImagen.querySelectorAll('p');
-    textEls.forEach(p => p.classList.add('hidden'));
-    previewsContainer.innerHTML = '';
-    previewsContainer.classList.remove('hidden');
-    Array.from(imagenInput.files).forEach(file => {
-        const img = document.createElement('img');
-        img.src = URL.createObjectURL(file);
-        img.className = 'w-full h-24 object-cover rounded shadow';
-        previewsContainer.appendChild(img);
+
+['frontal', 'izq', 'der'].forEach(lado => {
+  const input = document.getElementById(`img-${lado}`);
+  const prev = document.getElementById(`prev-${lado}`);
+  if (input && prev) {
+    input.addEventListener('change', () => {
+      if (input.files.length) {
+        prev.src = URL.createObjectURL(input.files[0]);
+        prev.classList.remove('hidden');
+      } else {
+        prev.classList.add('hidden');
+        prev.src = '';
+      }
     });
   }
 });
 
 formAnalisis.addEventListener('submit', async (e) => {
   e.preventDefault();
-  if (!imagenInput.files.length) {
-    alert('Seleccione al menos una foto del daño.');
-    return;
-  }
-  if (imagenInput.files.length > 3) {
-    alert('Puede subir máximo 3 fotos.');
+  const inFrontal = document.getElementById('img-frontal');
+  const inIzq = document.getElementById('img-izq');
+  const inDer = document.getElementById('img-der');
+  
+  let filesToUpload = [];
+  if (inFrontal?.files.length) filesToUpload.push(inFrontal.files[0]);
+  if (inIzq?.files.length) filesToUpload.push(inIzq.files[0]);
+  if (inDer?.files.length) filesToUpload.push(inDer.files[0]);
+
+  if (filesToUpload.length === 0) {
+    alert('Debe subir al menos una foto del daño (Frontal, Izquierda o Derecha).');
     return;
   }
 
@@ -80,7 +77,7 @@ formAnalisis.addEventListener('submit', async (e) => {
   resultadoAnalisis.classList.add('hidden');
 
   const formData = new FormData();
-  Array.from(imagenInput.files).forEach(file => formData.append('imagenes', file));
+  filesToUpload.forEach(file => formData.append('imagenes', file));
   const asesor = document.getElementById('asesor').value.trim() || window.DEFAULT_ASESOR || '';
   formData.append('asesor', asesor);
   formData.append('modo_analisis', modo);

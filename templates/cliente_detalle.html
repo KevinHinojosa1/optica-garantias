@@ -137,11 +137,30 @@
             </span>
           </label>
         </div>
-        <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center cursor-pointer hover:border-optica-500 transition" id="drop-imagen">
-          <input type="file" id="imagen" accept="image/*" class="hidden" multiple>
-          <p class="text-3xl mb-2">📷</p>
-          <p class="text-slate-600">Seleccionar fotos del daño<br><span class="text-xs text-slate-400">(Frontal, Lado Izquierdo, Lado Derecho - Max 3)</span></p>
-          <div id="previews-container" class="hidden grid grid-cols-3 gap-2 mt-4"></div>
+        <div class="mb-5">
+          <p class="text-sm font-medium text-slate-700 mb-2">Fotos del daño (Requerido al menos 1)</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center cursor-pointer hover:border-optica-500 transition relative bg-slate-50 min-h-[120px] flex flex-col justify-center items-center" id="slot-frontal" onclick="document.getElementById('img-frontal').click()">
+              <input type="file" id="img-frontal" accept="image/*" class="hidden">
+              <p class="text-2xl mb-1">📷</p>
+              <p class="text-xs text-slate-600 font-medium">Vista Frontal</p>
+              <img id="prev-frontal" class="hidden absolute inset-0 w-full h-full object-cover rounded-xl z-10" alt="Frontal">
+            </div>
+            
+            <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center cursor-pointer hover:border-optica-500 transition relative bg-slate-50 min-h-[120px] flex flex-col justify-center items-center" id="slot-izq" onclick="document.getElementById('img-izq').click()">
+              <input type="file" id="img-izq" accept="image/*" class="hidden">
+              <p class="text-2xl mb-1">📷</p>
+              <p class="text-xs text-slate-600 font-medium">Lado Izquierdo</p>
+              <img id="prev-izq" class="hidden absolute inset-0 w-full h-full object-cover rounded-xl z-10" alt="Izquierdo">
+            </div>
+            
+            <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center cursor-pointer hover:border-optica-500 transition relative bg-slate-50 min-h-[120px] flex flex-col justify-center items-center" id="slot-der" onclick="document.getElementById('img-der').click()">
+              <input type="file" id="img-der" accept="image/*" class="hidden">
+              <p class="text-2xl mb-1">📷</p>
+              <p class="text-xs text-slate-600 font-medium">Lado Derecho</p>
+              <img id="prev-der" class="hidden absolute inset-0 w-full h-full object-cover rounded-xl z-10" alt="Derecho">
+            </div>
+          </div>
         </div>
         <button type="submit" id="btn-analizar" class="btn-ola btn-ola--ai btn-ola--block btn-ola--lg">
           <span class="btn-ola__left">
