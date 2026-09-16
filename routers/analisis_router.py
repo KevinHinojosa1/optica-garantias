@@ -40,7 +40,7 @@ def _guardar_imagen(historial_id: int, image_bytes: bytes, mime_type: str) -> st
 @router.post("/api/analizar/{cliente_id}")
 async def analizar_dano(
     cliente_id: int,
-    imagenes: list[UploadFile] = File(...)  # Permite múltiples,
+    imagenes: list[UploadFile] = File(...), # Permite múltiples
     asesor: str = Form(default=None),
     codigo_descuento: str = Form(default=""),
     porcentaje_descuento: str = Form(default=""),
