@@ -19,10 +19,10 @@ class PdfService:
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
-            rightMargin=1.5*cm,
-            leftMargin=1.5*cm,
-            topMargin=1.5*cm,
-            bottomMargin=1.5*cm
+            rightMargin=1.0*cm,
+            leftMargin=1.0*cm,
+            topMargin=1.0*cm,
+            bottomMargin=1.0*cm
         )
         elements = []
 
@@ -59,8 +59,8 @@ class PdfService:
             fontName='Helvetica-Bold',
             fontSize=13,
             textColor=teal_color,
-            spaceBefore=12,
-            spaceAfter=6
+            spaceBefore=8,
+            spaceAfter=3
         )
 
         body_style = ParagraphStyle(
@@ -87,7 +87,7 @@ class PdfService:
             fontName='Helvetica',
             fontSize=10,
             textColor=text_color,
-            leading=14,
+            leading=12,
             leftIndent=15,
             bulletIndent=5
         )
@@ -104,15 +104,14 @@ class PdfService:
 
         # 1. Header Row
         title_para = Paragraph("INFORME DE REVISIÓN DE LENTES", title_style)
-        subtitle_para = Paragraph("Explicación clara para usted", subtitle_style)
-        
+                
         logo = None
         if os.path.exists(LOGO_OFICIAL_PATH):
             logo = Image(LOGO_OFICIAL_PATH, width=4*cm, height=1.5*cm)
             logo.hAlign = 'RIGHT'
 
         header_data = [[
-            [title_para, subtitle_para],
+            [title_para],
             logo if logo else ""
         ]]
         
@@ -124,7 +123,7 @@ class PdfService:
         ]))
         
         elements.append(header_table)
-        elements.append(Spacer(1, 0.8*cm))
+        elements.append(Spacer(1, 0.4*cm))
 
         # Date formatting
         meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
@@ -167,17 +166,17 @@ class PdfService:
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.lightgrey),
-            ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
         ]))
         
         elements.append(info_table)
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Spacer(1, 0.2*cm))
 
         # 3. Section: ¿Qué revisamos?
         elements.append(Paragraph("¿Qué revisamos?", section_title_style))
         elements.append(Paragraph("Revisamos cuidadosamente sus lentes por ambos lados, sus bordes y las zonas que tocan la montura. El objetivo fue conocer qué ocurrió con la superficie y verificar si el problema podía haberse originado durante la fabricación.", body_style))
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Spacer(1, 0.2*cm))
 
         # 4. Section: ¿Qué encontramos?
         elements.append(Paragraph("¿Qué encontramos?", section_title_style))
@@ -221,12 +220,12 @@ class PdfService:
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.lightgrey),
-            ('TOPPADDING', (0, 0), (-1, -1), 8),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
         ]))
         
         elements.append(encontramos_table)
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Spacer(1, 0.2*cm))
 
         # 5. Section: ¿Cuál es el resultado de la revisión?
         elements.append(Paragraph("¿Cuál es el resultado de la revisión?", section_title_style))
@@ -239,13 +238,13 @@ class PdfService:
         resultado_table = Table(resultado_data, colWidths=[18*cm])
         resultado_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (0, 0), light_gray),
-            ('TOPPADDING', (0, 0), (0, 0), 10),
-            ('BOTTOMPADDING', (0, 0), (0, 0), 10),
+            ('TOPPADDING', (0, 0), (0, 0), 6),
+            ('BOTTOMPADDING', (0, 0), (0, 0), 6),
             ('LEFTPADDING', (0, 0), (0, 0), 10),
             ('RIGHTPADDING', (0, 0), (0, 0), 10),
         ]))
         elements.append(resultado_table)
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Spacer(1, 0.2*cm))
 
         # 6. Warranty Decision Line
         if historial.veredicto == "APLICA":
@@ -256,7 +255,7 @@ class PdfService:
             decision_text = "No es posible determinar con la información actual. Se requiere una revisión presencial."
             
         elements.append(Paragraph(f"<b>¿La garantía aplica en este caso?</b> {decision_text}", body_style))
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Spacer(1, 0.2*cm))
 
         # 7. Section: ¿Cómo puede cuidar mejor sus lentes?
         elements.append(Paragraph("¿Cómo puede cuidar mejor sus lentes?", section_title_style))
@@ -272,7 +271,7 @@ class PdfService:
         for bullet in bullets:
             elements.append(Paragraph(f"• {bullet}", bullet_style))
         
-        elements.append(Spacer(1, 0.5*cm))
+        elements.append(Spacer(1, 0.2*cm))
 
         # 8. Commitment Block
         compromiso_text = "<b>Nuestro compromiso con usted:</b> queremos que conozca de forma clara qué observamos, por qué llegamos a este resultado y cómo puede cuidar mejor sus lentes. Si tiene alguna duda sobre esta revisión, nuestro equipo de Servicio al Cliente está disponible para orientarlo."
@@ -281,13 +280,13 @@ class PdfService:
         compromiso_table = Table(compromiso_data, colWidths=[18*cm])
         compromiso_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (0, 0), light_teal),
-            ('TOPPADDING', (0, 0), (0, 0), 10),
-            ('BOTTOMPADDING', (0, 0), (0, 0), 10),
+            ('TOPPADDING', (0, 0), (0, 0), 6),
+            ('BOTTOMPADDING', (0, 0), (0, 0), 6),
             ('LEFTPADDING', (0, 0), (0, 0), 10),
             ('RIGHTPADDING', (0, 0), (0, 0), 10),
         ]))
         elements.append(compromiso_table)
-        elements.append(Spacer(1, 1.5*cm))
+        elements.append(Spacer(1, 0.8*cm))
 
         # 9. Signature Block
         signature_left = [
