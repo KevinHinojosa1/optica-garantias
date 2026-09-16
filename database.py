@@ -54,6 +54,10 @@ def migrate_db():
             _agregar_columna_si_falta(conn, "historial_consultas", cols, "codigo_descuento", "codigo_descuento INTEGER")
             _agregar_columna_si_falta(conn, "historial_consultas", cols, "porcentaje_descuento", "porcentaje_descuento INTEGER")
             _agregar_columna_si_falta(conn, "historial_consultas", cols, "imagen_path", "imagen_path VARCHAR(300)")
+            _agregar_columna_si_falta(conn, "historial_consultas", cols, "que_observamos", "que_observamos TEXT")
+            _agregar_columna_si_falta(conn, "historial_consultas", cols, "que_causa", "que_causa TEXT")
+            _agregar_columna_si_falta(conn, "historial_consultas", cols, "problema_fabricacion", "problema_fabricacion TEXT")
+            _agregar_columna_si_falta(conn, "historial_consultas", cols, "resultado_revision", "resultado_revision TEXT")
 
         if "ivr_verificaciones" in tablas:
             cols = {c["name"] for c in inspector.get_columns("ivr_verificaciones")}

@@ -137,7 +137,8 @@ class PdfService:
         
         local_name = "N/A"
         if cliente and cliente.tienda:
-            local_name = TiendasService.get_nombre_tienda(cliente.tienda) or cliente.tienda
+            tienda_info = TiendasService.resolver_para_cliente(cliente.tienda)
+            local_name = tienda_info.get("nombre", cliente.tienda)
             
         producto = cliente.producto if cliente and cliente.producto else "Lentes de medida"
 
@@ -181,35 +182,35 @@ class PdfService:
         # 4. Section: ¿Qué encontramos?
         elements.append(Paragraph("¿Qué encontramos?", section_title_style))
         
-        motivo_text = historial.motivo if historial.motivo else "Se observan alteraciones en la superficie del lente."
+        que_observamos_text = historial.que_observamos or historial.motivo or "Se observan alteraciones en la superficie del lente."
         
-        # Determine cause based on veredicto and motivo
-        motivo_lower = motivo_text.lower()
-        if historial.veredicto == "NO APLICA" and ("craquelado" in motivo_lower or "cuarteado" in motivo_lower):
-            cause_text = "Este tipo de daño puede aparecer durante el uso por situaciones como calor intenso, cambios bruscos de temperatura, presión, roce frecuente o productos de limpieza no adecuados para lentes."
-        elif historial.veredicto == "NO APLICA" and ("rayado" in motivo_lower or "rayas" in motivo_lower):
-            cause_text = "Las rayas pueden aparecer por el uso de materiales abrasivos en la limpieza, contacto con superficies duras o almacenamiento sin protección."
-        elif historial.veredicto == "APLICA":
-            cause_text = "Este tipo de cambio puede estar relacionado con un defecto en el proceso de fabricación o en los materiales utilizados."
-        else:
-            cause_text = "Este tipo de cambio puede estar relacionado con diversas situaciones durante el uso o con el proceso de fabricación."
+        que_causa_text = historial.que_causa or (
+            "Este tipo de cambio puede estar relacionado con un defecto en el proceso de fabricación o en los materiales utilizados."
+            if historial.veredicto == "APLICA"
+            else "Este tipo de daño puede aparecer durante el uso por situaciones como calor intenso, cambios bruscos de temperatura, presión, roce frecuente o productos de limpieza no adecuados para lentes."
+        )
 
-        fab_problem = "Sí, se detectaron señales de un defecto de fabricación." if historial.veredicto == "APLICA" else "No, no encontramos señales de que el problema se haya originado durante la fabricación."
-        if historial.veredicto == "IMAGEN NO CLARA":
-            fab_problem = "No es posible determinar con la información actual. Se requiere una revisión presencial."
+        problema_fabricacion_text = historial.problema_fabricacion or (
+            "Sí, se detectaron señales de un defecto de fabricación."
+            if historial.veredicto == "APLICA"
+            else ("No es posible determinar con la información actual. Se requiere una revisión presencial." if historial.veredicto == "IMAGEN NO CLARA" else "No, no encontramos señales de que el problema se haya originado durante la fabricación.")
+        )
+
+        motivo_text = que_observamos_text
+        fundamento_text = historial.fundamento if historial.fundamento else "Se ha revisado según nuestras políticas de garantía."
 
         encontramos_data = [
             [
                 Paragraph("<b>¿Qué observamos?</b>", ParagraphStyle('T1', fontName='Helvetica-Bold', fontSize=10, textColor=teal_color)),
-                Paragraph(motivo_text, body_style)
+                Paragraph(que_observamos_text, body_style)
             ],
             [
                 Paragraph("<b>¿Qué puede causar este tipo de cambio?</b>", ParagraphStyle('T2', fontName='Helvetica-Bold', fontSize=10, textColor=teal_color)),
-                Paragraph(cause_text, body_style)
+                Paragraph(que_causa_text, body_style)
             ],
             [
                 Paragraph("<b>¿Encontramos un problema de fabricación?</b>", ParagraphStyle('T3', fontName='Helvetica-Bold', fontSize=10, textColor=teal_color)),
-                Paragraph(fab_problem, body_style)
+                Paragraph(problema_fabricacion_text, body_style)
             ]
         ]
 
@@ -230,10 +231,11 @@ class PdfService:
         # 5. Section: ¿Cuál es el resultado de la revisión?
         elements.append(Paragraph("¿Cuál es el resultado de la revisión?", section_title_style))
         
-        fundamento_text = historial.fundamento if historial.fundamento else "Se ha revisado según nuestras políticas de garantía."
-        resultado_combinado = f"{motivo_text} {fundamento_text}"
+        resultado_revision_text = historial.resultado_revision or (
+            f"Después de revisar sus lentes, encontramos que el cambio visible puede estar relacionado con situaciones que ocurren durante el uso o con el proceso de fabricación. {historial.fundamento or ''}"
+        )
         
-        resultado_data = [[Paragraph(resultado_combinado, bold_body_style)]]
+        resultado_data = [[Paragraph(resultado_revision_text, bold_body_style)]]
         resultado_table = Table(resultado_data, colWidths=[18*cm])
         resultado_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (0, 0), light_gray),

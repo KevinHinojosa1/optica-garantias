@@ -16,7 +16,10 @@ class HistorialCreate(BaseModel):
     codigo_descuento: Optional[int] = None
     porcentaje_descuento: Optional[int] = None
     imagen_path: Optional[str] = None
-
+    que_observamos: Optional[str] = None
+    que_causa: Optional[str] = None
+    problema_fabricacion: Optional[str] = None
+    resultado_revision: Optional[str] = None
 
 class HistorialResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -33,4 +36,8 @@ class HistorialResponse(BaseModel):
     codigo_descuento: Optional[int]
     porcentaje_descuento: Optional[int]
     imagen_path: Optional[str]
+    que_observamos: Optional[str]
+    que_causa: Optional[str]
+    problema_fabricacion: Optional[str]
+    resultado_revision: Optional[str]
     created_at: datetime

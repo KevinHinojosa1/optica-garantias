@@ -21,6 +21,10 @@ class HistorialConsulta(Base):
     codigo_descuento: Mapped[int | None] = mapped_column(Integer, nullable=True)
     porcentaje_descuento: Mapped[int | None] = mapped_column(Integer, nullable=True)
     imagen_path: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    que_observamos: Mapped[str | None] = mapped_column(Text, nullable=True)
+    que_causa: Mapped[str | None] = mapped_column(Text, nullable=True)
+    problema_fabricacion: Mapped[str | None] = mapped_column(Text, nullable=True)
+    resultado_revision: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, index=True)
 
     cliente = relationship("Cliente", backref="consultas")

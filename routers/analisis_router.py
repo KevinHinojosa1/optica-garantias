@@ -108,6 +108,10 @@ async def analizar_dano(
                 mensaje_enviado=mensaje,
                 codigo_descuento=codigo_int,
                 porcentaje_descuento=pct_int,
+                que_observamos=analisis.get("que_observamos"),
+                que_causa=analisis.get("que_causa"),
+                problema_fabricacion=analisis.get("problema_fabricacion"),
+                resultado_revision=analisis.get("resultado_revision"),
             ),
         )
 
