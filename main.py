@@ -72,6 +72,8 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+from basic_auth_middleware import BasicAuthMiddleware
+from security_middleware import SecurityHeadersMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request as StarletteRequest
 
@@ -92,6 +94,8 @@ class NoCacheMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(NoCacheMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(BasicAuthMiddleware)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(import_router)
