@@ -110,7 +110,7 @@ app.include_router(cuaderno_router)
 
 @app.get("/")
 async def root():
-    return RedirectResponse(url="/importar")
+    return RedirectResponse(url="/clientes")
 
 
 @app.get("/health")

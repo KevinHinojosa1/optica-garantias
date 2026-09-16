@@ -43,15 +43,22 @@ REGLAS DE GARANTÍA:
 Responde ÚNICAMENTE en JSON válido con este formato:
 {
   "veredicto": "APLICA" | "NO APLICA" | "IMAGEN NO CLARA",
-  "motivo": "descripción del daño detectado",
+  "motivo": "descripción clara de lo que se observa en los lentes (para el cliente)",
   "fundamento": "artículo de política que aplica",
   "confianza": 0-100,
-  "tipo_dano": "clasificación del daño"
+  "tipo_dano": "clasificación del daño",
+  "que_observamos": "Descripción detallada y clara de lo que se ve en la superficie del lente, escrita para que el cliente lo entienda",
+  "que_causa": "Explicación de qué puede causar este tipo de cambio o daño en los lentes",
+  "problema_fabricacion": "Sí o No, con explicación breve de si se encontraron o no señales de defecto de fabricación",
+  "resultado_revision": "Párrafo completo y profesional resumiendo el resultado de la revisión, escrito en tercera persona para el cliente"
 }
 Si confianza < 70, usa veredicto "IMAGEN NO CLARA".
 
 El veredicto debe fundamentarse en la BASE DE CONOCIMIENTO OFICIAL cuando se proporcione.
 En el campo "fundamento" cita el título del documento de conocimiento usado.
+
+IMPORTANTE: Los campos que_observamos, que_causa, problema_fabricacion y resultado_revision deben estar redactados
+de forma clara, profesional y empática para el cliente. Evita jerga técnica excesiva. Usa un tono respetuoso y explicativo.
 """
 
 
