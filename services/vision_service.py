@@ -50,7 +50,7 @@ Responde ÚNICAMENTE en JSON válido con este formato:
   "que_observamos": "Descripción detallada y clara de lo que se ve en la superficie del lente, escrita para que el cliente lo entienda",
   "que_causa": "Explicación de qué puede causar este tipo de cambio o daño en los lentes",
   "problema_fabricacion": "Sí o No, con explicación breve de si se encontraron o no señales de defecto de fabricación",
-  "resultado_revision": "Párrafo completo y profesional resumiendo el resultado de la revisión, escrito en tercera persona para el cliente"
+  "resultado_revision": "Conclusión TÉCNICA, DIRECTA y OBJETIVA (máximo 2 líneas). ESTÁ ESTRICTAMENTE PROHIBIDO usar saludos (ej. 'Estimado/a...'), disculpas (ej. 'Lamentamos informarle...'), o hablar en nombre de la empresa (ej. 'El equipo de Óptica Los Andes...'). Escribe únicamente la conclusión técnica del estado del lente."
 }
 Si confianza < 70, usa veredicto "IMAGEN NO CLARA".
 
