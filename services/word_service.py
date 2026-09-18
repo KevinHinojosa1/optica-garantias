@@ -10,7 +10,7 @@ from models.historial import HistorialConsulta
 from models.cliente import Cliente
 from services.tiendas_service import TiendasService
 import os
-from config import settings
+from config import settings, LOGO_OFICIAL_PATH
 
 class WordService:
     @staticmethod
@@ -39,13 +39,31 @@ class WordService:
         light_gray = "F3F4F6"
         
         # 1. Header
-        title_para = doc.add_paragraph()
+        header_table = doc.add_table(rows=1, cols=2)
+        # Give column 0 most of the width, column 1 the rest
+        header_table.columns[0].width = Inches(4.5)
+        header_table.columns[1].width = Inches(2.0)
+        
+        # Title in the left cell
+        title_cell = header_table.rows[0].cells[0]
+        title_para = title_cell.paragraphs[0]
         title_run = title_para.add_run("INFORME DE REVISIÓN DE LENTES")
         title_run.bold = True
         title_run.font.size = Pt(16)
         
-        # Logo could be added here if available, but docx makes layout tricky. We'll skip image or just put title.
-        # title_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        # Subtitle
+        sub_run = title_para.add_run("\nExplicación clara para usted")
+        sub_run.font.size = Pt(10)
+        sub_run.font.color.rgb = RGBColor(128, 128, 128)
+        
+        # Logo in the right cell
+        logo_cell = header_table.rows[0].cells[1]
+        logo_para = logo_cell.paragraphs[0]
+        logo_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        if os.path.exists(LOGO_OFICIAL_PATH):
+            logo_para.add_run().add_picture(LOGO_OFICIAL_PATH, width=Inches(1.8))
+            
+        doc.add_paragraph() # Spacer
         
         # Date formatting
         meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre']
