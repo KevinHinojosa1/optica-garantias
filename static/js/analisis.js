@@ -308,12 +308,21 @@ async function restaurarUltimoReporte() {
 
 function mostrarBotonPdf(url, historialId) {
   ultimoHistorialId = historialId;
-  const btn = document.getElementById('btn-descargar-pdf');
-  if (btn) {
-    btn.href = url;
-    btn.classList.remove('hidden');
-    btn.title = `Informe consulta #${historialId}`;
+  const btnPdf = document.getElementById('btn-descargar-pdf');
+  const btnWord = document.getElementById('btn-descargar-word');
+  
+  if (btnPdf) {
+    btnPdf.href = url;
+    btnPdf.classList.remove('hidden');
+    btnPdf.title = `Informe PDF #${historialId}`;
   }
+  
+  if (btnWord) {
+    btnWord.href = `/api/historial/${historialId}/word`;
+    btnWord.classList.remove('hidden');
+    btnWord.title = `Informe Word #${historialId}`;
+  }
+
   if (btnEnviarPdfWa) {
     btnEnviarPdfWa.classList.add('is-visible');
     btnEnviarPdfWa.dataset.historialId = historialId;

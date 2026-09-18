@@ -189,15 +189,26 @@
       <textarea id="mensaje-whatsapp" rows="12"
         class="w-full border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-optica-500 outline-none font-mono">{{ mensaje_inicial }}</textarea>
       <div class="btn-ola-grid mt-4">
-        <a id="btn-descargar-pdf" href="#" target="_blank" class="btn-ola btn-ola--indigo btn-ola--block hidden">
-          <span class="btn-ola__left">
-            <span class="btn-ola__icon">📄</span>
-            <span class="btn-ola__text">
-              <span class="btn-ola__title">Descargar PDF</span>
-              <span class="btn-ola__sub">Informe con logo oficial</span>
+        <div class="grid grid-cols-2 gap-2">
+          <a id="btn-descargar-pdf" href="#" target="_blank" class="btn-ola btn-ola--indigo hidden">
+            <span class="btn-ola__left">
+              <span class="btn-ola__icon">📄</span>
+              <span class="btn-ola__text">
+                <span class="btn-ola__title">Descargar PDF</span>
+                <span class="btn-ola__sub">Listo para cliente</span>
+              </span>
             </span>
-          </span>
-        </a>
+          </a>
+          <a id="btn-descargar-word" href="#" class="btn-ola btn-ola--primary hidden">
+            <span class="btn-ola__left">
+              <span class="btn-ola__icon">📝</span>
+              <span class="btn-ola__text">
+                <span class="btn-ola__title">Descargar Word</span>
+                <span class="btn-ola__sub">Documento editable</span>
+              </span>
+            </span>
+          </a>
+        </div>
         <button id="btn-regenerar" type="button" class="btn-ola btn-ola--secondary btn-ola--block">
           <span class="btn-ola__left">
             <span class="btn-ola__icon">🔄</span>

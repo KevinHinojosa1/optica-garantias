@@ -1,13 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse, StreamingResponse
 from templates_shared import templates
 from sqlalchemy.orm import Session
 
 from database import get_db
 from models.cliente import Cliente
+from models.historial import HistorialConsulta
 from schemas.historial import HistorialResponse
 from services.historial_service import HistorialService
 from services.pdf_service import PdfService
+from services.word_service import WordService
+
 
 router = APIRouter(tags=["Módulo 5 - Historial"])
 
@@ -127,3 +130,21 @@ async def limpiar_historial(db: Session = Depends(get_db)):
     except Exception as exc:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Error al limpiar historial: {exc}") from exc
+@router.get("/api/historial/{historial_id}/word")
+async def descargar_word_historial(historial_id: int, db: Session = Depends(get_db)):
+    historial = db.query(HistorialConsulta).filter(HistorialConsulta.id == historial_id).first()
+    if not historial:
+        raise HTTPException(status_code=404, detail="Análisis no encontrado")
+
+    cliente = db.query(Cliente).filter(Cliente.id == historial.cliente_id).first() if historial.cliente_id else None
+
+    try:
+        word_bytes = WordService.generar_informe_consulta(historial, cliente)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al generar Word: {str(e)}")
+
+    return Response(
+        content=word_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f"attachment; filename=informe_revision_{historial_id}.docx"},
+    )
