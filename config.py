@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     vision_provider: str = "claude"  # claude | xai | auto
     admin_username: str = ""
     admin_password: str = ""
+    supabase_url: str = ""
+    supabase_key: str = ""
     app_name: str = "Óptica Los Andes - Gestión de Garantías"
     app_host: str = "0.0.0.0"
     app_port: int = int(os.getenv("PORT", "8000"))

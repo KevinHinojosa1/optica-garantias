@@ -10,6 +10,7 @@ from routers.clientes_router import cliente_to_response
 from schemas.historial import HistorialCreate
 from services.descuento_service import DescuentoService
 from services.historial_service import HistorialService
+from services.storage_service import StorageService
 from services.conocimiento_service import ConocimientoService
 from services.vision_service import VisionService
 from services.whatsapp_service import WhatsAppService
@@ -128,15 +129,21 @@ async def analizar_dano(
 
         rutas = []
         for i, (bts, mime) in enumerate(imagenes_data):
-            # Hack to allow multiple names if needed, but the original _guardar_imagen uses just id.
-            # Let's write custom logic here inline or just append index.
-            directorio = settings.base_dir / settings.consultas_imagenes_dir
-            directorio.mkdir(parents=True, exist_ok=True)
             ext = _extension_mime(mime)
-            nombre = f"consulta_{registro.id}_{i+1}{ext}" if len(imagenes_data) > 1 else f"consulta_{registro.id}{ext}"
-            ruta = directorio / nombre
-            ruta.write_bytes(bts)
-            rutas.append(str(Path(settings.consultas_imagenes_dir) / nombre))
+            
+            # 1. Intentar subir a Supabase Storage
+            url_nube = StorageService.subir_imagen_consulta(bts, ext)
+            
+            if url_nube:
+                rutas.append(url_nube)
+            else:
+                # 2. Fallback local (si no hay Supabase config)
+                directorio = settings.base_dir / settings.consultas_imagenes_dir
+                directorio.mkdir(parents=True, exist_ok=True)
+                nombre = f"consulta_{registro.id}_{i+1}{ext}" if len(imagenes_data) > 1 else f"consulta_{registro.id}{ext}"
+                ruta = directorio / nombre
+                ruta.write_bytes(bts)
+                rutas.append(str(Path(settings.consultas_imagenes_dir) / nombre))
             
         imagen_rel = "|".join(rutas)
         HistorialService.actualizar_imagen(db, registro.id, imagen_rel)

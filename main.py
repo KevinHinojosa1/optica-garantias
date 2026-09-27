@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from config import settings
 from database import SessionLocal, init_db
 from routers import (
+    dashboard_router,
     analisis_router,
     clientes_router,
     cuaderno_router,
@@ -99,6 +100,7 @@ app.add_middleware(BasicAuthMiddleware)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(import_router)
+app.include_router(dashboard_router)
 app.include_router(clientes_router)
 app.include_router(analisis_router)
 app.include_router(mensajes_router)
@@ -114,7 +116,7 @@ app.include_router(cuaderno_router)
 
 @app.get("/")
 async def root():
-    return RedirectResponse(url="/clientes")
+    return RedirectResponse(url="/dashboard")
 
 
 @app.get("/health")
