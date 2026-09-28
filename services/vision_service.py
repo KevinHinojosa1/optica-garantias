@@ -83,7 +83,7 @@ class VisionService:
 
     @staticmethod
     def _contexto_texto(contexto_cliente: dict) -> str:
-        return (
+        base = (
             f"Analiza este producto dañado.\n"
             f"Cliente: {contexto_cliente.get('nombre')}\n"
             f"Producto: {contexto_cliente.get('producto')}\n"
@@ -93,9 +93,35 @@ class VisionService:
             f"OLA Plus: {'Sí' if contexto_cliente.get('tiene_ola_plus') else 'No'}\n"
             f"Dentro garantía general: {contexto_cliente.get('dentro_garantia')}\n"
         )
+        criterio = contexto_cliente.get("criterio_asesor")
+        observacion = (contexto_cliente.get("observacion_asesor") or "").strip()
+
+        if criterio in ("APLICA", "NO APLICA") or observacion:
+            criterio_str = criterio if criterio in ("APLICA", "NO APLICA") else "A determinar técnicamente"
+            bloque_asesor = (
+                f"\n=======================================================\n"
+                f"🔎 EVALUACIÓN Y CRITERIO PRELIMINAR DEL ASESOR EN SUCURSAL:\n"
+                f"- Veredicto fijado por el asesor: {criterio_str}\n"
+                f"- Observación directa del daño: \"{observacion if observacion else 'Revisión física directa en local'}\"\n\n"
+                f"INSTRUCCIONES OBLIGATORIAS PARA EL INFORME TÉCNICO:\n"
+                f"1. DEBES respetar el veredicto del asesor ({criterio_str}). Tu campo 'veredicto' en el JSON DEBE ser '{criterio_str}'.\n"
+                f"2. Utiliza la observación del asesor como fundamento principal y contrástala con las fotos para verificar y pulir la redacción con rigor técnico pericial.\n"
+                f"3. Redacta 'que_observamos' describiendo con máxima claridad y precisión técnica lo que presenta el lente, basándote en la observación del asesor y las fotos.\n"
+                f"4. Redacta 'que_causa' explicando la causa física real del daño (ej. choque térmico, calor, agentes químicos, microfisuras por tensión, abrasión, o defecto de adhesión de fábrica si aplica).\n"
+                f"5. Redacta 'problema_fabricacion' confirmando ('Sí...') o descartando ('No...') defecto de fábrica de forma 100% coherente con el veredicto '{criterio_str}'.\n"
+                f"6. Redacta 'resultado_revision': MÁXIMO 2 LÍNEAS. Conclusión técnica, directa y objetiva. ESTÁ ESTRICTAMENTE PROHIBIDO usar saludos (ej. 'Estimado/a...'), disculpas (ej. 'Lamentamos informarle...'), o hablar en nombre de la empresa (ej. 'El equipo de Óptica Los Andes...').\n"
+                f"=======================================================\n"
+            )
+            base += bloque_asesor
+        return base
 
     @classmethod
-    def _post_procesar(cls, result: dict) -> dict:
+    def _post_procesar(cls, result: dict, criterio_fijado: str | None = None) -> dict:
+        if criterio_fijado in ("APLICA", "NO APLICA"):
+            result["veredicto"] = criterio_fijado
+            result["confianza"] = max(int(result.get("confianza", 95)), 90)
+            return result
+
         confianza = int(result.get("confianza", 0))
         if confianza < 70 and result.get("veredicto") != "IMAGEN NO CLARA":
             result["veredicto"] = "IMAGEN NO CLARA"
@@ -230,9 +256,8 @@ class VisionService:
         result["potenciado_por"] = "Claude"
         if items:
             result["fuentes_conocimiento"] = ConocimientoService.fuentes_resumen(items)
-        return cls._post_procesar(result)
+        return cls._post_procesar(result, criterio_fijado=contexto_cliente.get("criterio_asesor"))
 
-    @classmethod
     @classmethod
     async def _analizar_xai(
         cls,
@@ -297,7 +322,7 @@ class VisionService:
         result["potenciado_por"] = "Grok"
         if items:
             result["fuentes_conocimiento"] = ConocimientoService.fuentes_resumen(items)
-        return cls._post_procesar(result)
+        return cls._post_procesar(result, criterio_fijado=contexto_cliente.get("criterio_asesor"))
 
     @classmethod
     async def analizar_imagen(

@@ -46,6 +46,8 @@ async def analizar_dano(
     codigo_descuento: str = Form(default=""),
     porcentaje_descuento: str = Form(default=""),
     modo_analisis: str = Form(default="conocimiento"),
+    criterio_asesor: str = Form(default="AUTO"),
+    observacion_asesor: str = Form(default=""),
     db: Session = Depends(get_db),
 ):
     cliente = db.query(Cliente).filter(Cliente.id == cliente_id).first()
@@ -85,6 +87,11 @@ async def analizar_dano(
         db.refresh(cliente)
 
         cliente_data = cliente_to_response(cliente).model_dump(mode="json")
+        criterio_clean = (criterio_asesor or "AUTO").strip().upper()
+        obs_clean = (observacion_asesor or "").strip()
+        cliente_data["criterio_asesor"] = criterio_clean
+        cliente_data["observacion_asesor"] = obs_clean
+
         asesor_final = (asesor or "").strip() or settings.default_asesor
 
         conocimiento = None
@@ -97,6 +104,12 @@ async def analizar_dano(
             cliente_data,
             conocimiento=conocimiento,
         )
+
+        # Si el asesor seleccionó explícitamente APLICA o NO APLICA, garantizar que el veredicto sea exactamente ese
+        if criterio_clean in ("APLICA", "NO APLICA"):
+            analisis["veredicto"] = criterio_clean
+            analisis["confianza"] = max(int(analisis.get("confianza", 95)), 90)
+
         analisis["modo_analisis"] = modo
         if modo == "claude_total":
             analisis["potenciado_por"] = "Claude total"

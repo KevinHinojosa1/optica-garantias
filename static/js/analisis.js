@@ -51,6 +51,55 @@ if (ultimoAnalisis) {
   }
 });
 
+// Manejo de Criterio del Asesor
+const inputCriterio = document.getElementById('criterio-asesor');
+const btnCritAuto = document.getElementById('btn-criterio-auto');
+const btnCritNoAplica = document.getElementById('btn-criterio-no-aplica');
+const btnCritAplica = document.getElementById('btn-criterio-aplica');
+const contenedorObs = document.getElementById('contenedor-observacion-asesor');
+const textareaObs = document.getElementById('observacion-asesor');
+
+function seleccionarCriterio(criterio) {
+  if (!inputCriterio) return;
+  inputCriterio.value = criterio;
+
+  [btnCritAuto, btnCritNoAplica, btnCritAplica].forEach(b => {
+    if (!b) return;
+    b.className = 'py-2.5 px-2 rounded-xl border text-xs font-bold transition-all flex flex-col sm:flex-row items-center justify-center gap-1 text-slate-600 bg-white border-slate-200 hover:bg-slate-50';
+  });
+
+  if (criterio === 'NO APLICA') {
+    btnCritNoAplica.className = 'py-2.5 px-2 rounded-xl border text-xs font-bold transition-all flex flex-col sm:flex-row items-center justify-center gap-1 text-white bg-red-600 border-red-600 shadow-md ring-2 ring-red-400';
+    contenedorObs?.classList.remove('hidden');
+    textareaObs?.focus();
+  } else if (criterio === 'APLICA') {
+    btnCritAplica.className = 'py-2.5 px-2 rounded-xl border text-xs font-bold transition-all flex flex-col sm:flex-row items-center justify-center gap-1 text-white bg-emerald-600 border-emerald-600 shadow-md ring-2 ring-emerald-400';
+    contenedorObs?.classList.remove('hidden');
+    textareaObs?.focus();
+  } else {
+    btnCritAuto.className = 'py-2.5 px-2 rounded-xl border text-xs font-bold transition-all flex flex-col sm:flex-row items-center justify-center gap-1 text-slate-800 bg-white border-slate-300 shadow-sm ring-2 ring-slate-400';
+    contenedorObs?.classList.add('hidden');
+  }
+}
+
+btnCritAuto?.addEventListener('click', () => seleccionarCriterio('AUTO'));
+btnCritNoAplica?.addEventListener('click', () => seleccionarCriterio('NO APLICA'));
+btnCritAplica?.addEventListener('click', () => seleccionarCriterio('APLICA'));
+
+// Chips de observación rápida
+document.querySelectorAll('.chip-obs').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const texto = chip.getAttribute('data-texto');
+    if (!textareaObs || !texto) return;
+    if (textareaObs.value.trim().length > 0) {
+      textareaObs.value += ' ' + texto;
+    } else {
+      textareaObs.value = texto;
+    }
+    textareaObs.focus();
+  });
+});
+
 formAnalisis.addEventListener('submit', async (e) => {
   e.preventDefault();
   const inFrontal = document.getElementById('img-frontal');
@@ -73,7 +122,7 @@ formAnalisis.addEventListener('submit', async (e) => {
   const titleEl = btn.querySelector('.btn-ola__title');
   const subEl = btn.querySelector('.btn-ola__sub');
   if (titleEl) titleEl.textContent = modo === 'claude_total' ? 'Claude total…' : 'Claude + conocimiento…';
-  if (subEl) subEl.textContent = 'Analizando imagen…';
+  if (subEl) subEl.textContent = 'Analizando y redactando informe…';
   resultadoAnalisis.classList.add('hidden');
 
   const formData = new FormData();
@@ -81,6 +130,12 @@ formAnalisis.addEventListener('submit', async (e) => {
   const asesor = document.getElementById('asesor').value.trim() || window.DEFAULT_ASESOR || '';
   formData.append('asesor', asesor);
   formData.append('modo_analisis', modo);
+
+  const criterio = inputCriterio?.value || 'AUTO';
+  const observacion = textareaObs?.value.trim() || '';
+  formData.append('criterio_asesor', criterio);
+  formData.append('observacion_asesor', observacion);
+
   const codigo = document.getElementById('codigo-descuento')?.value;
   const pct = document.getElementById('porcentaje-descuento')?.value;
   if (codigo) formData.append('codigo_descuento', codigo);
@@ -144,6 +199,17 @@ function mostrarResultado(a) {
       </div>
       <p><strong>Motivo:</strong> ${escapeHtml(a.motivo || '')}</p>
       <p><strong>Fundamento:</strong> ${escapeHtml(a.fundamento || '')}</p>
+      ${a.resultado_revision ? `
+        <div class="bg-white/90 rounded-xl p-3.5 border border-slate-200 text-xs text-slate-800 space-y-1.5 mt-2">
+          <div class="flex items-center justify-between border-b pb-1.5 border-slate-200">
+            <span class="font-bold text-slate-900 flex items-center gap-1">📋 Redacción Oficial para el Informe:</span>
+            <span class="text-[11px] bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-semibold border border-teal-200">Verificado y Pulido</span>
+          </div>
+          ${a.que_observamos ? `<p><strong>¿Qué observamos?:</strong> ${escapeHtml(a.que_observamos)}</p>` : ''}
+          ${a.que_causa ? `<p><strong>¿Qué puede causar?:</strong> ${escapeHtml(a.que_causa)}</p>` : ''}
+          <p><strong>Conclusión técnica:</strong> <span class="font-semibold text-slate-900">"${escapeHtml(a.resultado_revision)}"</span></p>
+        </div>
+      ` : ''}
       ${bloqueKb}
       ${a.confianza < 70 ? '<p class="text-yellow-700 font-semibold">⚠️ Confianza baja — solicite una segunda foto con mejor iluminación.</p>' : ''}
       <p class="text-sm opacity-80">✅ El reporte del Módulo 4 se actualizó con este veredicto.</p>
