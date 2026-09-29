@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     vision_provider: str = "claude"  # claude | xai | auto
     admin_username: str = ""
     admin_password: str = ""
+    secret_key: str = os.getenv("SECRET_KEY", "ola-sac-enterprise-secure-key-2026-x99")
+    pass_miguel: str = os.getenv("PASS_MIGUEL", "miguel2026")
+    pass_andrea: str = os.getenv("PASS_ANDREA", "andrea2026")
+    pass_carla: str = os.getenv("PASS_CARLA", "carla2026")
+    pass_kevin: str = os.getenv("PASS_KEVIN", "kevin2026")
     supabase_url: str = ""
     supabase_key: str = ""
     app_name: str = "Óptica Los Andes - Gestión de Garantías"
