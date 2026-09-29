@@ -1,3 +1,4 @@
+from routers.auth_router import router as auth_router
 from routers.dashboard_router import router as dashboard_router
 from routers.import_router import router as import_router
 from routers.clientes_router import router as clientes_router
@@ -13,6 +14,7 @@ from routers.whatsapp_envios_router import router as whatsapp_envios_router
 from routers.cuaderno_router import router as cuaderno_router
 
 __all__ = [
+    "auth_router",
     "dashboard_router",
     "import_router",
     "clientes_router",
