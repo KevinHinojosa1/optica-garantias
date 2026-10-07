@@ -1,0 +1,23 @@
+name: Keep Render Alive Bot
+
+on:
+  schedule:
+    # Ejecuta cada 12 minutos (Render apaga a los 15 minutos de inactividad)
+    - cron: '*/12 * * * *'
+  workflow_dispatch:
+
+jobs:
+  ping-render:
+    name: Ping Optica Los Andes en Render
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enviar señal HTTP a /health
+        run: |
+          echo "Disparando ping para mantener despierto el servidor..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -m 30 "https://optica-garantias.onrender.com/health")
+          echo "Respuesta del servidor: HTTP $HTTP_STATUS"
+          if [ "$HTTP_STATUS" -eq 200 ]; then
+            echo " Servidor activo y operativo en Render."
+          else
+            echo "⚠️ El servidor respondió con estado $HTTP_STATUS."
+          fi

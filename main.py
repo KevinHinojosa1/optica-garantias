@@ -1,4 +1,5 @@
 import asyncio
+import os
 import subprocess
 import sys
 from contextlib import asynccontextmanager
@@ -56,6 +57,23 @@ def _bootstrap_datos():
         print(f"Bootstrap (no crítico): {exc}", flush=True)
 
 
+async def _keep_alive_bot():
+    """Bot interno que envía una señal cada 10 minutos a Render para mantener el servidor despierto 24/7."""
+    await asyncio.sleep(45)
+    import httpx
+    base_url = os.getenv("RENDER_EXTERNAL_URL", "https://optica-garantias.onrender.com").rstrip("/")
+    url = f"{base_url}/health"
+    while True:
+        try:
+            async with httpx.AsyncClient(timeout=20.0) as client:
+                res = await client.get(url)
+                if res.status_code == 200:
+                    print(f"[BOT KEEP-ALIVE] Ping exitoso ({res.status_code}) a {url} — Servidor activo.", flush=True)
+        except Exception as e:
+            print(f"[BOT KEEP-ALIVE] Ping no crítico: {e}", flush=True)
+        await asyncio.sleep(600)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _preparar_directorios()
@@ -64,6 +82,7 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         print(f"init_db (no crítico): {exc}", flush=True)
     asyncio.create_task(asyncio.to_thread(_bootstrap_datos))
+    asyncio.create_task(_keep_alive_bot())
     yield
 
 
@@ -121,7 +140,7 @@ async def root():
     return RedirectResponse(url="/dashboard")
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health():
     from templates_shared import ASSET_VERSION
 
