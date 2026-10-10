@@ -125,9 +125,12 @@ Alertas:
 
     data = _parse_json_ia(resp.json()["content"][0]["text"])
     resultados = data.get("resultados", [])
+    por_id = {str(r.get("id")): r for r in resultados if isinstance(r, dict) and r.get("id") is not None}
     out = []
     for i, fila in enumerate(filas):
-        item = resultados[i] if i < len(resultados) else {}
+        item = por_id.get(str(fila.get("id")))
+        if item is None:
+            item = resultados[i] if not por_id and i < len(resultados) else {}
         cat = item.get("clasificacion", "Otros / Sin clasificar")
         if cat not in CATEGORIAS_IA:
             cat = _clasificar_reglas(_texto_alerta(fila))

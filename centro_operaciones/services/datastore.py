@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import threading
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -29,6 +30,17 @@ def _limpiar_texto(val) -> str:
     if s.endswith(".0") and s[:-2].isdigit():
         s = s[:-2]
     return "" if s.lower() in ("nan", "none", "nat") else s
+
+
+# Caché en memoria del dataset normalizado: evita releer BD/Excel en cada request.
+# BLOQUEO serializa los ciclos leer-modificar-guardar para no perder ediciones concurrentes.
+BLOQUEO = threading.RLock()
+_CACHE: dict[str, pd.DataFrame | None] = {"df": None}
+
+
+def invalidar_cache() -> None:
+    with BLOQUEO:
+        _CACHE["df"] = None
 
 
 COLUMNAS_TEXTO = [
@@ -174,6 +186,13 @@ def _cargar_desde_bd() -> pd.DataFrame | None:
 
 
 def cargar_alertas() -> pd.DataFrame:
+    with BLOQUEO:
+        if _CACHE["df"] is None:
+            _CACHE["df"] = _cargar_alertas_sin_cache()
+        return _CACHE["df"].copy()
+
+
+def _cargar_alertas_sin_cache() -> pd.DataFrame:
     # 1) Base de datos (fuente preferida para no perder ediciones en Render)
     db_df = _cargar_desde_bd()
     if db_df is not None:
@@ -231,8 +250,14 @@ def recargar_desde_excel() -> pd.DataFrame:
 
 
 def guardar_alertas(df: pd.DataFrame) -> None:
+    with BLOQUEO:
+        _guardar_alertas(df)
+
+
+def _guardar_alertas(df: pd.DataFrame) -> None:
     ALERTAS_CSV.parent.mkdir(parents=True, exist_ok=True)
     out = _normalizar(df)
+    _CACHE["df"] = out.copy()
     out.to_csv(ALERTAS_CSV, index=False)
     try:
         out.to_parquet(ALERTAS_PARQUET, index=False)
@@ -263,6 +288,11 @@ def _normalizar(df: pd.DataFrame) -> pd.DataFrame:
 
     out["id"] = pd.to_numeric(out["id"], errors="coerce").fillna(0).astype(int)
     out["n"] = pd.to_numeric(out["n"], errors="coerce").fillna(out["id"]).astype(int)
+    out = out.reset_index(drop=True)
+    duplicados = out["id"].duplicated(keep="first") & (out["id"] > 0)
+    if duplicados.any():
+        siguiente = int(out["id"].max()) + 1
+        out.loc[duplicados, "id"] = range(siguiente, siguiente + int(duplicados.sum()))
     out["fecha_alerta"] = pd.to_datetime(out["fecha_alerta"], errors="coerce")
 
     for col in COLUMNAS_TEXTO:
@@ -310,7 +340,7 @@ def filtrar_df(
     if fecha_desde:
         out = out[out["fecha_alerta"] >= pd.Timestamp(fecha_desde)]
     if fecha_hasta:
-        out = out[out["fecha_alerta"] <= pd.Timestamp(fecha_hasta) + timedelta(days=1)]
+        out = out[out["fecha_alerta"] < pd.Timestamp(fecha_hasta) + timedelta(days=1)]
     if meses:
         out = out[out["mes"].isin(meses)]
     if locales:
