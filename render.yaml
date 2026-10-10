@@ -15,6 +15,16 @@ services:
         value: sqlite:///./data/optica_garantias.db
       - key: DEBUG
         value: "false"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PASS_MIGUEL
+        sync: false
+      - key: PASS_ANDREA
+        sync: false
+      - key: PASS_CARLA
+        sync: false
+      - key: PASS_KEVIN
+        sync: false
       - key: VISION_PROVIDER
         value: claude
       - key: ANTHROPIC_API_KEY

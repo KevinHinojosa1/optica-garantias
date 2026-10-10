@@ -14,6 +14,10 @@ _INTENTOS_FALLIDOS: dict[str, dict] = {}
 MAX_INTENTOS = 5
 TIEMPO_BLOQUEO_SEGUNDOS = 15 * 60  # 15 minutos
 DURACION_TOKEN_SEGUNDOS = 12 * 3600  # 12 horas
+PBKDF2_ITERACIONES = 600_000
+PREFIJO_HASH = "pbkdf2_sha256$"
+
+_SECRET_KEY_EFIMERA = os.urandom(32).hex()
 
 USUARIOS_METADATA = {
     "miguel": {
@@ -50,38 +54,52 @@ USUARIOS_METADATA = {
     },
 }
 
+def _secret_key() -> bytes:
+    """SECRET_KEY del entorno; si falta, una clave aleatoria por proceso (las sesiones no sobreviven reinicios)."""
+    return (settings.secret_key or _SECRET_KEY_EFIMERA).encode()
+
+
 class AuthService:
     @staticmethod
-    def _hash_password(password: str, salt: bytes = None) -> str:
-        """Genera hash criptográfico seguro PBKDF2-HMAC-SHA256 con 600,000 iteraciones (Estándar OWASP)."""
-        if not salt:
-            salt = os.urandom(16)
-        key = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, 600000)
-        return f"{salt.hex()}:{key.hex()}"
+    def hash_password(password: str, salt: bytes = None) -> str:
+        """Hash PBKDF2-HMAC-SHA256 (600.000 iteraciones, OWASP) en formato pbkdf2_sha256$iter$salt$key."""
+        salt = salt or os.urandom(16)
+        key = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, PBKDF2_ITERACIONES)
+        return f"{PREFIJO_HASH}{PBKDF2_ITERACIONES}${salt.hex()}${key.hex()}"
 
     @staticmethod
     def _verificar_password_hash(stored_hash: str, password_ingresada: str) -> bool:
-        """Verificación criptográfica segura resistente a timing attacks."""
         try:
-            salt_hex, key_hex = stored_hash.split(":", 1)
-            salt = bytes.fromhex(salt_hex)
-            key = hashlib.pbkdf2_hmac("sha256", password_ingresada.encode("utf-8"), salt, 600000)
+            iteraciones, salt_hex, key_hex = stored_hash[len(PREFIJO_HASH):].split("$")
+            key = hashlib.pbkdf2_hmac(
+                "sha256", password_ingresada.encode("utf-8"), bytes.fromhex(salt_hex), int(iteraciones)
+            )
             return hmac.compare_digest(key.hex(), key_hex)
         except Exception:
             return False
 
-    @classmethod
-    def _obtener_passwords_permitidas(cls, username: str) -> list[str]:
-        """Obtiene las contraseñas válidas permitidas según configuración de entorno."""
-        u = username.lower()
-        pass_env = {
-            "miguel": getattr(settings, "pass_miguel", "miguel2026"),
-            "andrea": getattr(settings, "pass_andrea", "andrea2026"),
-            "carla": getattr(settings, "pass_carla", "carla2026"),
-            "kevin": getattr(settings, "pass_kevin", "kevin2026"),
-        }.get(u, f"{u}2026")
+    @staticmethod
+    def _password_configurada(username: str) -> str:
+        return (getattr(settings, f"pass_{username.lower()}", "") or "").strip()
 
-        return [pass_env, f"{u}2026", f"{u}123", "optica123", "sac2026"]
+    @classmethod
+    def _verificar_password(cls, username: str, password: str) -> bool:
+        configurada = cls._password_configurada(username)
+        if not configurada or not password:
+            return False
+        if configurada.startswith(PREFIJO_HASH):
+            return cls._verificar_password_hash(configurada, password)
+        return hmac.compare_digest(password.encode("utf-8"), configurada.encode("utf-8"))
+
+    @classmethod
+    def advertencias_configuracion(cls) -> list[str]:
+        avisos = []
+        if not settings.secret_key:
+            avisos.append("SECRET_KEY no configurada: se usa una clave temporal y las sesiones se pierden al reiniciar.")
+        sin_pass = [u for u in USUARIOS_METADATA if not cls._password_configurada(u)]
+        if sin_pass:
+            avisos.append(f"Usuarios sin contraseña configurada (no podrán ingresar): {', '.join(sin_pass)}.")
+        return avisos
 
     @classmethod
     def listar_usuarios(cls) -> list[dict]:
@@ -93,7 +111,6 @@ class AuthService:
                 "cargo": u["cargo"],
                 "avatar": u["avatar"],
                 "color": u["color"],
-                "password_sugerida": cls._obtener_passwords_permitidas(u["username"])[0],
             }
             for u in USUARIOS_METADATA.values()
         ]
@@ -164,21 +181,10 @@ class AuthService:
         user_meta = USUARIOS_METADATA.get(u_clean)
         if not user_meta:
             cls.registrar_intento_fallido(ip, u_clean)
-            time.sleep(1.0)  # Retardo intencional contra bots
             return None, "Usuario o contraseña incorrectos."
 
-        # Verificar contraseña contra lista permitida usando hashes
-        passwords_validas = cls._obtener_passwords_permitidas(u_clean)
-        autenticado = False
-        for pass_valida in passwords_validas:
-            # Comparamos usando digest seguro
-            if hmac.compare_digest(p_clean, pass_valida):
-                autenticado = True
-                break
-
-        if not autenticado:
+        if not cls._verificar_password(u_clean, p_clean):
             restantes = cls.registrar_intento_fallido(ip, u_clean)
-            time.sleep(1.0)  # Retardo intencional para frustrar fuerza bruta
             if restantes <= 0:
                 return None, "⚠️ Ha superado el límite de intentos. Su acceso ha sido bloqueado por 15 minutos."
             return None, f"Contraseña incorrecta. Le quedan {restantes} intento(s) antes del bloqueo de seguridad."
@@ -214,7 +220,7 @@ class AuthService:
             "nonce": nonce,
         }
         raw = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode()
-        signature = hmac.new(settings.secret_key.encode(), raw.encode(), hashlib.sha256).hexdigest()
+        signature = hmac.new(_secret_key(), raw.encode(), hashlib.sha256).hexdigest()
         return f"{raw}.{signature}"
 
     @classmethod
@@ -224,7 +230,7 @@ class AuthService:
             return None
         try:
             raw, sig = token.split(".", 1)
-            expected_sig = hmac.new(settings.secret_key.encode(), raw.encode(), hashlib.sha256).hexdigest()
+            expected_sig = hmac.new(_secret_key(), raw.encode(), hashlib.sha256).hexdigest()
             if not hmac.compare_digest(sig, expected_sig):
                 return None
 
@@ -247,3 +253,9 @@ class AuthService:
             return None
         except Exception:
             return None
+
+
+if __name__ == "__main__":
+    import getpass
+
+    print(AuthService.hash_password(getpass.getpass("Contraseña a hashear: ")))

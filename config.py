@@ -20,11 +20,13 @@ class Settings(BaseSettings):
     vision_provider: str = "claude"  # claude | xai | auto
     admin_username: str = ""
     admin_password: str = ""
-    secret_key: str = os.getenv("SECRET_KEY", "ola-sac-enterprise-secure-key-2026-x99")
-    pass_miguel: str = os.getenv("PASS_MIGUEL", "miguel2026")
-    pass_andrea: str = os.getenv("PASS_ANDREA", "andrea2026")
-    pass_carla: str = os.getenv("PASS_CARLA", "carla2026")
-    pass_kevin: str = os.getenv("PASS_KEVIN", "kevin2026")
+    # Sin valores por defecto: deben configurarse en el entorno (Render → Environment).
+    # PASS_* acepta texto plano o un hash generado con `python -m services.auth_service`.
+    secret_key: str = ""
+    pass_miguel: str = ""
+    pass_andrea: str = ""
+    pass_carla: str = ""
+    pass_kevin: str = ""
     supabase_url: str = ""
     supabase_key: str = ""
     app_name: str = "Óptica Los Andes - Gestión de Garantías"

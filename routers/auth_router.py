@@ -1,9 +1,21 @@
+import asyncio
+
 from fastapi import APIRouter, Form, Request, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from templates_shared import templates
 from services.auth_service import AuthService
 
 router = APIRouter(tags=["Autenticación"])
+
+RETARDO_LOGIN_FALLIDO_SEGUNDOS = 1.0
+
+
+def _destino_seguro(next_url: str | None) -> str:
+    """Solo rutas relativas internas: evita redirecciones abiertas como //sitio-malicioso.com."""
+    if not next_url or not next_url.startswith("/") or next_url.startswith(("//", "/\\")) or next_url == "/login":
+        return "/dashboard"
+    return next_url
+
 
 def _obtener_ip_cliente(request: Request) -> str:
     """Extrae la IP real del cliente detrás de proxies reversos (como Render / Cloudflare)."""
@@ -44,6 +56,7 @@ async def procesar_login(
     user, error_msg = AuthService.autenticar(username, password, ip=ip)
     
     if error_msg or not user:
+        await asyncio.sleep(RETARDO_LOGIN_FALLIDO_SEGUNDOS)
         usuarios = AuthService.listar_usuarios()
         return templates.TemplateResponse(
             request,
@@ -59,7 +72,7 @@ async def procesar_login(
 
     # Autenticación exitosa: generar token criptográfico firmado
     token = AuthService.crear_token(user["username"])
-    destino = next_url if next_url and next_url.startswith("/") and next_url != "/login" else "/dashboard"
+    destino = _destino_seguro(next_url)
     
     is_https = request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https"
 
