@@ -1,6 +1,27 @@
+from urllib.parse import urlsplit
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
-from starlette.responses import Response
+from starlette.responses import JSONResponse, Response
+
+METODOS_INSEGUROS = {"POST", "PUT", "PATCH", "DELETE"}
+
+# Política conservadora: no restringe scripts/estilos (hay CDNs y scripts inline),
+# pero bloquea iframes externos, <base> inyectado, plugins y envío de formularios a otros dominios.
+CONTENT_SECURITY_POLICY = "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'"
+
+
+class OriginCheckMiddleware(BaseHTTPMiddleware):
+    """Protección CSRF: rechaza peticiones que modifican datos si vienen de otro sitio (Origin/Referer)."""
+
+    async def dispatch(self, request: Request, call_next):
+        if request.method in METODOS_INSEGUROS:
+            origen = request.headers.get("origin") or request.headers.get("referer")
+            if origen:
+                host = request.headers.get("x-forwarded-host") or request.headers.get("host", "")
+                if urlsplit(origen).netloc.lower() != host.split(",")[0].strip().lower():
+                    return JSONResponse(status_code=403, content={"detail": "Origen no permitido."})
+        return await call_next(request)
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -26,6 +47,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         
         # 7. Aislamiento de origen (evita ataques Cross-Origin)
         response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        response.headers["Content-Security-Policy"] = CONTENT_SECURITY_POLICY
         
         # 8. Ocultar información del servidor para evitar fingerprinting de atacantes
         response.headers["Server"] = "Protected-Server"

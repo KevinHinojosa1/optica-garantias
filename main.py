@@ -94,7 +94,8 @@ app = FastAPI(
 )
 
 from auth_middleware import SessionAuthMiddleware
-from security_middleware import SecurityHeadersMiddleware
+from security_middleware import OriginCheckMiddleware, SecurityHeadersMiddleware
+from services.auth_service import AuthService
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request as StarletteRequest
 
@@ -117,6 +118,10 @@ class NoCacheMiddleware(BaseHTTPMiddleware):
 app.add_middleware(NoCacheMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(SessionAuthMiddleware)
+app.add_middleware(OriginCheckMiddleware)
+
+for _aviso in AuthService.advertencias_configuracion():
+    print(f"[SEGURIDAD] {_aviso}", flush=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(auth_router)

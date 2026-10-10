@@ -58,7 +58,6 @@
           <button type="button" 
             class="user-card text-left p-3 rounded-xl border border-slate-200/90 bg-white/80 hover:bg-white hover:border-optica-500 hover:shadow-md transition-all flex items-center gap-3 group relative cursor-pointer"
             data-username="{{ u.username }}"
-            data-password="{{ u.password_sugerida }}"
             data-nombre="{{ u.nombre }}"
             data-rol="{{ u.rol }}">
             <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 bg-slate-100 group-hover:scale-105 transition-transform">
@@ -127,7 +126,6 @@
     userCards.forEach(card => {
       card.addEventListener('click', () => {
         const u = card.dataset.username;
-        const p = card.dataset.password;
 
         // Reset cards
         userCards.forEach(c => {
@@ -141,7 +139,7 @@
 
         // Fill inputs
         inputUsername.value = u;
-        inputPassword.value = p;
+        inputPassword.value = '';
         inputPassword.focus();
       });
     });
