@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+import logging
+from datetime import date, datetime
 from typing import Optional
 
 from fastapi import APIRouter, File, HTTPException, Query, Request, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import HTMLResponse, Response
 
 from schemas.alertas import (
@@ -23,6 +25,23 @@ from services.respuesta_ia_service import RespuestaIAService
 from templates_shared import templates
 
 router = APIRouter(tags=["Alertas Telegram"])
+logger = logging.getLogger(__name__)
+
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+
+
+def _error_interno(contexto: str, exc: Exception) -> HTTPException:
+    logger.exception("%s: %s", contexto, exc)
+    return HTTPException(status_code=500, detail=f"{contexto}. Revise los logs del servidor.")
+
+
+async def _leer_upload(archivo: UploadFile) -> bytes:
+    content = await archivo.read(MAX_UPLOAD_BYTES + 1)
+    if not content:
+        raise HTTPException(status_code=400, detail="El archivo está vacío.")
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="El archivo supera el límite de 10 MB.")
+    return content
 
 
 def _filtros_desde_query(
@@ -43,6 +62,13 @@ def _filtros_desde_query(
             return []
         return [x.strip() for x in val.split(",") if x.strip()]
 
+    for nombre, valor in (("fecha_desde", fecha_desde), ("fecha_hasta", fecha_hasta)):
+        if valor:
+            try:
+                date.fromisoformat(valor)
+            except ValueError as exc:
+                raise HTTPException(status_code=422, detail=f"{nombre} debe tener formato AAAA-MM-DD.") from exc
+
     return {
         "fecha_desde": fecha_desde,
         "fecha_hasta": fecha_hasta,
@@ -58,7 +84,7 @@ def _filtros_desde_query(
 
 
 @router.get("/alertas", response_class=HTMLResponse)
-async def pagina_alertas(request: Request):
+def pagina_alertas(request: Request):
     try:
         meta = AlertasService.metadata()
         ia = RespuestaIAService.ia_disponible()
@@ -75,14 +101,11 @@ async def pagina_alertas(request: Request):
     except FileNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error al cargar módulo Alertas: {exc}",
-        ) from exc
+        raise _error_interno("Error al cargar módulo Alertas", exc) from exc
 
 
 @router.get("/api/alertas", response_model=AlertasListResponse)
-async def api_listar_alertas(
+def api_listar_alertas(
     fecha_desde: Optional[str] = None,
     fecha_hasta: Optional[str] = None,
     locales: Optional[str] = None,
@@ -110,7 +133,7 @@ async def api_listar_alertas(
 
 
 @router.get("/api/alertas/kpis", response_model=AlertasKpisResponse)
-async def api_kpis_alertas(
+def api_kpis_alertas(
     fecha_desde: Optional[str] = None,
     fecha_hasta: Optional[str] = None,
     locales: Optional[str] = None,
@@ -138,7 +161,7 @@ async def api_kpis_alertas(
 
 
 @router.get("/api/alertas/graficos", response_model=AlertasGraficosResponse)
-async def api_graficos_alertas(
+def api_graficos_alertas(
     fecha_desde: Optional[str] = None,
     fecha_hasta: Optional[str] = None,
     locales: Optional[str] = None,
@@ -166,33 +189,33 @@ async def api_graficos_alertas(
 
 
 @router.post("/api/alertas/guardar")
-async def api_guardar_alertas(payload: AlertasGuardarRequest):
+def api_guardar_alertas(payload: AlertasGuardarRequest):
     try:
         return AlertasService.guardar_filas(payload.filas)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Error al guardar: {exc}") from exc
+        raise _error_interno("Error al guardar", exc) from exc
 
 
 @router.post("/api/alertas/clasificar-reglas")
-async def api_clasificar_reglas(payload: AlertasClasificarRequest):
+def api_clasificar_reglas(payload: AlertasClasificarRequest):
     try:
         return AlertasService.clasificar_reglas(payload.ids)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise _error_interno("Error al clasificar por reglas", exc) from exc
 
 
 @router.post("/api/alertas/clasificar-ia")
-async def api_clasificar_ia(payload: AlertasClasificarRequest):
+def api_clasificar_ia(payload: AlertasClasificarRequest):
     try:
         return AlertasService.clasificar_ia(payload.ids)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise _error_interno("Error al clasificar con IA", exc) from exc
 
 
 @router.get("/api/alertas/exportar")
-async def api_exportar_alertas(
+def api_exportar_alertas(
     fecha_desde: Optional[str] = None,
     fecha_hasta: Optional[str] = None,
     locales: Optional[str] = None,
@@ -226,13 +249,13 @@ async def api_exportar_alertas(
 
 
 @router.post("/api/alertas/recargar-excel")
-async def api_recargar_excel():
+def api_recargar_excel():
     try:
         return AlertasService.recargar_excel()
     except FileNotFoundError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
+        raise HTTPException(status_code=404, detail="No se encontró el Excel de alertas.") from exc
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise _error_interno("Error al recargar Excel", exc) from exc
 
 
 @router.post("/api/alertas/subir-excel", response_model=AlertasSubirExcelResponse)
@@ -244,14 +267,15 @@ async def api_subir_excel_alertas(
     if not nombre.endswith((".xlsx", ".xls")):
         raise HTTPException(status_code=400, detail="Suba un archivo Excel (.xlsx) con hoja GENERAL.")
     try:
-        content = await archivo.read()
-        if not content:
-            raise HTTPException(status_code=400, detail="El archivo está vacío.")
-        return AlertasSubirExcelResponse(**AlertasService.subir_excel(content, modo=modo))
+        content = await _leer_upload(archivo)
+        resultado = await run_in_threadpool(AlertasService.subir_excel, content, modo=modo)
+        return AlertasSubirExcelResponse(**resultado)
     except HTTPException:
         raise
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=f"Excel inválido: {exc}") from exc
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Error al procesar Excel: {exc}") from exc
+        raise _error_interno("Error al procesar Excel", exc) from exc
 
 
 @router.post("/api/alertas/importar")
@@ -259,24 +283,24 @@ async def api_importar_alertas(archivo: UploadFile = File(...)):
     if not archivo.filename or not archivo.filename.lower().endswith(".csv"):
         raise HTTPException(status_code=400, detail="Suba un archivo CSV válido.")
     try:
-        content = await archivo.read()
-        if not content:
-            raise HTTPException(status_code=400, detail="El archivo está vacío.")
-        return AlertasService.importar_csv(content)
+        content = await _leer_upload(archivo)
+        return await run_in_threadpool(AlertasService.importar_csv, content)
     except HTTPException:
         raise
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Error al importar: {exc}") from exc
+        raise _error_interno("Error al importar", exc) from exc
 
 
 @router.post("/api/alertas/ingresar")
-async def api_ingresar_alerta(payload: AlertaIngresarRequest):
+def api_ingresar_alerta(payload: AlertaIngresarRequest):
     """Crea una nueva alerta manualmente (sin necesidad de subir un Excel)."""
     try:
         resultado = AlertasService.ingresar_alerta(payload.model_dump())
         return resultado
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Error al ingresar alerta: {exc}") from exc
+        raise _error_interno("Error al ingresar alerta", exc) from exc
 
 
 @router.post("/api/alertas/reporte-ia")
@@ -286,7 +310,7 @@ async def api_reporte_ia(payload: AlertaReporteIARequest):
         fila: dict = {}
         if payload.alerta_id is not None:
             from centro_operaciones.services.datastore import cargar_alertas
-            df = cargar_alertas()
+            df = await run_in_threadpool(cargar_alertas)
             rows = df[df["id"] == payload.alerta_id]
             if rows.empty:
                 raise HTTPException(status_code=404, detail=f"Alerta {payload.alerta_id} no encontrada.")
@@ -304,4 +328,4 @@ async def api_reporte_ia(payload: AlertaReporteIARequest):
     except HTTPException:
         raise
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Error al generar reporte IA: {exc}") from exc
+        raise _error_interno("Error al generar reporte IA", exc) from exc

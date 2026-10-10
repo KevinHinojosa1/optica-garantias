@@ -23,6 +23,7 @@ from centro_operaciones.constants import (
 from centro_operaciones.services.clasificacion import clasificar_dataframe_reglas
 from centro_operaciones.services.clasificacion_ia_alertas import clasificar_dataframe_completo
 from centro_operaciones.services.datastore import (
+    BLOQUEO,
     cargar_alertas,
     contar_pendientes,
     filtrar_df,
@@ -147,31 +148,33 @@ class AlertasService:
 
     @classmethod
     def guardar_filas(cls, filas: list[dict]) -> dict[str, Any]:
-        df = cargar_alertas()
         if not filas:
             return {"ok": True, "actualizados": 0}
         incoming = pd.DataFrame(filas)
         if "id" not in incoming.columns:
             raise ValueError("Las filas deben incluir el campo id.")
-        actualizados = 0
-        for _, row in incoming.iterrows():
-            rid = int(row["id"])
-            mask = df["id"] == rid
-            if not mask.any():
-                continue
-            for col in row.index:
-                if col in df.columns and col not in ("id",):
+        with BLOQUEO:
+            df = cargar_alertas()
+            columnas = [c for c in incoming.columns if c in COLUMNAS_EDITABLES and c in df.columns]
+            actualizados = 0
+            for _, row in incoming.iterrows():
+                mask = df["id"] == int(row["id"])
+                if not mask.any():
+                    continue
+                for col in columnas:
                     df.loc[mask, col] = row[col]
-            actualizados += 1
-        guardar_alertas(df)
+                actualizados += 1
+            if actualizados:
+                guardar_alertas(df)
         return {"ok": True, "actualizados": actualizados}
 
     @classmethod
     def clasificar_reglas(cls, ids: list[int]) -> dict[str, Any]:
-        df = cargar_alertas()
-        indices = df.index[df["id"].isin(ids)].tolist() if ids else df.index.tolist()
-        df = clasificar_dataframe_reglas(df, indices)
-        guardar_alertas(df)
+        with BLOQUEO:
+            df = cargar_alertas()
+            indices = df.index[df["id"].isin(ids)].tolist() if ids else df.index.tolist()
+            df = clasificar_dataframe_reglas(df, indices)
+            guardar_alertas(df)
         ids_out = ids or df["id"].tolist()
         return {"ok": True, "clasificadas": len(indices), "filas": _df_a_filas(df[df["id"].isin(ids_out)])}
 
@@ -181,8 +184,17 @@ class AlertasService:
         indices = df.index[df["id"].isin(ids)].tolist() if ids else df.index.tolist()
         if not indices:
             return {"ok": True, "clasificadas": 0, "filas": []}
-        df = clasificar_dataframe_completo(df, indices)
-        guardar_alertas(df)
+        clasificado = clasificar_dataframe_completo(df, indices)
+        columnas_ia = ["clasificacion", "justificacion_ia", "solucion", "clasificado_por", "problema"]
+        columnas_ia = [c for c in columnas_ia if c in clasificado.columns]
+        resultado = clasificado.loc[indices, ["id", *columnas_ia]].set_index("id")
+        # La llamada a Claude puede tardar; se fusiona sobre el estado actual para no pisar ediciones.
+        with BLOQUEO:
+            df = cargar_alertas()
+            mask = df["id"].isin(resultado.index)
+            for col in columnas_ia:
+                df.loc[mask, col] = df.loc[mask, "id"].map(resultado[col]).values
+            guardar_alertas(df)
         ids_out = ids if ids else [int(df.at[i, "id"]) for i in indices]
         return {"ok": True, "clasificadas": len(indices), "filas": _df_a_filas(df[df["id"].isin(ids_out)])}
 
@@ -194,18 +206,17 @@ class AlertasService:
         modo: str = "reemplazar",
     ) -> dict[str, Any]:
         nuevo = importar_excel_bytes(content)
-        if modo == "incremental":
-            existente = cargar_alertas()
-            ids_antes = set(int(i) for i in existente["id"].tolist())
-            df = fusionar_incremental(nuevo, existente)
-            ids_nuevos = [int(i) for i in df["id"].tolist() if int(i) not in ids_antes]
+        with BLOQUEO:
+            if modo == "incremental":
+                existente = cargar_alertas()
+                ids_antes = set(int(i) for i in existente["id"].tolist())
+                df = fusionar_incremental(nuevo, existente)
+                ids_nuevos = [int(i) for i in df["id"].tolist() if int(i) not in ids_antes]
+            else:
+                df = nuevo
+                ids_nuevos = [int(i) for i in df["id"].tolist()]
             ids_clasificar = ids_nuevos
-        else:
-            df = nuevo
-            ids_nuevos = [int(i) for i in df["id"].tolist()]
-            ids_clasificar = ids_nuevos
-
-        guardar_alertas(df)
+            guardar_alertas(df)
 
         return {
             "ok": True,
@@ -230,13 +241,27 @@ class AlertasService:
     def importar_csv(cls, content: bytes) -> dict[str, Any]:
         import io
 
-        nuevo = pd.read_csv(io.BytesIO(content))
+        try:
+            nuevo = pd.read_csv(io.BytesIO(content))
+        except (ValueError, pd.errors.ParserError) as exc:
+            raise ValueError("CSV ilegible.") from exc
+        faltantes = {"id", "local", "comentario"} - set(nuevo.columns)
+        if faltantes:
+            raise ValueError(f"Faltan columnas obligatorias: {', '.join(sorted(faltantes))}.")
+        ids = pd.to_numeric(nuevo["id"], errors="coerce")
+        if nuevo.empty or ids.isna().any() or (ids <= 0).any():
+            raise ValueError("Todas las filas deben tener un id numérico positivo.")
         guardar_alertas(nuevo)
         return {"ok": True, "importados": len(nuevo)}
 
     @classmethod
     def ingresar_alerta(cls, datos: dict) -> dict[str, Any]:
         """Crea una nueva fila de alerta ingresada manualmente y la persiste."""
+        with BLOQUEO:
+            return cls._ingresar_alerta(datos)
+
+    @classmethod
+    def _ingresar_alerta(cls, datos: dict) -> dict[str, Any]:
         df = cargar_alertas()
         nuevo_id = int(df["id"].max() + 1) if len(df) and "id" in df.columns else 1
         nuevo_n = int(df["n"].max() + 1) if len(df) and "n" in df.columns else 1

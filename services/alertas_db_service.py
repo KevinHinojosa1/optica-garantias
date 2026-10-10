@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import date, datetime
 from typing import Any
 
@@ -20,8 +21,14 @@ def _parse_fecha(val) -> date | None:
         return val
     if isinstance(val, datetime):
         return val.date()
+    texto = str(val).strip()
+    if re.match(r"^\d{4}-\d{2}-\d{2}", texto):
+        try:
+            return date.fromisoformat(texto[:10])
+        except ValueError:
+            return None
     try:
-        ts = pd.to_datetime(val, errors="coerce", dayfirst=True)
+        ts = pd.to_datetime(texto, errors="coerce", dayfirst=True)
         if pd.isna(ts):
             return None
         return ts.date()
@@ -71,10 +78,12 @@ class AlertasDbService:
             for _, series in df.iterrows():
                 row = _row_dict(series.to_dict())
                 rid = int(pd.to_numeric(row.get("id") or row.get("n") or 0, errors="coerce") or 0)
-                if rid <= 0:
+                if rid <= 0 or rid in vistos:
                     continue
                 vistos.add(rid)
                 payload = json.dumps(row, ensure_ascii=False, default=str)
+                if rid in existentes and existentes[rid].payload_json == payload:
+                    continue
                 fecha = _parse_fecha(row.get("fecha_alerta"))
                 fields = dict(
                     n=int(pd.to_numeric(row.get("n") or rid, errors="coerce") or rid),

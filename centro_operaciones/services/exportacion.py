@@ -71,6 +71,15 @@ def exportar_tabla_generica(
     return out.getvalue()
 
 
+_PREFIJOS_FORMULA = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _neutralizar_formula(val):
+    if isinstance(val, str) and val.startswith(_PREFIJOS_FORMULA):
+        return "'" + val
+    return val
+
+
 def _df_para_exporte_general(df: pd.DataFrame) -> pd.DataFrame:
     export = df.copy()
     if "fecha_alerta" in export.columns:
@@ -78,7 +87,7 @@ def _df_para_exporte_general(df: pd.DataFrame) -> pd.DataFrame:
     columnas = [c for c, _ in COLUMNAS_EXCEL_EXPORTE if c in export.columns]
     out = export[columnas].copy()
     out.columns = [label for c, label in COLUMNAS_EXCEL_EXPORTE if c in export.columns]
-    return out
+    return out.apply(lambda col: col.map(_neutralizar_formula))
 
 
 def exportar_matriz_seguimiento(df: pd.DataFrame) -> bytes:
