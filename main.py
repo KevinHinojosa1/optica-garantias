@@ -123,7 +123,23 @@ class NoCacheMiddleware(BaseHTTPMiddleware):
 app.add_middleware(NoCacheMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(SessionAuthMiddleware)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=str(settings.base_dir / "static")), name="static")
+
+
+@app.exception_handler(Exception)
+async def debug_exception_handler(request: Request, exc: Exception):
+    import traceback
+    tb = traceback.format_exc()
+    print(f"[ERROR VERCEL] {request.url.path}: {exc}\n{tb}", flush=True)
+    from fastapi.responses import HTMLResponse
+    return HTMLResponse(
+        content=f"""<!DOCTYPE html><html><head><title>Error</title></head>
+        <body style="font-family: monospace; padding: 20px; background: #fff1f2; color: #9f1239;">
+          <h2>⚠️ Excepción en {request.url.path}</h2>
+          <pre style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #fecdd3; overflow: auto;">{tb}</pre>
+        </body></html>""",
+        status_code=500,
+    )
 
 app.include_router(auth_router)
 app.include_router(import_router)
