@@ -29,8 +29,13 @@ from routers import (
 
 
 def _preparar_directorios() -> None:
-    for sub in ("data", "data/consultas", "data/base_datos", "data/google", "data/conocimiento", "static/img"):
-        (settings.base_dir / sub).mkdir(parents=True, exist_ok=True)
+    from pathlib import Path
+    base = Path("/tmp") if os.getenv("VERCEL") else settings.base_dir
+    try:
+        for sub in ("data", "data/consultas", "data/base_datos", "data/google", "data/conocimiento"):
+            (base / sub).mkdir(parents=True, exist_ok=True)
+    except Exception as exc:
+        print(f"_preparar_directorios (no crítico): {exc}", flush=True)
 
 
 def _bootstrap_datos():
@@ -82,7 +87,8 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         print(f"init_db (no crítico): {exc}", flush=True)
     asyncio.create_task(asyncio.to_thread(_bootstrap_datos))
-    asyncio.create_task(_keep_alive_bot())
+    if not os.getenv("VERCEL"):
+        asyncio.create_task(_keep_alive_bot())
     yield
 
 

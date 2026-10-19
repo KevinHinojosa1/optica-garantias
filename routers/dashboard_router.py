@@ -10,15 +10,21 @@ router = APIRouter(tags=["Dashboard"])
 
 @router.get("/dashboard", response_class=HTMLResponse)
 async def ver_dashboard(request: Request, db: Session = Depends(get_db)):
-    total_consultas = db.query(func.count(HistorialConsulta.id)).scalar()
-    aprobadas = db.query(func.count(HistorialConsulta.id)).filter(HistorialConsulta.veredicto == 'APLICA').scalar()
-    rechazadas = db.query(func.count(HistorialConsulta.id)).filter(HistorialConsulta.veredicto == 'NO APLICA').scalar()
-    dudosas = db.query(func.count(HistorialConsulta.id)).filter(HistorialConsulta.veredicto == 'IMAGEN NO CLARA').scalar()
-    
-    # Obtener ultimas consultas
-    ultimas = db.query(HistorialConsulta).order_by(HistorialConsulta.created_at.desc()).limit(5).all()
-
-    porcentaje_aprobacion = round((aprobadas / total_consultas * 100), 1) if total_consultas > 0 else 0
+    try:
+        total_consultas = db.query(func.count(HistorialConsulta.id)).scalar() or 0
+        aprobadas = db.query(func.count(HistorialConsulta.id)).filter(HistorialConsulta.veredicto == 'APLICA').scalar() or 0
+        rechazadas = db.query(func.count(HistorialConsulta.id)).filter(HistorialConsulta.veredicto == 'NO APLICA').scalar() or 0
+        dudosas = db.query(func.count(HistorialConsulta.id)).filter(HistorialConsulta.veredicto == 'IMAGEN NO CLARA').scalar() or 0
+        ultimas = db.query(HistorialConsulta).order_by(HistorialConsulta.created_at.desc()).limit(5).all()
+        porcentaje_aprobacion = round((aprobadas / total_consultas * 100), 1) if total_consultas > 0 else 0
+    except Exception as exc:
+        print(f"Error cargando métricas de dashboard: {exc}", flush=True)
+        total_consultas = 0
+        aprobadas = 0
+        rechazadas = 0
+        dudosas = 0
+        ultimas = []
+        porcentaje_aprobacion = 0
 
     return templates.TemplateResponse(
         request,

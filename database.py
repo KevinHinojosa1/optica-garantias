@@ -1,3 +1,6 @@
+import os
+import shutil
+from pathlib import Path
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
@@ -8,6 +11,25 @@ if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql+psycopg://", 1)
 elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+"):
     db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+
+# Soporte Vercel Serverless (el sistema de archivos es de solo lectura excepto /tmp)
+is_vercel = bool(os.getenv("VERCEL"))
+if is_vercel and db_url.startswith("sqlite"):
+    tmp_dir = Path("/tmp/data")
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+    tmp_db = tmp_dir / "optica_garantias.db"
+    if not tmp_db.exists():
+        for origen_path in [
+            settings.base_dir / "optica_garantias.db",
+            settings.base_dir / "data" / "optica_garantias.db",
+        ]:
+            if origen_path.exists():
+                try:
+                    shutil.copyfile(origen_path, tmp_db)
+                    break
+                except Exception:
+                    pass
+    db_url = f"sqlite:///{tmp_db}"
 
 _connect_args = {}
 if db_url.startswith("sqlite"):
@@ -79,12 +101,19 @@ def init_db():
     )
 
     Base.metadata.create_all(bind=engine)
-    migrate_db()
+    try:
+        migrate_db()
+    except Exception as exc:
+        print(f"migrate_db (no crítico): {exc}", flush=True)
 
-    consultas_dir = settings.base_dir / settings.consultas_imagenes_dir
-    consultas_dir.mkdir(parents=True, exist_ok=True)
-    (settings.base_dir / "data" / "conocimiento").mkdir(parents=True, exist_ok=True)
-    (settings.base_dir / "data" / "cuaderno").mkdir(parents=True, exist_ok=True)
+    base_storage = Path("/tmp") if is_vercel else settings.base_dir
+    try:
+        consultas_dir = base_storage / settings.consultas_imagenes_dir
+        consultas_dir.mkdir(parents=True, exist_ok=True)
+        (base_storage / "data" / "conocimiento").mkdir(parents=True, exist_ok=True)
+        (base_storage / "data" / "cuaderno").mkdir(parents=True, exist_ok=True)
+    except Exception as exc:
+        print(f"Directorios storage (no crítico): {exc}", flush=True)
 
     # Importar JSON antiguo de reprogramaciones si existe
     try:
