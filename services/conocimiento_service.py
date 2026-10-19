@@ -13,7 +13,9 @@ from sqlalchemy.orm import Session
 from config import settings
 from models.conocimiento import ConocimientoItem
 
-CONOCIMIENTO_DIR = settings.base_dir / "data" / "conocimiento"
+import os
+_base_storage = Path("/tmp") if os.getenv("VERCEL") else settings.base_dir
+CONOCIMIENTO_DIR = _base_storage / "data" / "conocimiento"
 
 CATEGORIAS = [
     {"id": "politica_oficial", "label": "Política oficial", "icon": "📜"},

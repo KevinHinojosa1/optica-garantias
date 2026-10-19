@@ -126,9 +126,12 @@ class RespuestaIAService:
     @classmethod
     def _guardar_plantillas(cls, plantillas: list[dict]) -> None:
         """Compat: reescribe JSON y sincroniza BD."""
-        RUTA_PLANTILLAS.parent.mkdir(parents=True, exist_ok=True)
-        with open(RUTA_PLANTILLAS, "w", encoding="utf-8") as f:
-            json.dump({"plantillas": plantillas}, f, ensure_ascii=False, indent=2)
+        try:
+            RUTA_PLANTILLAS.parent.mkdir(parents=True, exist_ok=True)
+            with open(RUTA_PLANTILLAS, "w", encoding="utf-8") as f:
+                json.dump({"plantillas": plantillas}, f, ensure_ascii=False, indent=2)
+        except Exception as exc:
+            print(f"Copia JSON plantillas no crítica: {exc}", flush=True)
 
     @classmethod
     def listar_plantillas(cls, modulo: str = "") -> list[dict]:

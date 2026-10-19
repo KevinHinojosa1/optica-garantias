@@ -110,7 +110,11 @@ async def api_resumen_dia(fecha: str | None = None, db: Session = Depends(get_db
 import json
 import os
 
-ULTIMA_MATRIZ_PATH = "data/ultima_matriz_envios.json"
+ULTIMA_MATRIZ_PATH = (
+    "/tmp/ultima_matriz_envios.json"
+    if os.getenv("VERCEL")
+    else "data/ultima_matriz_envios.json"
+)
 
 @router.get("/api/envios-whatsapp/historial")
 async def api_historial_reprogramaciones(
@@ -144,10 +148,15 @@ async def api_subir_excel_envios(archivo: UploadFile = File(...)):
             raise HTTPException(status_code=400, detail="El archivo está vacío.")
         data = WhatsAppEnviosService.parsear_excel(content, archivo.filename)
         
-        # Guardar la última matriz subida
-        os.makedirs("data", exist_ok=True)
-        with open(ULTIMA_MATRIZ_PATH, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
+        # Guardar la última matriz subida (en caché seguro no bloqueante)
+        try:
+            directorio_padre = os.path.dirname(ULTIMA_MATRIZ_PATH)
+            if directorio_padre:
+                os.makedirs(directorio_padre, exist_ok=True)
+            with open(ULTIMA_MATRIZ_PATH, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        except Exception as exc_cache:
+            print(f"Caché última matriz no crítico: {exc_cache}", flush=True)
             
         return SubirExcelEnviosResponse(**data)
     except HTTPException:

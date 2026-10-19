@@ -243,7 +243,8 @@ class CuadernoService:
         safe = re.sub(r"[^a-zA-Z0-9._-]", "_", Path(filename or "imagen").stem)[:40]
         nombre = f"nota_{nota_id}_{uuid.uuid4().hex[:8]}_{safe}{ext}"
         rel = Path("data/cuaderno") / nombre
-        abs_path = settings.base_dir / rel
+        base = Path("/tmp") if os.getenv("VERCEL") else settings.base_dir
+        abs_path = base / rel
         abs_path.parent.mkdir(parents=True, exist_ok=True)
         abs_path.write_bytes(content)
         adj = CuadernoAdjunto(

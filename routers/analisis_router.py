@@ -30,7 +30,8 @@ def _extension_mime(mime_type: str) -> str:
 
 
 def _guardar_imagen(historial_id: int, image_bytes: bytes, mime_type: str) -> str:
-    directorio = settings.base_dir / settings.consultas_imagenes_dir
+    base = Path("/tmp") if os.getenv("VERCEL") else settings.base_dir
+    directorio = base / settings.consultas_imagenes_dir
     directorio.mkdir(parents=True, exist_ok=True)
     ext = _extension_mime(mime_type)
     ruta = directorio / f"consulta_{historial_id}{ext}"
@@ -151,7 +152,8 @@ async def analizar_dano(
                 rutas.append(url_nube)
             else:
                 # 2. Fallback local (si no hay Supabase config)
-                directorio = settings.base_dir / settings.consultas_imagenes_dir
+                base = Path("/tmp") if os.getenv("VERCEL") else settings.base_dir
+                directorio = base / settings.consultas_imagenes_dir
                 directorio.mkdir(parents=True, exist_ok=True)
                 nombre = f"consulta_{registro.id}_{i+1}{ext}" if len(imagenes_data) > 1 else f"consulta_{registro.id}{ext}"
                 ruta = directorio / nombre
