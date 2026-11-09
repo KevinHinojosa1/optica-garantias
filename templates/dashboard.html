@@ -1,105 +1,404 @@
 {% extends "base.html" %}
-
-{% block title %}Dashboard Estadístico - Óptica Los Andes{% endblock %}
+{% block title %}Dashboard Ejecutivo V24{% endblock %}
 
 {% block content %}
-<div class="max-w-[1400px] mx-auto space-y-6 animate-fade-in pb-10">
-  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-    <div>
-      <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-optica-700 to-optica-500">
-        Panel de Control
-      </h1>
-      <p class="text-slate-500">Resumen general de garantías procesadas con IA.</p>
+<div class="space-y-6">
+
+  <!-- ==================== FILA 1: HERO CORAL CARD (8 COL) + CALENDARIO OPERATIVO (4 COL) ==================== -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+
+    <!-- 8-Col Hero Coral-Terracotta Banner (Exact Video Match) -->
+    <div class="lg:col-span-8 v24-hero-coral flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div class="relative z-10 space-y-4 max-w-xl">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-white/20 backdrop-blur-md border border-white/35 text-white">
+          <span class="w-2 h-2 rounded-full bg-amber-300 animate-pulse"></span>
+          Centro de Garantías · IA Vision Activa
+        </div>
+
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">
+            Tu gestión de garantías está al día esta semana
+          </h1>
+          <p class="text-white/85 text-xs sm:text-sm mt-1.5 leading-relaxed">
+            Auditoría técnica asistida por Claude Vision y normativa oficial de Óptica Los Andes. Evalúa reclamos, emite actas PDF y gestiona tiendas en tiempo real.
+          </p>
+        </div>
+
+        <!-- Inline Mini Metrics Pills -->
+        <div class="grid grid-cols-3 gap-2.5 pt-1">
+          <div class="rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 px-3.5 py-2.5">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-white/75">Analizados</p>
+            <p class="text-lg sm:text-xl font-extrabold text-white mt-0.5">{{ total_casos }}</p>
+          </div>
+          <div class="rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 px-3.5 py-2.5">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-white/75">Aprobadas</p>
+            <p class="text-lg sm:text-xl font-extrabold text-white mt-0.5">{{ aprobadas }}</p>
+          </div>
+          <div class="rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 px-3.5 py-2.5">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-white/75">Rechazadas</p>
+            <p class="text-lg sm:text-xl font-extrabold text-white mt-0.5">{{ rechazadas }}</p>
+          </div>
+        </div>
+
+        <!-- Hero CTA Buttons -->
+        <div class="flex flex-wrap items-center gap-3 pt-1">
+          <a href="/clientes"
+             class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-white text-slate-900 font-extrabold text-xs sm:text-sm shadow-lg hover:bg-amber-50 transition transform hover:-translate-y-0.5">
+            <span>✨ Evaluar Garantía</span>
+          </a>
+          <a href="/api/historial/exportar"
+             class="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/18 hover:bg-white/28 text-white border border-white/35 font-bold text-xs sm:text-sm backdrop-blur-md transition">
+            <span>📥 Exportar Excel</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Right Circular Glass Progress Gauge (Exact Video Match) -->
+      <div class="relative z-10 self-center md:self-auto flex flex-col items-center">
+        {% set pct = porcentaje_aprobacion | default(0) %}
+        {% set dash_offset = 339.29 - (339.29 * pct / 100) %}
+        <div class="v24-progress-ORB">
+          <svg class="w-32 h-32 -rotate-90 transform" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="54" stroke="rgba(255,255,255,0.22)" stroke-width="9" fill="transparent" />
+            <circle cx="60" cy="60" r="54" stroke="#ffffff" stroke-width="9" stroke-linecap="round" fill="transparent"
+                    stroke-dasharray="339.29" stroke-dashoffset="{{ dash_offset }}" />
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+            <span class="text-2xl font-extrabold text-white tracking-tight">{{ pct }}%</span>
+            <span class="text-[10px] font-bold uppercase tracking-wider text-white/80">Aprobación</span>
+          </div>
+        </div>
+        <span class="mt-2.5 text-[11px] font-semibold text-white/85 bg-black/15 px-3 py-1 rounded-full border border-white/20">
+          SLA Operativo · Tiempo Real
+        </span>
+      </div>
     </div>
-    <a href="/clientes" class="btn-ola btn-ola--primary flex items-center gap-2 px-5 py-2.5">
-      <span>➕ Nuevo Análisis</span>
-    </a>
+
+    <!-- 4-Col Calendar & Operational Schedule Card (Exact Video Match) -->
+    <div class="lg:col-span-4 glass-card p-5 flex flex-col justify-between space-y-4">
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <p class="text-[11px] font-bold uppercase tracking-wider text-optica-600">Agenda SAC</p>
+            <h3 id="v24-cal-month" class="text-base font-extrabold text-slate-900">Calendario Operativo</h3>
+          </div>
+          <span class="glass-pill px-2.5 py-1 rounded-xl text-[11px] font-bold text-slate-700">Semana Activa</span>
+        </div>
+
+        <!-- 5-Day Week Strip -->
+        <div class="grid grid-cols-5 gap-2" id="v24-week-strip">
+          <div class="v24-day-pill" data-weekday="1">
+            <span class="text-[10px] font-bold uppercase opacity-75">Lun</span>
+            <span class="text-sm font-extrabold mt-0.5 day-num">--</span>
+          </div>
+          <div class="v24-day-pill" data-weekday="2">
+            <span class="text-[10px] font-bold uppercase opacity-75">Mar</span>
+            <span class="text-sm font-extrabold mt-0.5 day-num">--</span>
+          </div>
+          <div class="v24-day-pill" data-weekday="3">
+            <span class="text-[10px] font-bold uppercase opacity-75">Mié</span>
+            <span class="text-sm font-extrabold mt-0.5 day-num">--</span>
+          </div>
+          <div class="v24-day-pill" data-weekday="4">
+            <span class="text-[10px] font-bold uppercase opacity-75">Jue</span>
+            <span class="text-sm font-extrabold mt-0.5 day-num">--</span>
+          </div>
+          <div class="v24-day-pill" data-weekday="5">
+            <span class="text-[10px] font-bold uppercase opacity-75">Vie</span>
+            <span class="text-sm font-extrabold mt-0.5 day-num">--</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Operational Schedule Shortcuts -->
+      <div class="space-y-2.5">
+        <a href="/ivr" class="glass-card-inner p-3 flex items-center justify-between group block">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-9 h-9 rounded-xl bg-optica-500/15 text-optica-600 flex items-center justify-center font-bold text-sm shrink-0">
+              📞
+            </div>
+            <div class="min-w-0">
+              <p class="text-xs font-extrabold text-slate-800 truncate group-hover:text-optica-600 transition">Verificación IVR Tiendas</p>
+              <p class="text-[11px] text-slate-500 truncate">Control diario de líneas y atención</p>
+            </div>
+          </div>
+          <span class="text-xs font-bold text-slate-400 group-hover:text-optica-600 transition">→</span>
+        </a>
+
+        <a href="/envios-whatsapp" class="glass-card-inner p-3 flex items-center justify-between group block">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
+              💬
+            </div>
+            <div class="min-w-0">
+              <p class="text-xs font-extrabold text-slate-800 truncate group-hover:text-emerald-600 transition">Reprogramación Entregas WA</p>
+              <p class="text-[11px] text-slate-500 truncate">Avisos a clientes, tiendas y correo</p>
+            </div>
+          </div>
+          <span class="text-xs font-bold text-slate-400 group-hover:text-emerald-600 transition">→</span>
+        </a>
+      </div>
+    </div>
+
   </div>
 
-  <!-- KPI Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-    <!-- Card 1 -->
-    <div class="glass-panel p-6 flex flex-col justify-between border-t-4 border-optica-500">
-      <h3 class="text-slate-500 font-medium text-sm uppercase tracking-wider">Total Analizados</h3>
-      <div class="mt-2 flex items-baseline gap-2">
-        <span class="text-4xl font-bold text-slate-800">{{ total_consultas }}</span>
-        <span class="text-sm text-slate-400">casos</span>
+  <!-- ==================== FILA 2: 4 TARJETAS KPI (3ª TARJETA EN CORAL ACCENT COMO EN EL VIDEO) ==================== -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+
+    <!-- KPI 1: Total Analizados -->
+    <div class="v24-stat-card">
+      <div class="flex items-center justify-between mb-3">
+        <span class="w-10 h-10 rounded-2xl bg-white/80 border border-white flex items-center justify-center text-lg shadow-sm">
+          📊
+        </span>
+        <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-white/75 text-slate-700 border border-white">
+          100% Base
+        </span>
       </div>
-    </div>
-    
-    <!-- Card 2 -->
-    <div class="glass-panel p-6 flex flex-col justify-between border-t-4 border-green-500">
-      <h3 class="text-slate-500 font-medium text-sm uppercase tracking-wider">Aprobadas</h3>
-      <div class="mt-2 flex items-baseline gap-2">
-        <span class="text-4xl font-bold text-green-600">{{ aprobadas }}</span>
-        <span class="text-sm text-green-500">({{ porcentaje_aprobacion }}%)</span>
+      <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Analizados</p>
+      <div class="flex items-baseline justify-between mt-1">
+        <h3 class="text-3xl font-extrabold text-slate-900">{{ total_casos }}</h3>
+        <span class="text-xs font-semibold text-emerald-600">● Activo</span>
       </div>
+      <p class="text-[11px] text-slate-500 mt-2">Expedientes procesados en sistema</p>
     </div>
 
-    <!-- Card 3 -->
-    <div class="glass-panel p-6 flex flex-col justify-between border-t-4 border-red-500">
-      <h3 class="text-slate-500 font-medium text-sm uppercase tracking-wider">Rechazadas</h3>
-      <div class="mt-2 flex items-baseline gap-2">
-        <span class="text-4xl font-bold text-red-600">{{ rechazadas }}</span>
+    <!-- KPI 2: Garantías Aprobadas -->
+    <div class="v24-stat-card">
+      <div class="flex items-center justify-between mb-3">
+        <span class="w-10 h-10 rounded-2xl bg-emerald-500/15 border border-emerald-500/20 text-emerald-700 flex items-center justify-center text-lg">
+          ✅
+        </span>
+        <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-800 border border-emerald-500/20">
+          {{ porcentaje_aprobacion }}% Aprobación
+        </span>
       </div>
-    </div>
-    
-    <!-- Card 4 -->
-    <div class="glass-panel p-6 flex flex-col justify-between border-t-4 border-yellow-500">
-      <h3 class="text-slate-500 font-medium text-sm uppercase tracking-wider">Por Revisar</h3>
-      <div class="mt-2 flex items-baseline gap-2">
-        <span class="text-4xl font-bold text-yellow-600">{{ dudosas }}</span>
-        <span class="text-sm text-slate-400">Dudosas</span>
+      <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Garantías Aprobadas</p>
+      <div class="flex items-baseline justify-between mt-1">
+        <h3 class="text-3xl font-extrabold text-slate-900">{{ aprobadas }}</h3>
+        <span class="text-xs font-semibold text-emerald-700">Proceden</span>
       </div>
+      <p class="text-[11px] text-slate-500 mt-2">Cubiertas por política técnica OLA</p>
     </div>
+
+    <!-- KPI 3: Signature Coral-Terracotta Highlight Card (Matches Video 3rd Card) -->
+    <div class="v24-stat-card v24-stat-card--accent">
+      <div class="flex items-center justify-between mb-3">
+        <span class="w-10 h-10 rounded-2xl bg-white/20 border border-white/35 text-white flex items-center justify-center text-lg backdrop-blur-sm">
+          🛡️
+        </span>
+        <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-white/20 text-white border border-white/30">
+          {% if total_casos > 0 %}{{ ((rechazadas / total_casos) * 100) | round(1) }}%{% else %}0%{% endif %} Filtro
+        </span>
+      </div>
+      <p class="text-xs font-bold uppercase tracking-wider text-white/80">No Aplica / Descuento</p>
+      <div class="flex items-baseline justify-between mt-1">
+        <h3 class="text-3xl font-extrabold text-white">{{ rechazadas }}</h3>
+        <span class="text-xs font-semibold text-amber-200">Contención</span>
+      </div>
+      <p class="text-[11px] text-white/80 mt-2">Daño externo o beneficio comercial</p>
+    </div>
+
+    <!-- KPI 4: Por Revisar -->
+    <div class="v24-stat-card">
+      <div class="flex items-center justify-between mb-3">
+        <span class="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/25 text-amber-700 flex items-center justify-center text-lg">
+          🔎
+        </span>
+        <span class="text-[11px] font-bold px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-800 border border-amber-500/25">
+          Auditoría
+        </span>
+      </div>
+      <p class="text-xs font-bold uppercase tracking-wider text-slate-500">Revisión Especial</p>
+      <div class="flex items-baseline justify-between mt-1">
+        <h3 class="text-3xl font-extrabold text-slate-900">{{ revisar }}</h3>
+        <span class="text-xs font-semibold text-amber-700">Laboratorio</span>
+      </div>
+      <p class="text-[11px] text-slate-500 mt-2">Casos sujetos a inspección física</p>
+    </div>
+
   </div>
 
-  <!-- Recent Activity -->
-  <div class="mt-8">
-    <h2 class="text-xl font-bold text-slate-800 mb-4">Actividad Reciente</h2>
-    <div class="glass-panel overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-slate-50 border-b border-slate-200">
-              <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Fecha</th>
-              <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Cliente</th>
-              <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Resultado</th>
-              <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Acción</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100">
-            {% for caso in ultimas %}
-            <tr class="hover:bg-slate-50 transition-colors">
-              <td class="px-6 py-4 text-sm text-slate-600">
-                {{ caso.created_at.strftime('%d/%m/%Y %H:%M') if caso.created_at else 'N/A' }}
-              </td>
-              <td class="px-6 py-4 text-sm font-medium text-slate-800">
-                {{ caso.cliente_nombre }}
-              </td>
-              <td class="px-6 py-4">
-                {% if caso.veredicto == 'APLICA' %}
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200">APLICA</span>
-                {% elif caso.veredicto == 'NO APLICA' %}
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 border border-red-200">NO APLICA</span>
-                {% else %}
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">REVISIÓN MANUAL</span>
-                {% endif %}
-              </td>
-              <td class="px-6 py-4">
-                <a href="/historial" class="text-optica-600 hover:text-optica-800 text-sm font-medium">Ver Detalles →</a>
-              </td>
-            </tr>
-            {% else %}
-            <tr>
-              <td colspan="4" class="px-6 py-8 text-center text-slate-500">No hay casos registrados aún.</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+  <!-- ==================== FILA 3: MOTIVOS FRECUENTES (7 COL) + TOP TIENDAS (5 COL) ==================== -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+    <!-- Motivos Más Frecuentes -->
+    <div class="lg:col-span-7 glass-card p-6">
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <p class="text-[11px] font-bold uppercase tracking-wider text-optica-600">Diagnóstico IA & Asesor</p>
+          <h3 class="text-base sm:text-lg font-extrabold text-slate-900">Motivos Técnicos Más Frecuentes</h3>
+        </div>
+        <span class="glass-pill text-xs font-bold text-slate-600 px-3 py-1 rounded-xl">Top 5 causas</span>
       </div>
+
+      {% if motivos_stats %}
+      <div class="space-y-4">
+        {% for item in motivos_stats %}
+        <div class="glass-card-inner p-3.5">
+          <div class="flex justify-between items-center text-xs sm:text-sm font-bold text-slate-800 mb-2">
+            <span class="truncate pr-4">{{ item.motivo }}</span>
+            <span class="text-optica-600 shrink-0">{{ item.count }} casos ({{ item.pct }}%)</span>
+          </div>
+          <div class="w-full h-2.5 bg-white/70 rounded-full overflow-hidden p-0.5 border border-white">
+            <div class="h-full rounded-full transition-all duration-700"
+                 style="width: {{ item.pct }}%; background: linear-gradient(90deg, #e0533c 0%, #f59e0b 100%);"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="py-12 text-center text-slate-500">
+        <p class="text-3xl mb-2">📊</p>
+        <p class="text-sm font-medium">Aún no hay suficientes evaluaciones para graficar tendencias.</p>
+      </div>
+      {% endif %}
     </div>
+
+    <!-- Top Locales / Tiendas -->
+    <div class="lg:col-span-5 glass-card p-6">
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <p class="text-[11px] font-bold uppercase tracking-wider text-optica-600">Distribución Geográfica</p>
+          <h3 class="text-base sm:text-lg font-extrabold text-slate-900">Incidencia por Tienda</h3>
+        </div>
+        <span class="glass-pill text-xs font-bold text-slate-600 px-3 py-1 rounded-xl">Top 5 locales</span>
+      </div>
+
+      {% if locales_stats %}
+      <div class="space-y-3">
+        {% for loc in locales_stats %}
+        <div class="glass-card-inner p-3.5 flex items-center justify-between">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-8 h-8 rounded-xl flex items-center justify-center font-extrabold text-xs text-white shrink-0"
+                 style="background: linear-gradient(135deg, #e0533c 0%, #d96b43 100%);">
+              #{{ loop.index }}
+            </div>
+            <span class="font-bold text-slate-800 text-xs sm:text-sm truncate">{{ loc.tienda }}</span>
+          </div>
+          <span class="glass-pill px-3 py-1 rounded-xl text-xs font-extrabold text-slate-800 shrink-0">
+            {{ loc.count }} reclamos
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="py-12 text-center text-slate-500">
+        <p class="text-3xl mb-2">🏬</p>
+        <p class="text-sm font-medium">Sin registros de tiendas todavía.</p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- ==================== FILA 4: ÚLTIMAS EVALUACIONES REGISTRADAS ==================== -->
+  <div class="glass-card p-6">
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
+      <div>
+        <p class="text-[11px] font-bold uppercase tracking-wider text-optica-600">Trazabilidad en Tiempo Real</p>
+        <h3 class="text-base sm:text-lg font-extrabold text-slate-900">Últimas Evaluaciones Registradas</h3>
+      </div>
+      <a href="/historial" class="glass-pill px-4 py-2 rounded-xl text-xs font-extrabold text-optica-600 hover:text-optica-700 transition">
+        Ver historial completo →
+      </a>
+    </div>
+
+    {% if ultimos_casos %}
+    <div class="v24-table-wrap overflow-x-auto">
+      <table class="w-full text-left border-collapse v24-table min-w-[680px]">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Paciente</th>
+            <th>Tienda</th>
+            <th>Motivo</th>
+            <th>Asesor</th>
+            <th>Veredicto Final</th>
+            <th class="text-right">Acta PDF</th>
+          </tr>
+        </thead>
+        <tbody class="text-xs sm:text-sm">
+          {% for c in ultimos_casos %}
+          <tr>
+            <td class="text-slate-500 font-medium whitespace-nowrap">
+              {{ c.created_at.strftime('%d/%m/%Y %H:%M') if c.created_at else 'Reciente' }}
+            </td>
+            <td class="font-extrabold text-slate-900">{{ c.cliente_nombre or 'Paciente OLA' }}</td>
+            <td class="text-slate-600 font-medium">{{ c.cliente.tienda if c.cliente and c.cliente.tienda else 'SAC Central' }}</td>
+            <td class="text-slate-600 max-w-[220px] truncate">{{ c.motivo or 'Evaluación técnica' }}</td>
+            <td>
+              <span class="glass-pill px-2.5 py-1 rounded-lg text-xs font-bold text-slate-700">
+                {{ c.asesor or 'SAC' }}
+              </span>
+            </td>
+            <td>
+              {% set v = (c.veredicto or '') | upper %}
+              {% if 'APLICA' in v and 'NO APLICA' not in v %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-500/15 text-emerald-800 border border-emerald-500/25">
+                  ● {{ c.veredicto }}
+                </span>
+              {% elif 'NO APLICA' in v %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold bg-rose-500/15 text-rose-800 border border-rose-500/25">
+                  ● {{ c.veredicto }}
+                </span>
+              {% else %}
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold bg-amber-500/15 text-amber-800 border border-amber-500/25">
+                  ● {{ c.veredicto }}
+                </span>
+              {% endif %}
+            </td>
+            <td class="text-right">
+              <a href="/api/historial/{{ c.id }}/pdf"
+                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-sm transition hover:-translate-y-0.5"
+                 style="background: linear-gradient(135deg, #e0533c 0%, #d96b43 100%);"
+                 title="Descargar Informe PDF">
+                <span>📄 PDF</span>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="py-10 text-center text-slate-500">
+      <p class="text-sm font-medium">No se han registrado evaluaciones recientes.</p>
+    </div>
+    {% endif %}
   </div>
 
 </div>
+
+<script>
+  (function () {
+    // Populate current week dates in the 5-day calendar strip and highlight today
+    const now = new Date();
+    const monthEl = document.getElementById('v24-cal-month');
+    if (monthEl) {
+      try {
+        const m = new Intl.DateTimeFormat('es-EC', { month: 'long', year: 'numeric' }).format(now);
+        monthEl.textContent = m.charAt(0).toUpperCase() + m.slice(1);
+      } catch (e) {}
+    }
+
+    const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon ... 6=Sat
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + mondayOffset);
+
+    const pills = document.querySelectorAll('#v24-week-strip .v24-day-pill');
+    pills.forEach(function (pill, idx) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + idx);
+      const numSpan = pill.querySelector('.day-num');
+      if (numSpan) numSpan.textContent = d.getDate();
+
+      const activeDay = (dayOfWeek >= 1 && dayOfWeek <= 5) ? dayOfWeek : 1;
+      if (idx + 1 === activeDay) {
+        pill.classList.add('v24-day-pill--active');
+      }
+    });
+  })();
+</script>
 {% endblock %}

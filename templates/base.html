@@ -2,161 +2,261 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <title>{% block title %}Óptica Los Andes{% endblock %} — Garantías</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>{% block title %}Óptica Los Andes{% endblock %} — Centro de Operaciones V24</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/glass.css?v={{ asset_version }}">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/static/css/glass.css?v={{ asset_version }}">
   <script>
     tailwind.config = {
       theme: {
         extend: {
-          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'] },
           colors: {
-            optica: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af' }
+            optica: {
+              50: '#fff5f2',
+              100: '#ffe8e0',
+              200: '#ffd0c2',
+              500: '#e0533c',
+              600: '#cf432c',
+              700: '#ad3420',
+              800: '#8d2b1b',
+              900: '#742619',
+            }
           }
         }
       }
     }
   </script>
-  <style>
-    html { -webkit-text-size-adjust: 100%; }
-    body { font-family: 'Inter', system-ui, sans-serif; }
-    .overflow-touch { -webkit-overflow-scrolling: touch; }
-  </style>
   {% block head %}{% endblock %}
 </head>
-<body class="glass-body min-h-screen text-slate-800 antialiased">
-  <nav class="glass-nav sticky top-0 z-40">
-    <div class="max-w-[1440px] mx-auto px-3 sm:px-6">
-      <div class="flex items-center justify-between gap-2 xl:gap-4 py-2.5">
-        <!-- Logo / Marca -->
-        <div class="flex items-center gap-2.5 shrink-0">
-          <span class="text-2xl shrink-0 opacity-90">👓</span>
-          <div class="min-w-0">
-            <h1 class="font-bold text-sm sm:text-base leading-tight tracking-tight text-slate-900 truncate">Óptica Los Andes</h1>
-            <p class="text-[11px] text-slate-500 font-medium truncate">Centro de Operaciones</p>
-          </div>
+<body class="glass-body antialiased">
+
+  <div class="v24-stage">
+    <!-- ==================== LEFT FLOATING GLASS SIDEBAR ==================== -->
+    <aside class="v24-sidebar" aria-label="Navegación principal">
+      <div>
+        <!-- Brand Header + Mobile Toggle -->
+        <div class="flex items-center justify-between">
+          <a href="/dashboard" class="v24-brand group">
+            <div class="v24-brand-logo">
+              {% if logo_oficial_path %}
+              <img src="{{ logo_oficial_path }}?v={{ asset_version }}" alt="Óptica Los Andes">
+              {% else %}
+              <span>👓</span>
+              {% endif %}
+            </div>
+            <div class="min-w-0">
+              <h1 class="text-sm font-extrabold tracking-tight text-slate-900 truncate group-hover:text-optica-600 transition-colors">Óptica Los Andes</h1>
+              <p class="text-[11px] font-semibold text-slate-500 truncate">Spatial Glass · V24</p>
+            </div>
+          </a>
+          <button type="button" id="v24-mobile-toggle" class="lg:hidden p-2 rounded-xl glass-pill text-slate-700 hover:text-optica-600" aria-label="Alternar menú">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
         </div>
 
-        <!-- Botón Menú Móvil -->
-        <button type="button" id="nav-toggle" aria-label="Abrir menú" aria-expanded="false"
-          class="lg:hidden flex items-center justify-center w-9 h-9 rounded-xl glass-btn text-slate-600 shrink-0">
-          <svg id="nav-icon-open" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-          </svg>
-          <svg id="nav-icon-close" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-
-        <!-- Navegación Desktop y Perfil de Usuario -->
-        <div class="hidden lg:flex items-center gap-2 xl:gap-3 shrink-0">
-          <div class="flex items-center gap-1 xl:gap-1.5 text-xs xl:text-sm">
-            <a href="/dashboard" class="nav-link px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-xl glass-btn transition whitespace-nowrap text-slate-600 {% if active == 'dashboard' %}glass-btn-active font-semibold{% endif %}">Dashboard</a>
-            <a href="/clientes" class="nav-link px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-xl glass-btn transition whitespace-nowrap text-slate-600 {% if active == 'clientes' %}glass-btn-active font-semibold{% endif %}">Atención</a>
-            <a href="/historial" class="nav-link px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-xl glass-btn transition whitespace-nowrap text-slate-600 {% if active == 'historial' %}glass-btn-active font-semibold{% endif %}">Historial</a>
-            <a href="/conocimiento" class="nav-link px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-xl glass-btn transition whitespace-nowrap text-slate-600 {% if active == 'conocimiento' %}glass-btn-active font-semibold{% endif %}">Conocimiento</a>
-            <a href="/ivr" class="nav-link px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-xl glass-btn transition whitespace-nowrap text-slate-600 {% if active == 'ivr' %}glass-btn-active font-semibold{% endif %}">IVR</a>
-            <a href="/envios-whatsapp" class="nav-link px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-xl glass-btn transition whitespace-nowrap text-slate-600 {% if active == 'envios_whatsapp' %}glass-btn-active font-semibold{% endif %}">Entregas WA</a>
-            <a href="/scripts" class="nav-link px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-xl glass-btn transition whitespace-nowrap text-slate-600 {% if active == 'scripts' %}glass-btn-active font-semibold{% endif %}">Scripts</a>
-            <a href="/cuaderno" class="nav-link px-2.5 py-1.5 xl:px-3 xl:py-2 rounded-xl glass-btn transition whitespace-nowrap text-slate-600 {% if active == 'cuaderno' %}glass-btn-active font-semibold{% endif %}">Cuaderno</a>
+        <!-- Collapsible Navigation Area on Mobile, Always Visible on Desktop -->
+        <div id="v24-sidebar-menu" class="hidden lg:block mt-2">
+          <!-- Quick Search Input -->
+          <div class="v24-search-box">
+            <svg class="v24-search-icon w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="m21 21-4.3-4.3"/>
+            </svg>
+            <input type="search" id="v24-module-search" class="v24-search-input" placeholder="Buscar módulo..." autocomplete="off">
+            <span class="v24-search-kbd">⌘K</span>
           </div>
 
-          {% if request.state.user %}
-          <!-- Cápsula de Usuario Unificada y Elegante -->
-          <div class="flex items-center gap-1.5 pl-2.5 border-l border-slate-300/70">
-            <div class="flex items-center gap-2 bg-white/80 border border-slate-200/90 py-1 px-2.5 rounded-xl shadow-xs">
-              <span class="w-6 h-6 rounded-lg bg-optica-100 text-optica-700 flex items-center justify-center text-xs shrink-0 font-bold">
-                {{ request.state.user.avatar }}
-              </span>
-              <div class="leading-none text-left">
-                <p class="text-xs font-bold text-slate-800 tracking-tight">{{ request.state.user.nombre }}</p>
-                <p class="text-[10px] text-slate-500 font-medium">{{ request.state.user.rol }}</p>
-              </div>
-            </div>
-
-            <!-- Botón Salir con Ícono SVG -->
-            <a href="/logout" title="Cerrar sesión" 
-              class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 hover:text-red-600 hover:bg-red-50 border border-slate-200/90 bg-white/70 transition shadow-xs group cursor-pointer">
-              <svg class="w-4 h-4 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          <p class="v24-nav-section-label">Centro de Operaciones</p>
+          <nav class="v24-nav-list" id="v24-nav-links">
+            <a href="/dashboard" data-label="dashboard resumen metricas kpi inicio"
+               class="v24-nav-item {% if request.url.path == '/dashboard' %}v24-nav-item--active{% endif %}">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/>
               </svg>
+              <span>Dashboard</span>
             </a>
-          </div>
-          {% endif %}
+
+            <a href="/clientes" data-label="atencion clientes garantias analisis paciente"
+               class="v24-nav-item {% if request.url.path == '/clientes' or request.url.path.startswith('/cliente/') %}v24-nav-item--active{% endif %}">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+              <span>Atención y Garantías</span>
+            </a>
+
+            <a href="/historial" data-label="historial consultas pdf word reportes"
+               class="v24-nav-item {% if request.url.path == '/historial' %}v24-nav-item--active{% endif %}">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span>Historial</span>
+            </a>
+
+            <a href="/conocimiento" data-label="conocimiento politicas base ia claude"
+               class="v24-nav-item {% if request.url.path == '/conocimiento' %}v24-nav-item--active{% endif %}">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+              </svg>
+              <span>Conocimiento</span>
+            </a>
+
+            <p class="v24-nav-section-label mt-3">Canales & CX</p>
+
+            <a href="/ivr" data-label="ivr tiendas verificacion llamadas"
+               class="v24-nav-item {% if request.url.path == '/ivr' %}v24-nav-item--active{% endif %}">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+              </svg>
+              <span>Verificación IVR</span>
+            </a>
+
+            <a href="/envios-whatsapp" data-label="entregas whatsapp reprogramacion matriz excel"
+               class="v24-nav-item {% if request.url.path == '/envios-whatsapp' %}v24-nav-item--active{% endif %}">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+              </svg>
+              <span>Entregas WA</span>
+            </a>
+
+            <a href="/scripts" data-label="scripts guiones cx objeciones"
+               class="v24-nav-item {% if request.url.path == '/scripts' %}v24-nav-item--active{% endif %}">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+              </svg>
+              <span>Scripts CX</span>
+            </a>
+
+            <a href="/cuaderno" data-label="cuaderno bitacora notas apuntes"
+               class="v24-nav-item {% if request.url.path == '/cuaderno' %}v24-nav-item--active{% endif %}">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+              <span>Mi Cuaderno</span>
+            </a>
+          </nav>
         </div>
       </div>
 
-      <!-- Menú Móvil -->
-      <div id="nav-menu" class="hidden lg:hidden border-t border-white/50 pb-3 pt-2">
-        {% if request.state.user %}
-        <div class="flex items-center justify-between p-2.5 my-2 bg-white/80 rounded-2xl border border-slate-200 text-xs">
-          <div class="flex items-center gap-2">
-            <span class="w-7 h-7 rounded-lg bg-optica-100 flex items-center justify-center text-sm font-bold">
-              {{ request.state.user.avatar }}
-            </span>
-            <div class="leading-none">
-              <p class="font-bold text-slate-800 text-xs">{{ request.state.user.nombre }}</p>
-              <p class="text-[10px] text-slate-500 font-medium mt-0.5">{{ request.state.user.rol }}</p>
-            </div>
+      <!-- User Profile Capsule at Bottom of Sidebar -->
+      {% if request.state.user %}
+      <div class="v24-user-card">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="v24-user-avatar">
+            {{ request.state.user.avatar or request.state.user.nombre[:2].upper() }}
           </div>
-          <a href="/logout" class="text-red-600 text-xs font-semibold px-2.5 py-1 bg-red-50 rounded-lg hover:bg-red-100 flex items-center gap-1 border border-red-100 transition">
-            <span>Salir</span>
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
+          <div class="min-w-0">
+            <p class="text-xs font-extrabold text-slate-900 truncate">{{ request.state.user.nombre }}</p>
+            <p class="text-[10px] font-semibold text-slate-500 truncate">{{ request.state.user.rol or request.state.user.cargo }}</p>
+          </div>
+        </div>
+        <a href="/logout" title="Cerrar sesión"
+           class="p-2 rounded-xl bg-white/60 hover:bg-rose-50 text-slate-600 hover:text-rose-600 border border-white/80 transition shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+        </a>
+      </div>
+      {% endif %}
+    </aside>
+
+    <!-- ==================== MAIN FLOATING GLASS WINDOW ==================== -->
+    <div class="v24-main">
+      <!-- Top Window Header Bar -->
+      <header class="v24-topbar">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white/70 text-optica-600 border border-white/85 shadow-sm">
+              <span class="w-1.5 h-1.5 rounded-full bg-optica-500 animate-pulse"></span>
+              Glassy V24 · En línea
+            </span>
+            <span id="v24-live-date" class="text-xs font-semibold text-slate-500 hidden sm:inline"></span>
+          </div>
+          <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight mt-1">
+            {% if request.state.user %}
+              Hola, {{ request.state.user.nombre.split(' ')[0] }} 👋
+            {% else %}
+              Centro de Operaciones SAC
+            {% endif %}
+          </h2>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+          <a href="/clientes" class="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold text-white shadow-md transition hover:-translate-y-0.5"
+             style="background: linear-gradient(135deg, #e0533c 0%, #d96b43 100%); box-shadow: 0 8px 20px -5px rgba(224, 83, 60, 0.45);">
+            <span>＋ Nueva Garantía</span>
+          </a>
+          <a href="/historial" class="glass-pill px-3.5 py-2 rounded-2xl text-xs font-bold text-slate-700 hover:text-slate-900 transition">
+            📋 Historial
           </a>
         </div>
-        {% endif %}
-        <div class="grid grid-cols-2 gap-1.5 pt-1 text-xs">
-          <a href="/dashboard" class="nav-link px-3 py-2 rounded-xl glass-btn transition text-center text-slate-700 {% if active == 'dashboard' %}glass-btn-active font-semibold{% endif %}">Dashboard</a>
-          <a href="/clientes" class="nav-link px-3 py-2 rounded-xl glass-btn transition text-center text-slate-700 {% if active == 'clientes' %}glass-btn-active font-semibold{% endif %}">Atención</a>
-          <a href="/historial" class="nav-link px-3 py-2 rounded-xl glass-btn transition text-center text-slate-700 {% if active == 'historial' %}glass-btn-active font-semibold{% endif %}">Historial</a>
-          <a href="/conocimiento" class="nav-link px-3 py-2 rounded-xl glass-btn transition text-center text-slate-700 {% if active == 'conocimiento' %}glass-btn-active font-semibold{% endif %}">Conocimiento</a>
-          <a href="/ivr" class="nav-link px-3 py-2 rounded-xl glass-btn transition text-center text-slate-700 {% if active == 'ivr' %}glass-btn-active font-semibold{% endif %}">IVR</a>
-          <a href="/envios-whatsapp" class="nav-link px-3 py-2 rounded-xl glass-btn transition text-center text-slate-700 {% if active == 'envios_whatsapp' %}glass-btn-active font-semibold{% endif %}">Entregas WA</a>
-          <a href="/scripts" class="nav-link px-3 py-2 rounded-xl glass-btn transition text-center text-slate-700 {% if active == 'scripts' %}glass-btn-active font-semibold{% endif %}">Scripts</a>
-          <a href="/cuaderno" class="nav-link px-3 py-2 rounded-xl glass-btn transition text-center text-slate-700 {% if active == 'cuaderno' %}glass-btn-active font-semibold{% endif %}">Cuaderno</a>
-        </div>
-      </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="flex-1 w-full">
+        {% block content %}{% endblock %}
+      </main>
+
+      <!-- Subtle Window Footer -->
+      <footer class="mt-10 pt-4 border-t border-white/50 flex flex-wrap items-center justify-between gap-2 text-[11px] font-medium text-slate-500">
+        <span>Óptica Los Andes · Sistema Inteligente de Garantías & Operaciones SAC</span>
+        <span>Glassy Dashboard V24 · Claude Vision AI</span>
+      </footer>
     </div>
-  </nav>
-
-  <main class="max-w-[1440px] mx-auto px-3 sm:px-6 py-4 sm:py-6">
-    {% block content %}{% endblock %}
-  </main>
-
-  <footer class="glass-footer text-center text-xs text-slate-500 py-4 px-4 mt-6 sm:mt-8">
-    Óptica Los Andes Ecuador — v{{ asset_version }}
-  </footer>
+  </div>
 
   <script>
     (function () {
-      const toggle = document.getElementById('nav-toggle');
-      const menu = document.getElementById('nav-menu');
-      const iconOpen = document.getElementById('nav-icon-open');
-      const iconClose = document.getElementById('nav-icon-close');
-      if (!toggle || !menu) return;
-
-      function setOpen(open) {
-        menu.classList.toggle('hidden', !open);
-        iconOpen.classList.toggle('hidden', open);
-        iconClose.classList.toggle('hidden', !open);
-        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
-        toggle.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+      // Live Date Formatting in Topbar
+      const dateEl = document.getElementById('v24-live-date');
+      if (dateEl) {
+        try {
+          const now = new Date();
+          const fmt = new Intl.DateTimeFormat('es-EC', { weekday: 'long', day: 'numeric', month: 'short' }).format(now);
+          dateEl.textContent = '· ' + fmt.charAt(0).toUpperCase() + fmt.slice(1);
+        } catch (e) {}
       }
 
-      toggle.addEventListener('click', () => setOpen(menu.classList.contains('hidden')));
-      menu.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', () => setOpen(false));
-      });
-      window.addEventListener('resize', () => {
-        if (window.innerWidth >= 1024) setOpen(false);
-      });
+      // Mobile Sidebar Toggle
+      const toggleBtn = document.getElementById('v24-mobile-toggle');
+      const menu = document.getElementById('v24-sidebar-menu');
+      if (toggleBtn && menu) {
+        toggleBtn.addEventListener('click', function () {
+          menu.classList.toggle('hidden');
+        });
+      }
+
+      // Quick Module Filter & Cmd+K Shortcut
+      const searchInput = document.getElementById('v24-module-search');
+      const navLinks = document.querySelectorAll('#v24-nav-links .v24-nav-item');
+      if (searchInput && navLinks.length) {
+        searchInput.addEventListener('input', function () {
+          const q = (searchInput.value || '').toLowerCase().trim();
+          navLinks.forEach(function (link) {
+            const text = (link.textContent + ' ' + (link.getAttribute('data-label') || '')).toLowerCase();
+            link.style.display = (!q || text.includes(q)) ? '' : 'none';
+          });
+        });
+
+        searchInput.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') {
+            const visible = Array.from(navLinks).find(function (l) { return l.style.display !== 'none'; });
+            if (visible && visible.href) window.location.href = visible.href;
+          }
+        });
+
+        window.addEventListener('keydown', function (e) {
+          if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            if (menu && menu.classList.contains('hidden')) menu.classList.remove('hidden');
+            searchInput.focus();
+          }
+        });
+      }
     })();
   </script>
   {% block scripts %}{% endblock %}
