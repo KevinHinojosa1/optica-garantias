@@ -13,7 +13,7 @@ def _obtener_ip_cliente(request: Request) -> str:
     return request.client.host if request.client else "127.0.0.1"
 
 @router.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request, next: str = "/dashboard", error: str = None):
+async def login_page(request: Request, next: str = "/envios-whatsapp", error: str = None):
     ip = _obtener_ip_cliente(request)
     bloqueado, min_restantes = AuthService.verificar_bloqueo(ip, "")
     
@@ -27,7 +27,7 @@ async def login_page(request: Request, next: str = "/dashboard", error: str = No
         "login.html",
         {
             "usuarios": usuarios,
-            "next_url": next or "/dashboard",
+            "next_url": next or "/envios-whatsapp",
             "error": msg_error,
             "bloqueado": bloqueado,
         },
@@ -38,7 +38,7 @@ async def procesar_login(
     request: Request,
     username: str = Form(...),
     password: str = Form(...),
-    next_url: str = Form(default="/dashboard"),
+    next_url: str = Form(default="/envios-whatsapp"),
 ):
     ip = _obtener_ip_cliente(request)
     user, error_msg = AuthService.autenticar(username, password, ip=ip)
@@ -50,7 +50,7 @@ async def procesar_login(
             "login.html",
             {
                 "usuarios": usuarios,
-                "next_url": next_url or "/dashboard",
+                "next_url": next_url or "/envios-whatsapp",
                 "error": error_msg or "Usuario o contraseña incorrectos.",
                 "selected_username": username.strip().lower() if username else "",
             },
@@ -59,7 +59,7 @@ async def procesar_login(
 
     # Autenticación exitosa: generar token criptográfico firmado
     token = AuthService.crear_token(user["username"])
-    destino = next_url if next_url and next_url.startswith("/") and next_url != "/login" else "/dashboard"
+    destino = next_url if next_url and next_url.startswith("/") and next_url not in ("/login", "/dashboard") else "/envios-whatsapp"
     
     is_https = request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https"
 

@@ -159,7 +159,7 @@ app.include_router(cuaderno_router)
 
 @app.get("/")
 async def root():
-    return RedirectResponse(url="/dashboard")
+    return RedirectResponse(url="/envios-whatsapp")
 
 
 @app.api_route("/health", methods=["GET", "HEAD"])
@@ -175,7 +175,7 @@ async def not_found_handler(request: Request, exc):
         from fastapi.responses import JSONResponse
 
         return JSONResponse(status_code=404, content={"detail": "Recurso no encontrado"})
-    return RedirectResponse(url="/clientes")
+    return RedirectResponse(url="/envios-whatsapp")
 
 
 if __name__ == "__main__":
