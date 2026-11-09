@@ -690,6 +690,80 @@ html {
   border-color: rgba(252, 165, 165, 0.75);
 }
 
+.btn-ola--indigo {
+  color: #fff;
+  background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 24px -6px rgba(67, 56, 202, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.32);
+}
+
+.btn-ola--sm {
+  padding: 0.48rem 0.9rem;
+  font-size: 0.8125rem;
+  border-radius: 12px;
+}
+
+.btn-ola--center {
+  justify-content: center;
+  text-align: center;
+}
+
+.btn-ola-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+}
+
+@media (min-width: 640px) {
+  .btn-ola-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .btn-ola--span-2 {
+    grid-column: span 2 / span 2;
+  }
+}
+
+/* IVR Verification & Modal Glass Classes */
+.glass-val-ok {
+  border-color: rgba(16, 185, 129, 0.38) !important;
+  color: #047857 !important;
+  background: rgba(236, 253, 245, 0.65) !important;
+}
+
+.glass-val-ok-active {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 8px 20px -4px rgba(16, 185, 129, 0.45) !important;
+}
+
+.glass-val-no {
+  border-color: rgba(244, 63, 94, 0.38) !important;
+  color: #be123c !important;
+  background: rgba(255, 241, 242, 0.65) !important;
+}
+
+.glass-val-no-active {
+  background: linear-gradient(135deg, #e11d48 0%, #f43f5e 100%) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 8px 20px -4px rgba(244, 63, 94, 0.45) !important;
+}
+
+.glass-modal-overlay {
+  background: rgba(30, 22, 18, 0.38);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.glass-modal {
+  background: rgba(255, 252, 249, 0.92);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  box-shadow: 0 28px 64px rgba(30, 20, 12, 0.24);
+}
+
 /* ==========================================================================
    7. TABLES & SCROLLBARS
    ========================================================================== */

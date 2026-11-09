@@ -2,7 +2,7 @@ from fastapi.templating import Jinja2Templates
 
 from config import LOGO_OFICIAL_PATH, settings
 
-ASSET_VERSION = "2.24.0"
+ASSET_VERSION = "2.25.0"
 
 templates = Jinja2Templates(directory=str(settings.base_dir / "templates"))
 templates.env.globals["asset_version"] = ASSET_VERSION

@@ -106,8 +106,9 @@ class PdfService:
         title_para = Paragraph("INFORME DE REVISIÓN DE LENTES", title_style)
                 
         logo = None
-        if os.path.exists(LOGO_OFICIAL_PATH):
-            logo = Image(LOGO_OFICIAL_PATH, width=4*cm, height=1.5*cm)
+        logo_full = str(settings.base_dir / LOGO_OFICIAL_PATH.lstrip("/"))
+        if os.path.exists(logo_full):
+            logo = Image(logo_full, width=4*cm, height=1.5*cm)
             logo.hAlign = 'RIGHT'
 
         header_data = [[

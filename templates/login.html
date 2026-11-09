@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Iniciar Sesión — Óptica Los Andes · Glassy V24</title>
+  <title>Iniciar Sesión — Óptica Los Andes · Servicio al Cliente</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -18,14 +18,14 @@
     <div class="lg:col-span-5 v24-hero-coral flex flex-col justify-between p-7 sm:p-8">
       <div class="relative z-10 space-y-5">
         <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-white/20 backdrop-blur-md border border-white/35 text-white">
-          <span class="w-2 h-2 rounded-full bg-amber-300 animate-pulse"></span>
-          Spatial Glass V24
+          <span class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
+          Plataforma Oficial SAC
         </div>
 
         <div class="flex items-center gap-3.5">
           <div class="w-12 h-12 rounded-2xl bg-white/95 p-1.5 shadow-lg flex items-center justify-center shrink-0">
             {% if logo_oficial_path %}
-            <img src="{{ logo_oficial_path }}?v={{ asset_version }}" alt="Óptica Los Andes" class="w-full h-full object-contain">
+            <img src="/{{ logo_oficial_path.lstrip('/') }}?v={{ asset_version }}" alt="Óptica Los Andes" class="w-full h-full object-contain">
             {% else %}
             <span class="text-2xl">👓</span>
             {% endif %}
@@ -38,22 +38,22 @@
 
         <div class="pt-2">
           <h2 class="text-2xl font-extrabold text-white leading-snug">
-            Auditoría Inteligente de Garantías & Experiencia al Cliente
+            Auditoría Técnica de Garantías & Experiencia al Cliente
           </h2>
           <p class="text-xs sm:text-sm text-white/85 mt-2 leading-relaxed">
-            Plataforma unificada con IA Claude Vision, emisión de informes oficiales PDF/Word, verificación IVR y reprogramación masiva WhatsApp.
+            Plataforma corporativa unificada con evaluación asistida por IA, emisión de informes oficiales PDF y Word, control IVR y reprogramación de entregas WhatsApp.
           </p>
         </div>
       </div>
 
       <div class="relative z-10 pt-6 mt-6 border-t border-white/25 grid grid-cols-2 gap-3 text-white">
         <div class="rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 p-3">
-          <p class="text-[10px] font-bold uppercase tracking-wider text-white/75">Motor IA</p>
-          <p class="text-sm font-extrabold mt-0.5">Claude Vision</p>
+          <p class="text-[10px] font-bold uppercase tracking-wider text-white/75">Evaluación Técnica</p>
+          <p class="text-sm font-extrabold mt-0.5">Claude Vision IA</p>
         </div>
         <div class="rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 p-3">
-          <p class="text-[10px] font-bold uppercase tracking-wider text-white/75">Interfaz</p>
-          <p class="text-sm font-extrabold mt-0.5">Glassy V24</p>
+          <p class="text-[10px] font-bold uppercase tracking-wider text-white/75">Cobertura</p>
+          <p class="text-sm font-extrabold mt-0.5">Nacional · Ecuador</p>
         </div>
       </div>
     </div>

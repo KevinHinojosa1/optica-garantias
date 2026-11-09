@@ -60,8 +60,9 @@ class WordService:
         logo_cell = header_table.rows[0].cells[1]
         logo_para = logo_cell.paragraphs[0]
         logo_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-        if os.path.exists(LOGO_OFICIAL_PATH):
-            logo_para.add_run().add_picture(LOGO_OFICIAL_PATH, width=Inches(1.8))
+        logo_full = str(settings.base_dir / LOGO_OFICIAL_PATH.lstrip("/"))
+        if os.path.exists(logo_full):
+            logo_para.add_run().add_picture(logo_full, width=Inches(1.8))
             
         doc.add_paragraph() # Spacer
         

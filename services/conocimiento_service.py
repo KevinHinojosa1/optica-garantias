@@ -214,7 +214,7 @@ class ConocimientoService:
 
     @classmethod
     def _eliminar_archivo(cls, rel_path: str) -> None:
-        ruta = settings.base_dir / rel_path
+        ruta = _base_storage / rel_path
         if ruta.exists():
             ruta.unlink(missing_ok=True)
 
@@ -222,7 +222,9 @@ class ConocimientoService:
     def ruta_imagen_abs(cls, item: ConocimientoItem) -> Path | None:
         if not item.imagen_path:
             return None
-        ruta = settings.base_dir / item.imagen_path
+        ruta = _base_storage / item.imagen_path
+        if not ruta.exists():
+            ruta = settings.base_dir / item.imagen_path
         return ruta if ruta.exists() else None
 
     @classmethod

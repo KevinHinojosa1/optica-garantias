@@ -56,9 +56,11 @@ class HistorialService:
     def _borrar_imagen(registro: HistorialConsulta) -> None:
         if not registro.imagen_path:
             return
+        import os
+        base = Path("/tmp") if os.getenv("VERCEL") else settings.base_dir
         ruta = Path(registro.imagen_path)
         if not ruta.is_absolute():
-            ruta = settings.base_dir / ruta
+            ruta = base / ruta
         if ruta.exists():
             ruta.unlink(missing_ok=True)
 

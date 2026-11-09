@@ -73,7 +73,12 @@ async def api_adjunto(adj_id: int, db: Session = Depends(get_db)):
     adj = CuadernoService.obtener_adjunto(db, adj_id)
     if not adj:
         raise HTTPException(status_code=404, detail="Adjunto no encontrado")
-    path = settings.base_dir / adj.ruta
+    import os
+    from pathlib import Path
+    base = Path("/tmp") if os.getenv("VERCEL") else settings.base_dir
+    path = base / adj.ruta
+    if not path.exists():
+        path = settings.base_dir / adj.ruta
     if not path.exists():
         raise HTTPException(status_code=404, detail="Archivo no encontrado en disco")
     return FileResponse(path, media_type=adj.mime or "image/jpeg", filename=adj.nombre_original)

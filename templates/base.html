@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>{% block title %}Óptica Los Andes{% endblock %} — Centro de Operaciones V24</title>
+  <title>{% block title %}Óptica Los Andes{% endblock %} — Centro de Operaciones SAC</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -43,14 +43,14 @@
           <a href="/dashboard" class="v24-brand group">
             <div class="v24-brand-logo">
               {% if logo_oficial_path %}
-              <img src="{{ logo_oficial_path }}?v={{ asset_version }}" alt="Óptica Los Andes">
+              <img src="/{{ logo_oficial_path.lstrip('/') }}?v={{ asset_version }}" alt="Óptica Los Andes">
               {% else %}
               <span>👓</span>
               {% endif %}
             </div>
             <div class="min-w-0">
               <h1 class="text-sm font-extrabold tracking-tight text-slate-900 truncate group-hover:text-optica-600 transition-colors">Óptica Los Andes</h1>
-              <p class="text-[11px] font-semibold text-slate-500 truncate">Spatial Glass · V24</p>
+              <p class="text-[11px] font-semibold text-slate-500 truncate">Servicio al Cliente · SAC</p>
             </div>
           </a>
           <button type="button" id="v24-mobile-toggle" class="lg:hidden p-2 rounded-xl glass-pill text-slate-700 hover:text-optica-600" aria-label="Alternar menú">
@@ -171,8 +171,8 @@
         <div>
           <div class="flex items-center gap-2">
             <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-white/70 text-optica-600 border border-white/85 shadow-sm">
-              <span class="w-1.5 h-1.5 rounded-full bg-optica-500 animate-pulse"></span>
-              Glassy V24 · En línea
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              Centro de Operaciones SAC · En línea
             </span>
             <span id="v24-live-date" class="text-xs font-semibold text-slate-500 hidden sm:inline"></span>
           </div>
@@ -203,8 +203,8 @@
 
       <!-- Subtle Window Footer -->
       <footer class="mt-10 pt-4 border-t border-white/50 flex flex-wrap items-center justify-between gap-2 text-[11px] font-medium text-slate-500">
-        <span>Óptica Los Andes · Sistema Inteligente de Garantías & Operaciones SAC</span>
-        <span>Glassy Dashboard V24 · Claude Vision AI</span>
+        <span>Óptica Los Andes · Sistema Corporativo de Garantías y Experiencia al Cliente</span>
+        <span>Departamento de Servicio al Cliente (SAC)</span>
       </footer>
     </div>
   </div>

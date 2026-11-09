@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import uuid
 from datetime import datetime
@@ -31,7 +32,8 @@ COLORES = ["amber", "rose", "sky", "emerald", "violet", "orange", "slate"]
 class CuadernoService:
     @classmethod
     def dir_adjuntos(cls) -> Path:
-        p = settings.base_dir / "data" / "cuaderno"
+        base = Path("/tmp") if os.getenv("VERCEL") else settings.base_dir
+        p = base / "data" / "cuaderno"
         p.mkdir(parents=True, exist_ok=True)
         return p
 
@@ -202,8 +204,9 @@ class CuadernoService:
         nota = cls.obtener(db, nota_id)
         if not nota:
             return False
+        base = Path("/tmp") if os.getenv("VERCEL") else settings.base_dir
         for a in list(nota.adjuntos or []):
-            path = settings.base_dir / a.ruta
+            path = base / a.ruta
             if path.exists():
                 try:
                     path.unlink()
@@ -269,7 +272,8 @@ class CuadernoService:
         adj = cls.obtener_adjunto(db, adj_id)
         if not adj:
             return False
-        path = settings.base_dir / adj.ruta
+        base = Path("/tmp") if os.getenv("VERCEL") else settings.base_dir
+        path = base / adj.ruta
         if path.exists():
             try:
                 path.unlink()
